@@ -1,0 +1,41 @@
+#include <iostream>
+
+using namespace std;
+
+class ExtendibleHashing {
+	
+	private:
+
+		class Index {
+			private:
+				typedef struct Bucket {
+					int data;
+					size_t localDepth;
+				} Bucket;
+
+				size_t globalDepth;
+				size_t numBuckets;
+				Bucket *buckets;
+			public:
+				Index() : globalDepth(1), numBuckets(2) { 
+					this->buckets = new Bucket[2];
+				}
+
+				~Index() {
+					delete this->buckets;
+				}
+		};
+
+		Index *index;
+
+	public:
+		ExtendibleHashing() {
+			this->index = new Index;
+		}
+
+		~ExtendibleHashing() {
+			delete this->index;
+		}
+	
+
+};
