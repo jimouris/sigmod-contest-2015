@@ -2,11 +2,11 @@
 # In order to execute this "Makefile" just type "make"
 #
 
-OBJS 	= main.o extendibleHashing.o
-SOURCE	= main.cpp extendibleHashing.cpp
-HEADER  = extendibleHashing.hpp
+OBJS 	= main.o extendibleHashing.o parser.o
+SOURCE	= main.c extendibleHashing.c parser.c
+HEADER  = extendibleHashing.h parser.h
 OUT  	= a.out
-CC		= g++
+CC		= gcc
 FLAGS 	= -c
 # -g option enables debugging mode 
 # -c flag generates object code for separate files
@@ -15,11 +15,14 @@ all: $(OBJS)
 	$(CC) $(OBJS) -o $(OUT) -O3
 
 # create/compile the individual files >>separately<< 
-main.o: main.cpp
-	$(CC) $(FLAGS) main.cpp
+main.o: main.c
+	$(CC) $(FLAGS) main.c
 
-extendibleHashing.o: extendibleHashing.cpp
-	$(CC) $(FLAGS) extendibleHashing.cpp
+extendibleHashing.o: extendibleHashing.c
+	$(CC) $(FLAGS) extendibleHashing.c
+
+parser.o: parser.c
+	$(CC) $(FLAGS) parser.c
 
 # clean house
 clean:
