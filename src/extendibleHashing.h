@@ -20,7 +20,7 @@ typedef struct Transaction_ptr {
 
 } t_t;
 
-typedef t_t* RangeArray;
+typedef t_t RangeArray;
 
 typedef struct Bucket {
 	size_t local_depth;

@@ -49,7 +49,7 @@ int insertHashRecord(Hash* hash, Key key, RangeArray* rangeArray) {
 	Bucket *bucket = hash->index[bucket_num];
 	if (bucket->current_entries < bucket->capacity) { // If there is space to insert it on the bucket
 		size_t current_entries = bucket->current_entries; 
-		bucket->transaction_range[current_entries].transaction_id = key;
+		bucket->transaction_range[current_entries].transaction_id = key; // einai arxidia, anti gia key, 8elei Tid
 		bucket->current_entries++;
 		return 0; // OK_SUCCESS
 	} else { // if there is no space
