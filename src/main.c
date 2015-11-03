@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "extendibleHashing.h"
 #include "parser.h"
+#include "journal.h"
 
 #define BUFF_SIZE 1024
 

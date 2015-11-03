@@ -5,7 +5,7 @@
 
 
 typedef struct List_node {
-	int data;
+	int data; //Change that
 	struct List_node *next;
 	struct List_node *prev;
 } List_node;
