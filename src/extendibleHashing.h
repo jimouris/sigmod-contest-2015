@@ -36,10 +36,12 @@ typedef struct Hash {
 } Hash;
 
 uint64_t hashFunction(uint64_t, uint64_t);
+void splitBucket(Bucket **, uint64_t, uint64_t, size_t, size_t);
+void fixHashPointers(Bucket **, Bucket *, size_t, uint64_t, size_t);
 
 Hash* createHash(); 
 
-int insertHashRecord(Hash*, Key, RangeArray*);
+int insertHashRecord(Hash*, Key, RangeArray*, uint64_t);
 
 // OK_SUCCESS deleteHashRecord(Hash*, Key);
 
