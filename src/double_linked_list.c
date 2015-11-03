@@ -1,19 +1,7 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include "double_linked_list.h"
 
-typedef struct list_t {
-	int data;
-	struct list_t *next;
-	struct list_t *prev;
-} list_t;
-
-typedef struct info {
-	list_t *list_beg;
-	list_t *list_end;
-} info;
-
-list_t *insert_start(info *l_info, int d) {
-	list_t *n = malloc(sizeof(list_t));
+List_node *insert_start(List_t *l_info, int d) {
+	List_node *n = malloc(sizeof(List_node));
 	n->data = d;
 	n->next = l_info->list_beg;
 	n->prev = NULL;
@@ -25,8 +13,8 @@ list_t *insert_start(info *l_info, int d) {
 	return n;
 }
 
-list_t *insert_end(info *l_info, int d) {
-	list_t *n = malloc(sizeof(list_t));
+List_node *insert_end(List_t *l_info, int d) {
+	List_node *n = malloc(sizeof(List_node));
 	n->data = d;
 	n->next = NULL;
 	n->prev = l_info->list_end;
@@ -38,8 +26,8 @@ list_t *insert_end(info *l_info, int d) {
 	return l_info->list_beg;
 }
 
-list_t *remove_end(info *l_info) {
-	list_t *n = l_info->list_end;
+List_node *remove_end(List_t *l_info) {
+	List_node *n = l_info->list_end;
 	if (n->prev == NULL)
 		l_info->list_beg = n->next;
 	else
@@ -51,31 +39,17 @@ list_t *remove_end(info *l_info) {
 	return n;
 }
 
-info *info_init(void) {
-	info *l_info = malloc(sizeof(info));
+List_t *info_init(void) {
+	List_t *l_info = malloc(sizeof(List_t));
 	l_info->list_beg = NULL;
 	l_info->list_end = NULL;
 }
 
-void print_list(info *l_info) {
-	list_t *t = l_info->list_beg;
+void print_list(List_t *l_info) {
+	List_node *t = l_info->list_beg;
 	while(t != NULL) {
 		printf("%d ", t->data);
 		t = t->next;
 	}
 	printf("\n");
-}
-
-int main(void) {
-	info *l_info = info_init();
-	list_t *list = NULL;
-	list = insert_end(l_info, 5);
-	list = insert_start(l_info, 1);
-	list = insert_end(l_info, 13);
-	print_list(l_info);
-	list = remove_end(l_info);
-	list = insert_start(l_info, 12);
-	print_list(l_info);
-
-	return EXIT_SUCCESS;
 }
