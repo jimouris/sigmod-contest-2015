@@ -103,6 +103,11 @@ List_t* getJournalRecords(Journal* journal, JournalRecord* record, int range_sta
 	return record_list;
 }
 
+int destroyJournalRecord(JournalRecord* record){
+	free(record->column_values);
+	free(record);
+	return 0;
+}
 
 int destroyJournal(Journal* journal) {
 	int i;
@@ -111,11 +116,5 @@ int destroyJournal(Journal* journal) {
 	}
 	free(journal->records);
 	free(journal);
-	return 0;
-}
-
-int destroyJournalRecord(JournalRecord* record){
-	free(record->column_values);
-	free(record);
 	return 0;
 }
