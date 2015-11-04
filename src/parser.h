@@ -1,6 +1,8 @@
 #ifndef __PARSER__
 #define __PARSER__ 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <inttypes.h>
 
 typedef enum { Equal, NotEqual, Less, LessOrEqual, Greater, GreaterOrEqual } Op_t;
@@ -20,9 +22,10 @@ typedef struct DefineSchema {
 } DefineSchema_t;
 
 typedef struct Transaction { 
-	uint64_t transactionId;				/// The transaction id. Monotonic increasing 
-	uint32_t deleteCount,insertCount;	/// The operation counts 
-	char operations[];					/// A sequence of transaction operations. Deletes first 
+	uint64_t transactionId;	/// The transaction id. Monotonic increasing 
+	uint32_t insertCount;	/// The operation counts 
+	uint32_t deleteCount;	/// The operation counts 
+	char operations[];		/// A sequence of transaction operations. Deletes first 
 } Transaction_t; 
 
 typedef struct TransactionOperationDelete { 
@@ -65,5 +68,9 @@ typedef struct Flush {
 	/// All validations to this id (including) must be answered 
 	uint64_t validationId; 
 } Flush_t;
+
+
+DefineSchema_t* defineScemaParser(char *);
+
 
 #endif

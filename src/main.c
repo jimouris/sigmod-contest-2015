@@ -13,27 +13,30 @@ int main (int argc, char** argv) {
 	/* Read from stdin */
 	char *buffer = malloc(1024 * sizeof(char));
 	ALLOCATION_ERROR(buffer);
+
 	while (read(STDIN_FILENO, buffer, 1024) > 0) {
 		// printf("%s\n\n", buffer);
-
-		char * pch;
-		pch = strtok (buffer," ");
-		while (pch != NULL) {
-			if (!strcmp(buffer, "defineschema")) {
-				// defineScemaParser();
-			} else if (!strcmp(buffer, "transaction")) {
-				// transactionParser();
-			} else if (!strcmp(buffer, "validation")) {
-				// validationParser();
-			} else if (!strcmp(buffer, "flush")) {
-			} else if (!strcmp(buffer, "forget")) {
-			} else if (!strcmp(buffer, "done")) {
-			}
-			pch = strtok (NULL, " ");
+		char *name = buffer;
+		while (*buffer != ' ')
+			*buffer++;
+		*buffer++ = '\0';
+		if (!strcmp(name, "defineschema")) {
+			printf("DEFINESCHEMA MAN MU!\n");
+			DefineSchema_t *defineScema = defineScemaParser(buffer);
+			uint32_t i;
+			printf("Total relations: %d\nRelations count:\n", defineScema->relationCount);
+			for (i = 0 ; i< defineScema->relationCount ; i++)
+				printf("%d) %d\n", i, defineScema->columnCounts[i]);
+		} else if (!strcmp(name, "transaction")) {
+			// transactionParser();
+			printf("TRAANSACTION MAN MU!\n");
+		} else if (!strcmp(name, "validation")) {
+			// validationParser();
+		} else if (!strcmp(name, "flush")) {
+		} else if (!strcmp(name, "forget")) {
+		} else if (!strcmp(name, "done")) {
 		}
-
-
+	
 	}
-
 
 }
