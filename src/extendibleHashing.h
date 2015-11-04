@@ -1,5 +1,6 @@
 #ifndef __ExtendibleHashing__
 #define __ExtendibleHashing__ 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
@@ -43,11 +44,11 @@ Hash* createHash();
 
 int insertHashRecord(Hash*, Key, RangeArray*, uint64_t);
 
-// OK_SUCCESS deleteHashRecord(Hash*, Key);
+int deleteHashRecord(Hash*, Key);
 
 // OK_SUCCESS deleteJournalRecord(Hash*, Key, int transaction_id); 
 
-// RangeArray* getHashRecord(Hash*, Key); 
+RangeArray* getHashRecord(Hash*, Key); 
 
 // List<Record> getHashRecords(Hash*, Key, int range_start, int range_end);
 
