@@ -1,5 +1,6 @@
 #ifndef __ExtendibleHashing__
 #define __ExtendibleHashing__ 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
@@ -36,16 +37,18 @@ typedef struct Hash {
 } Hash;
 
 uint64_t hashFunction(uint64_t, uint64_t);
+void splitBucket(Bucket **, uint64_t, uint64_t, size_t, size_t);
+void fixHashPointers(Bucket **, Bucket *, size_t, uint64_t, size_t);
 
 Hash* createHash(); 
 
-int insertHashRecord(Hash*, Key, RangeArray*);
+int insertHashRecord(Hash*, Key, RangeArray*, uint64_t);
 
-// OK_SUCCESS deleteHashRecord(Hash*, Key);
+int deleteHashRecord(Hash*, Key);
 
 // OK_SUCCESS deleteJournalRecord(Hash*, Key, int transaction_id); 
 
-// RangeArray* getHashRecord(Hash*, Key); 
+RangeArray* getHashRecord(Hash*, Key); 
 
 // List<Record> getHashRecords(Hash*, Key, int range_start, int range_end);
 
