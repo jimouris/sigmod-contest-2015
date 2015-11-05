@@ -17,10 +17,8 @@ int main (int argc, char** argv) {
 	while (read(STDIN_FILENO, buffer, 1024) > 0) {
 		// printf("%s\n\n", buffer);
 		while (1) {
-			char *name = buffer;
-			while (*buffer != ' ')
-				*buffer++;
-			*buffer++ = '\0';
+			char *name = getFirstToken(&buffer);
+			skipWhiteSpaces(&buffer);
 
 			DefineSchema_t *defineScema;
 			if (!strcmp(name, "defineschema")) {

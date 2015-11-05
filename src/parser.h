@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <inttypes.h>
 
 typedef enum { Equal, NotEqual, Less, LessOrEqual, Greater, GreaterOrEqual } Op_t;
@@ -69,6 +70,9 @@ typedef struct Flush {
 	uint64_t validationId; 
 } Flush_t;
 
+
+void skipWhiteSpaces(char**);
+char* getFirstToken(char**);
 
 DefineSchema_t* defineScemaParser(char **);
 Transaction_t* transactionParser(char **);
