@@ -18,13 +18,13 @@ all: $(OBJS)
 main.o: main.c
 	$(CC) $(FLAGS) main.c
 
-extendibleHashing.o: extendibleHashing.c
+extendibleHashing.o: extendibleHashing.c extendibleHashing.h 
 	$(CC) $(FLAGS) extendibleHashing.c
 
-parser.o: parser.c
+parser.o: parser.c extendibleHashing.h 
 	$(CC) $(FLAGS) parser.c
 
-journal.o: journal.c
+journal.o: journal.c journal.h 
 	$(CC) $(FLAGS) journal.c
 
 # double_linked_list.o: double_linked_list.c
