@@ -37,6 +37,8 @@ int main (int argc, char** argv) {
 				// validationParser();
 			} else if (!strcmp(name, "flush")) {
 			} else if (!strcmp(name, "forget")) {
+				printf("FORGET MAN MU!\n");
+				Forget_t *forget = forgetParser(&buffer);
 			} else if (!strcmp(name, "done")) {
 			}
 		}

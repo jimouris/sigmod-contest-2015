@@ -44,3 +44,11 @@ Transaction_t* transactionParser(char **buffer) {
 	printf("buffer:->%s<-\n", *buffer);
 	exit(0);
 }
+
+Forget_t* forgetParser(char **buffer) {
+	Forget_t *forget = malloc(sizeof(Forget_t));
+	skipWhiteSpaces(buffer);
+	char *tid = getFirstToken(buffer);
+	forget->transactionId = atoll(tid);
+	return forget;
+}
