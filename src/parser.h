@@ -70,7 +70,7 @@ typedef struct Flush {
 } Flush_t;
 
 
-DefineSchema_t* defineScemaParser(char *);
+DefineSchema_t* defineScemaParser(char **);
 
 
 #endif

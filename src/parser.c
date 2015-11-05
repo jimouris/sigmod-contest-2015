@@ -5,11 +5,11 @@
 *	example: definescema [3 4]\ntransaction blahblah
 *	buffer after the return = "\ntransaction blahblah "
 */
-DefineSchema_t* defineScemaParser(char *buffer) {
-	char *buf = buffer;
-	while (*buffer != '\n' && *buffer != '\0')
-		buffer++;
-	*buffer++ = '\0';
+DefineSchema_t* defineScemaParser(char **buffer) {
+	char *buf = *buffer;
+	while ((**buffer) != '\n' && (**buffer) != '\0')
+		(*buffer)++;
+	*(*buffer)++ = '\0';
 	/* count Relations */
 	char *pch = buf;
 	uint32_t cnt = 0;

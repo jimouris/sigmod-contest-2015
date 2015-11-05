@@ -18,15 +18,16 @@ int main (int argc, char** argv) {
 		// printf("%s\n\n", buffer);
 		char *name = buffer;
 		while (*buffer != ' ')
-			buffer++;
+			*buffer++;
 		*buffer++ = '\0';
 		if (!strcmp(name, "defineschema")) {
 			printf("DEFINESCHEMA MAN MU!\n");
-			DefineSchema_t *defineScema = defineScemaParser(buffer);
+			DefineSchema_t *defineScema = defineScemaParser(&buffer);
 			uint32_t i;
 			printf("Total relations: %d\nRelations count:\n", defineScema->relationCount);
 			for (i = 0 ; i< defineScema->relationCount ; i++)
 				printf("%d) %d\n", i, defineScema->columnCounts[i]);
+			printf("buffer:->%s<-\n", buffer);
 		} else if (!strcmp(name, "transaction")) {
 			// transactionParser();
 			printf("TRAANSACTION MAN MU!\n");
