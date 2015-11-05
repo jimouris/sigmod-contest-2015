@@ -18,7 +18,7 @@ int main (int argc, char** argv) {
 		// printf("%s\n\n", buffer);
 		char *name = buffer;
 		while (*buffer != ' ')
-			*buffer++;
+			buffer++;
 		*buffer++ = '\0';
 		if (!strcmp(name, "defineschema")) {
 			printf("DEFINESCHEMA MAN MU!\n");

@@ -6,10 +6,9 @@
 *	buffer after the return = "\ntransaction blahblah "
 */
 DefineSchema_t* defineScemaParser(char *buffer) {
-
 	char *buf = buffer;
 	while (*buffer != '\n' && *buffer != '\0')
-		*buffer++;
+		buffer++;
 	*buffer++ = '\0';
 	/* count Relations */
 	char *pch = buf;
@@ -17,7 +16,7 @@ DefineSchema_t* defineScemaParser(char *buffer) {
 	while (*buf != ']') {
 		if (*buf == ' ')
 			cnt++;
-		*buf++;
+		buf++;
 	}
 	cnt++;
 	/* allocate appropriate space + for the flexible array */
@@ -28,11 +27,11 @@ DefineSchema_t* defineScemaParser(char *buffer) {
 	pch = strtok(pch, " ");
 	while (pch != NULL) {
 		if (i == 0) // skip '['
-			*pch++;
+			pch++;
 		if (i == cnt-1) { // skip ']'
 			char *tmp = pch;
 			while (*tmp != ']')
-				*tmp++;
+				tmp++;
 			*tmp = '\0';
 		}
 		defineScema->columnCounts[i++] = atoi(pch);
