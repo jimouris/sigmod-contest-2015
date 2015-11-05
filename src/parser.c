@@ -40,3 +40,7 @@ DefineSchema_t* defineScemaParser(char **buffer) {
 	return defineScema;
 }
 
+Transaction_t* transactionParser(char **buffer) {
+	printf("buffer:->%s<-\n", *buffer);
+	exit(0);
+}
