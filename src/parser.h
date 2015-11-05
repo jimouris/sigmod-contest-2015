@@ -76,5 +76,6 @@ char* getFirstToken(char**);
 
 DefineSchema_t* defineScemaParser(char **);
 Transaction_t* transactionParser(char **);
+Forget_t* forgetParser(char **);
 
 #endif
