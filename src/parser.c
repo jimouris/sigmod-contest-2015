@@ -1,6 +1,9 @@
 #include "parser.h"
 #include "extendibleHashing.h"
 
+static uint32_t* schema = NULL;
+
+
 void skipWhiteSpaces(char** str){
 	while(isspace(**str)){
 		(*str)++;
@@ -23,111 +26,47 @@ char* getFirstToken(char** buffer){
 	return token;
 }
 
-/* 	parses the input and if there is another "command" after it, returns the remaining in the buffer
-*	example: definescema [3 4]\ntransaction blahblah
-*	buffer after the return = "\ntransaction blahblah "
-*/
-DefineSchema_t* defineScemaParser(char **buffer) {
-	char *buf = *buffer;
-	while ((**buffer) != '\n' && (**buffer) != '\0')
-		(*buffer)++;
-	*(*buffer)++ = '\0';
-	/* count Relations */
-	char *pch = buf;
-	uint32_t cnt = 0;
-	while (*buf != ']') {
-		if (*buf == ' ')
-			cnt++;
-		buf++;
+
+void processDefineSchema(DefineSchema_t *s) {
+	int i;
+	// printf("DefineSchema %d |", s->relationCount);
+	if (schema == NULL)
+		free(schema);
+	schema = malloc(sizeof(uint32_t)*s->relationCount);
+	for (i = 0; i < s->relationCount; i++) {
+		// printf(" %d ",s->columnCounts[i]);
+		schema[i] = s->columnCounts[i];
 	}
-	cnt++;
-	/* allocate appropriate space + for the flexible array */
-	DefineSchema_t *defineScema = malloc(sizeof(DefineSchema_t) + cnt * sizeof(uint32_t));
-	ALLOCATION_ERROR(defineScema);
-	defineScema->relationCount = cnt;
-	uint32_t i = 0;
-	pch = strtok(pch, " ");
-	while (pch != NULL) {
-		if (i == 0) // skip '['
-			pch++;
-		if (i == cnt-1) { // skip ']'
-			char *tmp = pch;
-			while (*tmp != ']')
-				tmp++;
-			*tmp = '\0';
-		}
-		defineScema->columnCounts[i++] = atoll(pch);
-		pch = strtok(NULL, " ");
-	}
-	return defineScema;
+	// printf("\n");
 }
 
-Transaction_t* transactionParser(char **buffer) {
-	/* Get transaction Id */
-	char *t_id = getFirstToken(buffer);
-	skipWhiteSpaces(buffer);
-	uint64_t transaction_id = atoll(t_id);
-	fprintf(stderr,"TRANS_ID: %zd\n", transaction_id);
-	/* Deletions */
-	(*buffer)++;	/* Skip the first '[' */
-	int open_brackets = 1;
-	while (**buffer != ']'){
-		skipWhiteSpaces(buffer);
-		/* Get Relation_id */
-		char *r_id = getFirstToken(buffer);
-		skipWhiteSpaces(buffer);
-		uint64_t relation_id = atoll(r_id);
-		fprintf(stderr,"RID: %zd\n", relation_id);
-		(*buffer)++;	/* Skip the next '[' */
-		fprintf(stderr,"buffer:->%s<-\n", *buffer);
-		/* Get Column numbers */
-		while (**buffer != ']'){
-			char* col_no = getFirstToken(buffer);
-			skipWhiteSpaces(buffer);
-			uint32_t column_number = atoll(col_no);
-			fprintf(stderr,"COL_ID: %"PRIu32"\n", column_number);
-			fprintf(stderr,"buffer:->%s<-\n", *buffer);
-		}
-		(*buffer)++;
+void processTransaction(Transaction_t *t) {
+	int i;
+	const char* reader = t->operations;
+	// printf("Transaction %lu (%u, %u) |", t->transactionId, t->deleteCount, t->insertCount);
+	for (i=0; i < t->deleteCount; i++) {
+		const TransactionOperationDelete_t* o = (TransactionOperationDelete_t*)reader;
+		// printf("opdel rid %u #rows %u ", o->relationId, o->rowCount);
+		reader += sizeof(TransactionOperationDelete_t) + (sizeof(uint64_t)*o->rowCount);
 	}
-	(*buffer)++;	/* skip the last ] of the deletions */
-	skipWhiteSpaces(buffer);
-	/* Insertions */
-	if (**buffer == '[') {	// If we have insertions
-		(*buffer)++;	/* Skip the first '[' */
-		while (**buffer != ']') {
-			skipWhiteSpaces(buffer);
-			/* Get Relation_id */
-			char *r_id = getFirstToken(buffer);
-			skipWhiteSpaces(buffer);
-			uint64_t relation_id = atoll(r_id);
-			fprintf(stderr,"RID: %zd\n", relation_id);
-			(*buffer)++;	/* Skip the next '[' */
-			fprintf(stderr,"buffer:->%s<-\n", *buffer);
-			/* Get Column numbers */
-			while(**buffer != ']'){
-				char* col_no = getFirstToken(buffer);
-				skipWhiteSpaces(buffer);
-				uint32_t column_number = atoll(col_no);
-				fprintf(stderr,"COL_ID: %"PRIu32"\n", column_number);
-				fprintf(stderr,"buffer:->%s<-\n", *buffer);
-			}
-			(*buffer)++;
-		}
-		(*buffer)++;	/* skip the last ] of the insertions */
+	// printf(" \t| ");
+	for (i=0; i < t->insertCount; i++) {
+		const TransactionOperationInsert_t* o = (TransactionOperationInsert_t*)reader;
+		// printf("opins rid %u #rows %u |", o->relationId, o->rowCount);
+		reader+=sizeof(TransactionOperationInsert_t)+(sizeof(uint64_t)*o->rowCount*schema[o->relationId]);
 	}
-	skipWhiteSpaces(buffer);
-	printf("\n\nDONE, remaining buffer:\n-->%s<--\n", *buffer);
-	Transaction_t *transaction =  malloc(sizeof(Transaction_t));
-	
-	exit(0);
-	return transaction;
+	// printf("\n");
+
 }
 
-Forget_t* forgetParser(char **buffer) {
-	Forget_t *forget = malloc(sizeof(Forget_t));
-	skipWhiteSpaces(buffer);
-	char *tid = getFirstToken(buffer);
-	forget->transactionId = atoll(tid);
-	return forget;
+void processValidationQueries(ValidationQueries_t *v) {
+	// printf("ValidationQueries %lu [%lu, %lu] %u\n", v->validationId, v->from, v->to, v->queryCount);
+}
+
+void processFlush(Flush_t *fl) {
+	// printf("Flush %lu\n", fl->validationId);
+}
+
+void processForget(Forget_t *fo) {
+	// printf("Forget %lu\n", fo->transactionId);
 }

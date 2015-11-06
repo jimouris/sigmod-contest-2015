@@ -6,54 +6,6 @@
 #include "parser.h"
 #include "journal.h"
 
-#define BUFF_SIZE 1024
-
-static uint32_t* schema = NULL;
-
-static void processDefineSchema(DefineSchema_t *s) {
-	int i;
-	printf("DefineSchema %d |", s->relationCount);
-	if (schema == NULL)
-		free(schema);
-	schema = malloc(sizeof(uint32_t)*s->relationCount);
-	for (i = 0; i < s->relationCount; i++) {
-		printf(" %d ",s->columnCounts[i]);
-		schema[i] = s->columnCounts[i];
-	}
-	printf("\n");
-}
-
-static void processTransaction(Transaction_t *t) {
-	int i;
-	const char* reader = t->operations;
-	printf("Transaction %lu (%u, %u) |", t->transactionId, t->deleteCount, t->insertCount);
-	for (i=0; i < t->deleteCount; i++) {
-		const TransactionOperationDelete_t* o = (TransactionOperationDelete_t*)reader;
-		printf("opdel rid %u #rows %u ", o->relationId, o->rowCount);
-		reader+=sizeof(TransactionOperationDelete_t)+(sizeof(uint64_t)*o->rowCount);
-	}
-	printf(" \t| ");
-	for (i=0; i < t->insertCount; i++) {
-		const TransactionOperationInsert_t* o = (TransactionOperationInsert_t*)reader;
-		printf("opins rid %u #rows %u |", o->relationId, o->rowCount);
-		reader+=sizeof(TransactionOperationInsert_t)+(sizeof(uint64_t)*o->rowCount*schema[o->relationId]);
-	}
-	printf("\n");
-
-}
-
-static void processValidationQueries(ValidationQueries_t *v) {
-	printf("ValidationQueries %lu [%lu, %lu] %u\n", v->validationId, v->from, v->to, v->queryCount);
-}
-
-static void processFlush(Flush_t *fl) {
-	printf("Flush %lu\n", fl->validationId);
-}
-
-static void processForget(Forget_t *fo) {
-	printf("Forget %lu\n", fo->transactionId);
-}
-
 
 int main(int argc, char **argv) {
 	MessageHead_t head;
@@ -64,7 +16,7 @@ int main(int argc, char **argv) {
 		if (read(0, &head, sizeof(head)) <= 0) {
 			exit(EXIT_FAILURE);
 		} // crude error handling, should never happen
-		printf("HEAD LEN %u \t| HEAD TYPE %u \t| DESC ", head.messageLen, head.type);
+		// printf("HEAD LEN %u \t| HEAD TYPE %u \t| DESC ", head.messageLen, head.type);
 
 		/* Retrieve the message body */
 		if (body != NULL)

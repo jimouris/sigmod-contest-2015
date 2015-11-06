@@ -107,8 +107,19 @@ typedef struct Forget {
 void skipWhiteSpaces(char**);
 char* getFirstToken(char**);
 
-DefineSchema_t* defineScemaParser(char **);
-Transaction_t* transactionParser(char **);
+
+
+void processDefineSchema(DefineSchema_t *);
+
+void processTransaction(Transaction_t *);
+
+void processValidationQueries(ValidationQueries_t *);
+
+void processFlush(Flush_t *);
+
+void processForget(Forget_t *);
+
+
 Forget_t* forgetParser(char **);
 
 #endif
