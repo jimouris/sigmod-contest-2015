@@ -47,13 +47,13 @@ void processTransaction(Transaction_t *t) {
 	for (i=0; i < t->deleteCount; i++) {
 		const TransactionOperationDelete_t* o = (TransactionOperationDelete_t*)reader;
 		// printf("opdel rid %u #rows %u ", o->relationId, o->rowCount);
-		reader += sizeof(TransactionOperationDelete_t) + (sizeof(uint64_t)*o->rowCount);
+		reader += sizeof(TransactionOperationDelete_t) + (sizeof(uint64_t) * o->rowCount);
 	}
 	// printf(" \t| ");
 	for (i=0; i < t->insertCount; i++) {
 		const TransactionOperationInsert_t* o = (TransactionOperationInsert_t*)reader;
 		// printf("opins rid %u #rows %u |", o->relationId, o->rowCount);
-		reader += sizeof(TransactionOperationInsert_t) + (sizeof(uint64_t)*o->rowCount*schema[o->relationId]);
+		reader += sizeof(TransactionOperationInsert_t) + (sizeof(uint64_t) * o->rowCount*schema[o->relationId]);
 	}
 	// printf("\n");
 
