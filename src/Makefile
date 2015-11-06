@@ -7,7 +7,7 @@ SOURCE	= main.c extendibleHashing.c parser.c journal.c
 HEADER  = extendibleHashing.h parser.h journal.h
 OUT  	= a.out
 CC		= gcc
-FLAGS 	= -c
+FLAGS 	= -c -g
 # -g option enables debugging mode 
 # -c flag generates object code for separate files
 
