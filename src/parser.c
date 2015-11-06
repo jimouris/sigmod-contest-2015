@@ -53,7 +53,7 @@ void processTransaction(Transaction_t *t) {
 	for (i=0; i < t->insertCount; i++) {
 		const TransactionOperationInsert_t* o = (TransactionOperationInsert_t*)reader;
 		// printf("opins rid %u #rows %u |", o->relationId, o->rowCount);
-		reader+=sizeof(TransactionOperationInsert_t)+(sizeof(uint64_t)*o->rowCount*schema[o->relationId]);
+		reader += sizeof(TransactionOperationInsert_t) + (sizeof(uint64_t)*o->rowCount*schema[o->relationId]);
 	}
 	// printf("\n");
 
@@ -61,6 +61,13 @@ void processTransaction(Transaction_t *t) {
 
 void processValidationQueries(ValidationQueries_t *v) {
 	// printf("ValidationQueries %lu [%lu, %lu] %u\n", v->validationId, v->from, v->to, v->queryCount);
+	int i;
+	/*For each query*/
+	const char* reader = v->queries;
+	for (i = 0; i < v->queryCount; i++) {
+		const Query_t* query = (Query_t*)reader;
+		reader += sizeof(Query_t) + (sizeof(Column_t) * query->columnCount);
+	}
 }
 
 void processFlush(Flush_t *fl) {
