@@ -5,6 +5,9 @@
 #include <string.h>
 #include <ctype.h>
 #include <inttypes.h>
+#include "journal.h"
+#include "extendibleHashing.h"
+
 
 /// Message types
 typedef enum { Done, DefineSchema, Transaction, ValidationQueries, Flush, Forget } Type_t;
@@ -104,20 +107,19 @@ typedef struct Forget {
 } Forget_t;
 
 
-void skipWhiteSpaces(char**);
-char* getFirstToken(char**);
+// void skipWhiteSpaces(char**);
+// char* getFirstToken(char**);
 
 
+Journal_t** processDefineSchema(DefineSchema_t *, int*);
 
-void processDefineSchema(DefineSchema_t *);
+void processTransaction(Transaction_t *, Journal_t**);
 
-void processTransaction(Transaction_t *);
+void processValidationQueries(ValidationQueries_t *, Journal_t**);
 
-void processValidationQueries(ValidationQueries_t *);
+void processFlush(Flush_t *, Journal_t**);
 
-void processFlush(Flush_t *);
-
-void processForget(Forget_t *);
+void processForget(Forget_t *, Journal_t**);
 
 
 Forget_t* forgetParser(char **);

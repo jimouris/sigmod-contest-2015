@@ -11,6 +11,8 @@ int main(int argc, char **argv) {
 	MessageHead_t head;
 	void *body = NULL;
 	uint32_t len;
+	Journal_t** journal_array = NULL;
+	int relation_count = 0;
 	while (1) {
 		/* Retrieve the message head */
 		if (read(0, &head, sizeof(head)) <= 0) {
@@ -29,31 +31,37 @@ int main(int argc, char **argv) {
 			} // crude error handling, should never happen
 			len -= (sizeof(head) + head.messageLen);
 		}
-
 		// And interpret it
 		switch (head.type) {
 			case Done:
 				printf("\n");
+				int i;
+				for(i = 0; i< relation_count; i++){
+					printf("Journal No: %d\n",i );
+					printJournal(journal_array[i]);
+				}
 				return 0;
 			case DefineSchema:
-				processDefineSchema(body);
+				journal_array = processDefineSchema(body, &relation_count);
 				break;
 			case Transaction:
-				processTransaction(body);
+				processTransaction(body,journal_array);
 				break;
 			case ValidationQueries:
-				processValidationQueries(body);
+				processValidationQueries(body,journal_array);
 				break;
 			case Flush:
-				processFlush(body);
+				processFlush(body,journal_array);
 				break;
 			case Forget:
-				processForget(body);
+				processForget(body,journal_array);
 				break;
 			default: 
 				exit(EXIT_FAILURE);	// crude error handling, should never happen
 		}
 	}
+
+	
 
 	return 0;
 }

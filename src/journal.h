@@ -12,7 +12,7 @@
 typedef struct JournalRecord_t {
 	uint64_t transaction_id;
 	size_t columns;	//number of columns
-	uint32_t* column_values;
+	uint64_t* column_values;
 } JournalRecord_t;
 
 typedef struct Journal_t {
@@ -60,5 +60,8 @@ JournalRecord_t* copyJournalRecord(JournalRecord_t*);
 
 int increaseJournal(Journal_t*);
 
+void printJournal(Journal_t*);
+
+void printJournalRecord(JournalRecord_t*);
 
 #endif

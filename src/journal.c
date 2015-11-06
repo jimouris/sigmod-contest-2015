@@ -127,8 +127,8 @@ JournalRecord_t* copyJournalRecord(JournalRecord_t* old){
 	ALLOCATION_ERROR(new_d);
 	new_d->transaction_id = old->transaction_id;
 	new_d->columns = old->columns;
-	uint32_t i;
-	new_d->column_values = malloc(new_d->columns*sizeof(uint32_t));
+	uint64_t i;
+	new_d->column_values = malloc(new_d->columns*sizeof(uint64_t));
 	ALLOCATION_ERROR(new_d->column_values);
 	for(i = 0; i < new_d->columns; i++){
 		new_d->column_values[i] = old->column_values[i];
@@ -152,3 +152,21 @@ int destroyJournal(Journal_t* journal) {
 	free(journal);
 	return 0;
 }
+
+void printJournalRecord(JournalRecord_t* rec) {
+	size_t i;
+	printf("Tr id: %zu\t",rec->transaction_id );
+	for(i = 0; i < rec->columns; i++){
+		printf("  %zu",rec->column_values[i]);
+	}
+	printf("\n\n");
+}
+
+
+void printJournal(Journal_t* journal){
+	uint64_t i;
+	for(i = 0; i < journal->num_of_recs; i++){
+		printJournalRecord(journal->records[i]);
+	}
+}
+
