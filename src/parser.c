@@ -71,7 +71,7 @@ Transaction_t* transactionParser(char **buffer) {
 	/* Deletions */
 	(*buffer)++;	/* Skip the first '[' */
 	int open_brackets = 1;
-	while ((**buffer != ']') /*&& (open_brackets == 1)*/){
+	while (**buffer != ']'){
 		skipWhiteSpaces(buffer);
 		/* Get Relation_id */
 		char *r_id = getFirstToken(buffer);
@@ -79,7 +79,6 @@ Transaction_t* transactionParser(char **buffer) {
 		uint64_t relation_id = atoll(r_id);
 		fprintf(stderr,"RID: %zd\n", relation_id);
 		(*buffer)++;	/* Skip the next '[' */
-		// open_brackets++;
 		fprintf(stderr,"buffer:->%s<-\n", *buffer);
 		/* Get Column numbers */
 		while (**buffer != ']'){
@@ -89,7 +88,6 @@ Transaction_t* transactionParser(char **buffer) {
 			fprintf(stderr,"COL_ID: %"PRIu32"\n", column_number);
 			fprintf(stderr,"buffer:->%s<-\n", *buffer);
 		}
-		// open_brackets--;
 		(*buffer)++;
 	}
 	(*buffer)++;	/* skip the last ] of the deletions */
@@ -120,7 +118,10 @@ Transaction_t* transactionParser(char **buffer) {
 	}
 	skipWhiteSpaces(buffer);
 	printf("\n\nDONE, remaining buffer:\n-->%s<--\n", *buffer);
+	Transaction_t *transaction =  malloc(sizeof(Transaction_t));
+	
 	exit(0);
+	return transaction;
 }
 
 Forget_t* forgetParser(char **buffer) {
