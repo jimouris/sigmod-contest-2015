@@ -63,48 +63,63 @@ DefineSchema_t* defineScemaParser(char **buffer) {
 }
 
 Transaction_t* transactionParser(char **buffer) {
+	/* Get transaction Id */
 	char *t_id = getFirstToken(buffer);
 	skipWhiteSpaces(buffer);
 	uint64_t transaction_id = atoll(t_id);
 	fprintf(stderr,"TRANS_ID: %zd\n", transaction_id);
-	//Deletes
-	(*buffer)++;	//Skip the first '['
+	/* Deletions */
+	(*buffer)++;	/* Skip the first '[' */
 	int open_brackets = 1;
-	while(((**buffer) != ']') && (open_brackets == 1)){
+	while ((**buffer != ']') /*&& (open_brackets == 1)*/){
 		skipWhiteSpaces(buffer);
-		//Get Relation_id
+		/* Get Relation_id */
 		char *r_id = getFirstToken(buffer);
 		skipWhiteSpaces(buffer);
 		uint64_t relation_id = atoll(r_id);
 		fprintf(stderr,"RID: %zd\n", relation_id);
-		(*buffer)++;	//Skip the next '['
-		open_brackets++;
+		(*buffer)++;	/* Skip the next '[' */
+		// open_brackets++;
 		fprintf(stderr,"buffer:->%s<-\n", *buffer);
-		//Get Column numbers
-		while(**buffer != ']'){
+		/* Get Column numbers */
+		while (**buffer != ']'){
 			char* col_no = getFirstToken(buffer);
 			skipWhiteSpaces(buffer);
 			uint32_t column_number = atoll(col_no);
 			fprintf(stderr,"COL_ID: %"PRIu32"\n", column_number);
 			fprintf(stderr,"buffer:->%s<-\n", *buffer);
 		}
-		open_brackets--;
-
-
-
-
-
-
-
-
-
-
-
-
+		// open_brackets--;
 		(*buffer)++;
-		
 	}
-	printf("DONE, open_brackets = %d\n",open_brackets);
+	(*buffer)++;	/* skip the last ] of the deletions */
+	skipWhiteSpaces(buffer);
+	/* Insertions */
+	if (**buffer == '[') {	// If we have insertions
+		(*buffer)++;	/* Skip the first '[' */
+		while (**buffer != ']') {
+			skipWhiteSpaces(buffer);
+			/* Get Relation_id */
+			char *r_id = getFirstToken(buffer);
+			skipWhiteSpaces(buffer);
+			uint64_t relation_id = atoll(r_id);
+			fprintf(stderr,"RID: %zd\n", relation_id);
+			(*buffer)++;	/* Skip the next '[' */
+			fprintf(stderr,"buffer:->%s<-\n", *buffer);
+			/* Get Column numbers */
+			while(**buffer != ']'){
+				char* col_no = getFirstToken(buffer);
+				skipWhiteSpaces(buffer);
+				uint32_t column_number = atoll(col_no);
+				fprintf(stderr,"COL_ID: %"PRIu32"\n", column_number);
+				fprintf(stderr,"buffer:->%s<-\n", *buffer);
+			}
+			(*buffer)++;
+		}
+		(*buffer)++;	/* skip the last ] of the insertions */
+	}
+	skipWhiteSpaces(buffer);
+	printf("\n\nDONE, remaining buffer:\n-->%s<--\n", *buffer);
 	exit(0);
 }
 
