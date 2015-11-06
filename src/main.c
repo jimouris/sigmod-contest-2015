@@ -32,23 +32,23 @@ int main(int argc, char **argv) {
 
 		// And interpret it
 		switch (head.type) {
-			case 
-				Done: printf("\n");
+			case Done:
+				printf("\n");
 				return 0;
-			case 
-				DefineSchema: processDefineSchema(body);
+			case DefineSchema:
+				processDefineSchema(body);
 				break;
-			case 
-				Transaction: processTransaction(body);
+			case Transaction:
+				processTransaction(body);
 				break;
-			case 
-				ValidationQueries: processValidationQueries(body);
+			case ValidationQueries:
+				processValidationQueries(body);
 				break;
-			case 
-				Flush: processFlush(body);
+			case Flush:
+				processFlush(body);
 				break;
-			case 
-				Forget: processForget(body);
+			case Forget:
+				processForget(body);
 				break;
 			default: 
 				exit(EXIT_FAILURE);	// crude error handling, should never happen

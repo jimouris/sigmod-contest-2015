@@ -1,7 +1,7 @@
-// #ifndef __JOURNAL__
-// #define __JOURNAL__
-
-// #include "double_linked_list.h"
+#ifndef __JOURNAL__
+#define __JOURNAL__
+#include <inttypes.h>
+#include "extendibleHashing.h"
 
 
 #define JOURNAL_CAPACITY_INIT 64
@@ -9,21 +9,20 @@
 
 
 
-typedef struct JournalRecord {
-	int transaction_id;
+typedef struct JournalRecord_t {
+	uint64_t transaction_id;
 	size_t columns;	//number of columns
-	int* column_values;
-} JournalRecord;
+	uint32_t* column_values;
+} JournalRecord_t;
 
-typedef struct Journal {
-	JournalRecord** records;
-	size_t num_of_recs;
-	size_t journal_capacity;
-} Journal;
+typedef struct Journal_t {
+	JournalRecord_t** records; /*To avoid offset fix pointers problem*/
+	uint64_t num_of_recs;
+	uint64_t journal_capacity;
+} Journal_t;
 
 typedef struct List_node {
-	// int data; //Change that
-	JournalRecord* data;
+	JournalRecord_t* data;
 	struct List_node *next;
 	struct List_node *prev;
 } List_node;
@@ -35,9 +34,9 @@ typedef struct List_t {
 
 
 
-List_node* insert_start(List_t* l_info, JournalRecord* d);
+List_node* insert_start(List_t* l_info, JournalRecord_t* d);
 
-List_node* insert_end(List_t* l_info, JournalRecord* d);
+List_node* insert_end(List_t* l_info, JournalRecord_t* d);
 
 List_node* remove_end(List_t* l_info);
 
@@ -46,15 +45,20 @@ List_t* info_init();
 void print_list(List_t *l_info);
 
 
-Journal* createJournal();
+Journal_t* createJournal();
 
-int insertJournalRecord(Journal*, JournalRecord*);
+int insertJournalRecord(Journal_t*, JournalRecord_t*);
 
-List_t* getJournalRecords(Journal*, JournalRecord*, int range_start, int range_end);
+List_t* getJournalRecords(Journal_t*, JournalRecord_t*, int range_start, int range_end);
 
-int destroyJournal(Journal*);
+int destroyJournal(Journal_t*);
 
-int increaseJournal(Journal*);
+int destroyJournalRecord(JournalRecord_t*);
+
+JournalRecord_t* copyJournalRecord(JournalRecord_t*);
 
 
-// #endif
+int increaseJournal(Journal_t*);
+
+
+#endif
