@@ -1,6 +1,5 @@
 #include "extendibleHashing.h"
 
-
 Hash* createHash() {
 	Hash *hash = malloc(sizeof(Hash));
 	ALLOCATION_ERROR(hash);
@@ -23,37 +22,146 @@ Hash* createHash() {
 	return hash;
 }
 
-void splitBucket(Bucket **index, uint64_t bucket_num, uint64_t tid, size_t global_depth, size_t split_only) {
-	/* allocate a new tmp bucket and the new one (for the split) */
+/*copy transactions from one Bucket to another one*/
+void copyBucketTransactions(Bucket* dest,Bucket* src) {
+	int i = 0 ;
+	for (i = 0 ; i < src->current_entries ; i++) {
+		dest->transaction_range[i].transaction_id = src->transaction_range[i].transaction_id;
+	}
+}
+
+
+/*tempBucket hash C+1 places.C places for the conflict Bucket and 1 place for the new Key*/
+Bucket * createTempBucket(){
+	Bucket *tmp_bucket = malloc(sizeof(Bucket));
+	ALLOCATION_ERROR(tmp_bucket);
+	tmp_bucket->capacity = C; //we do not use it
+	tmp_bucket->transaction_range = malloc((tmp_bucket->capacity+1) * sizeof(t_t));
+	ALLOCATION_ERROR(tmp_bucket->transaction_range);
+	return tmp_bucket;
+}
+
+/*creates an empty Bucket(no transactions) with local_depth same of recently increased conflict_bucket*/
+Bucket * createNewBucket(Bucket* conflict_bucket){
 	Bucket *new_bucket = malloc(sizeof(Bucket));
 	ALLOCATION_ERROR(new_bucket);
 	new_bucket->capacity = C;
-	index[bucket_num]->local_depth++;
-	new_bucket->local_depth = index[bucket_num]->local_depth;
+	new_bucket->local_depth = conflict_bucket->local_depth ;
 	new_bucket->current_entries = 0;
 	new_bucket->transaction_range = malloc(new_bucket->capacity * sizeof(t_t));
 	ALLOCATION_ERROR(new_bucket->transaction_range);
-	Bucket *tmp_bucket = malloc(sizeof(Bucket));
-	ALLOCATION_ERROR(tmp_bucket);
-	tmp_bucket->capacity = C;
-	tmp_bucket->transaction_range = malloc((tmp_bucket->capacity+1) * sizeof(t_t));
-	ALLOCATION_ERROR(tmp_bucket->transaction_range);
-	/* copy everything to tmp bucket */
-	memcpy(tmp_bucket, index[bucket_num], sizeof(Bucket));
-	tmp_bucket->transaction_range[C].transaction_id = tid;
-	// tmp_bucket[C].transaction_id = &tidInJournal;
-	memset(index[bucket_num]->transaction_range, 0, sizeof(C * sizeof(t_t)));
+	int i = 0;
+	for (i = 0 ; i < new_bucket->capacity ; i++ ) {
+		new_bucket->transaction_range[i].transaction_id = 0;
+	}
+	return new_bucket;
+}
+
+/*printsBucket various info*/
+void printBucket(Bucket * bucket){
+	fprintf(stderr,"------------------------------------------------------------\n");
+	fprintf(stderr,"local_depth(%zu), current_entries(%zu), capacity(%zu)\n",bucket->local_depth,bucket->current_entries,bucket->capacity);
+
+	int j = 0 ;
+	for (j = 0 ; j < bucket->current_entries ; j++) { //
+		uint64_t tid = bucket->transaction_range[j].transaction_id;
+		fprintf(stderr,"Record(%d) : %llu\n",j,tid);
+	}
+	fprintf(stderr,"------------------------------------------------------------\n");
+}
+
+/*Prints index, the bucket pointing to and the content of the bucket.*/
+void printHash(Hash* hash){
+	 int i;
+	 for (i = 0 ; i < hash->size ; i++) { /*for every index*/
+	 	if (hash->index[i] != NULL) { /*points somewhere*/
+	 		fprintf(stderr, "*****Index %d points to Bucket address %p*******\n",i,hash->index[i]);
+	 		fprintf(stderr,"Bucket has local_depth(%zu) capacity(%zu) and current_entries(%zu) \n",hash->index[i]->local_depth,hash->index[i]->capacity,hash->index[i]->current_entries);
+	 		if (!hash->index[i]->current_entries) {
+	 			fprintf(stderr,"Bucket has no entries yet\n");
+	 		} else {
+	 			fprintf(stderr,"Bucket has %zu records\n",hash->index[i]->current_entries);
+	 			printBucket(hash->index[i]);
+	 		}
+	 		fprintf(stderr,"***********************************************************\n");
+	 	} else {
+	 		fprintf(stderr,"~~~~~Index (%d) points to no bucket~~~~~\n",i);
+	 	}
+	 }
+}
+
+/*The conflict bucket is empty of transaction, just hold the local_depth*/
+void cleanConflictBucket(Bucket* conflict_bucket,Bucket* tmp_bucket) {
+	int i = 0 ;
+	for (i = 0 ; i < conflict_bucket->current_entries ; i++ ) {
+		conflict_bucket->transaction_range[i].transaction_id = 0;
+	}
+	conflict_bucket->current_entries = 0;
+	conflict_bucket->capacity = C;
+	conflict_bucket->local_depth = tmp_bucket->local_depth;
+}
+
+/*Adds the Key that caused the conflict as the last element of the temp_bucket transactions array*/
+void addNewKeyToTempBucket(Bucket * temp_bucket,uint64_t key) {
+	temp_bucket -> current_entries = C + 1;
+	temp_bucket -> transaction_range[C].transaction_id = key;
+}
+
+/*
+ * We use it on Recursion. This function recreates the conflict_bucket (remember it was empty from
+ * the cleanConflictBucket) and destroys the malloced tmp_bucket. After this function call, comes 
+ * the recursion on spliBucket
+*/
+void destroyTempBucketRecreateConflict(Bucket * conflict_bucket,Bucket *tmp_bucket) {
+	int i;
+	for (i = 0 ; i < C ; i++) {
+		conflict_bucket->transaction_range[i].transaction_id = tmp_bucket->transaction_range[i].transaction_id;
+		// fprintf(stderr, "TRALALALALL %llu\n", tmp_bucket->transaction_range[i].transaction_id);
+	}
+	conflict_bucket->capacity = C;
+	conflict_bucket->current_entries = C;
+	conflict_bucket->local_depth = tmp_bucket->local_depth;
+	free(tmp_bucket->transaction_range);
+	free(tmp_bucket);
+}
+
+/*Does whatever it says*/
+void doublicateIndex(Hash * hash) {
+	hash->global_depth++;
+	hash->size *= 2;
+	hash->index = realloc(hash->index, hash->size * sizeof(Bucket *));
+	ALLOCATION_ERROR(hash->index);
+}
+
+/* The main function of extendible hashing.
+ * doublicate_index_flag -> insertHashRecord decide its value at first
+ * bucket_num -> the overflow bucket
+ * doublicate_index_flag -> is Set to 1 either on Recursion or from insertHashRecord depending
+ * the local_depth of Bucket with the global depth
+*/
+void splitBucket(Hash* myhash, uint64_t bucket_num, uint64_t tid,size_t doublicate_index_flag) {
+	/* allocate a new tmp bucket and the new one (for the split) */
+	if (doublicate_index_flag){
+		doublicateIndex(myhash);	
+	}
+	myhash->index[bucket_num]->local_depth++;
+	Bucket *new_bucket = createNewBucket(myhash->index[bucket_num]);
+	Bucket *tmp_bucket = createTempBucket();
+	tmp_bucket->local_depth = myhash->index[bucket_num]->local_depth; //need it for destroyTempBucketRecreateConflict
+	copyBucketTransactions(tmp_bucket,myhash->index[bucket_num]);
+	addNewKeyToTempBucket(tmp_bucket,tid); //change tid to key later
+	cleanConflictBucket(myhash->index[bucket_num],tmp_bucket);
 	/* flags to check if the split actually changed tids or we have to doublicate index again */
 	int i;
 	size_t flag1 = 0, flag2 = 0;
 	uint64_t new_bucket_hash = 0;
 	for (i = 0 ; i <= C ; i++) { //scan the tmp_bucket
 		uint64_t tmp_tid = tmp_bucket->transaction_range[i].transaction_id;
-		uint64_t new_hash = hashFunction(1 << global_depth, tmp_tid);
-		if (new_hash == bucket_num && index[bucket_num]->current_entries < C) { //tid on old bucket
-			size_t current_entries = index[bucket_num]->current_entries;
-			index[bucket_num]->transaction_range[current_entries].transaction_id = tmp_tid;
-			index[bucket_num]->current_entries++;
+		uint64_t new_hash = hashFunction(1 <<myhash->global_depth, tmp_tid);
+		if (new_hash == bucket_num && myhash->index[bucket_num]->current_entries < C) { //tid on old bucket
+			size_t current_entries = myhash->index[bucket_num]->current_entries;
+			myhash->index[bucket_num]->transaction_range[current_entries].transaction_id = tmp_tid;
+			myhash->index[bucket_num]->current_entries++;
 			flag1 = 1;
 		} else if (new_hash != bucket_num && new_bucket->current_entries < C) { //tid on new bucket
 			size_t current_entries = new_bucket->current_entries;
@@ -63,35 +171,34 @@ void splitBucket(Bucket **index, uint64_t bucket_num, uint64_t tid, size_t globa
 			new_bucket_hash = new_hash;
 		}
 	}
-	fixHashPointers(index, new_bucket, global_depth, bucket_num, split_only);
-	free(tmp_bucket->transaction_range);
-	free(tmp_bucket);
+	fixHashPointers(myhash->index, new_bucket, myhash->global_depth, bucket_num, split_only);
 	// if all entries gone to one bucket 
-	/* MAS LEIPEI KATI*/
-	if (flag1 == 0) 
-		splitBucket(index, new_bucket_hash, tid, global_depth, 0);		
-	else if (flag2 == 0)
-		splitBucket(index, bucket_num, tid, global_depth, 0);		
+	if (flag1 == 0){
+		destroyTempBucketRecreateConflict(myhash->index[bucket_num],tmp_bucket);
+		splitBucket(myhash, new_bucket_hash, tid, 0,1);
+	}
+	else if (flag2 == 0){
+		destroyTempBucketRecreateConflict(myhash->index[bucket_num],tmp_bucket);
+		splitBucket(myhash, bucket_num, tid, 0,1);
+	}	
 }
 
-/* fix new indexes pointers after doublicates */
+/* fix new indexes pointers after index doublicate or just splits pointers */
 void fixHashPointers(Bucket **index, Bucket *new_bucket, size_t global_depth, uint64_t bucket_num, size_t split_only) {
 	int i, j;
 	size_t old_size = 1 << (global_depth-1);
-	if (split_only) {
-		index[bucket_num+old_size] = new_bucket;
-	} else {
-		for (i = 0, j = old_size ; i < old_size ; i++, j++) {
-			if (i == bucket_num)
-				index[j] = new_bucket;
-			else
-				index[j] = index[i];
-		}
+	for (i = 0, j = old_size ; i < old_size ; i++, j++) {
+		if (i == bucket_num)
+			index[j] = new_bucket;
+		else
+			index[j] = index[i];
 	}
 }
 
+/*insert Record to Hash*/
 int insertHashRecord(Hash* hash, Key key, RangeArray* rangeArray, uint64_t tid) {
-	uint64_t bucket_num = hashFunction(hash->size, key); 
+	/*important : change 'tid' with 'key' later */
+	uint64_t bucket_num = hashFunction(hash->size, tid); 
 	Bucket *bucket = hash->index[bucket_num];
 	if (bucket->current_entries < bucket->capacity) { // If there is space to insert it on the bucket
 		size_t current_entries = bucket->current_entries; 
@@ -100,16 +207,12 @@ int insertHashRecord(Hash* hash, Key key, RangeArray* rangeArray, uint64_t tid) 
 		return 0; // OK_SUCCESS
 	} else { // if there is no space
 		if (bucket->local_depth == hash->global_depth) { // one pointer per bucket -> doublicate index
-			hash->global_depth++;
-			hash->size *= 2;
-			hash->index = realloc(hash->index, hash->size * sizeof(Bucket *));
-			ALLOCATION_ERROR(hash->index);
-			splitBucket(hash->index, bucket_num, tid, hash->global_depth, 0);
+			splitBucket(hash, bucket_num, tid, 0,1);
 		} else if (bucket->local_depth < hash->global_depth) { // split bucket
-			splitBucket(hash->index, bucket_num, tid, hash->global_depth, 1);
+			splitBucket(hash, bucket_num, tid, 1,0);
 		}
 	}
-
+	return 0;
 }  
 
 uint64_t hashFunction(uint64_t size, uint64_t n) {
@@ -146,6 +249,7 @@ int deleteHashRecord(Hash* hash, Key key) { // OK_SUCCESS
 	// free(hash->index[bucket_num]->transaction_range);
 	// free(hash->index[bucket_num]);
 	// hash->index[bucket_num] = NULL;
+	return 0;
 } 
 
 // OK_SUCCESS deleteJournalRecord(Hash*, Key, int transaction_id) {
