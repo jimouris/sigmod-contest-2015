@@ -66,6 +66,7 @@ Journal_t* createJournal() {
 	journal->records = malloc(journal->journal_capacity * sizeof(JournalRecord_t*));
 	ALLOCATION_ERROR(journal->records);
 	journal->num_of_recs = 0;
+	journal->index = createHash();
 	return journal;
 }
 
@@ -86,6 +87,7 @@ int insertJournalRecord(Journal_t* journal, JournalRecord_t* record) {
 	//Insert the record
 	journal->records[journal->num_of_recs] = record;
 	journal->num_of_recs++;
+	insertHashRecord(journal->index, record->column_values[0], NULL, record);
 	return 0;
 }
 
@@ -93,10 +95,10 @@ int insertJournalRecord(Journal_t* journal, JournalRecord_t* record) {
 //Den xerw pou xrhsimevei h JournalRecord_t* record. 
 List_t* getJournalRecords(Journal_t* journal, JournalRecord_t* record, int range_start, int range_end) {
 	/*Binary Search for first appearance*/
-	int first = 0;
-	int last = journal->num_of_recs - 1;
-	int middle = (first+last)/2;
-	int first_appearance;
+	uint64_t first = 0;
+	uint64_t last = journal->num_of_recs - 1;
+	uint64_t middle = (first+last)/2;
+	uint64_t first_appearance;
 	while (first <= last) {
 		if (journal->records[middle]->transaction_id < range_start){
 			first = middle + 1;    
@@ -115,7 +117,7 @@ List_t* getJournalRecords(Journal_t* journal, JournalRecord_t* record, int range
 	}
 	List_t* record_list = info_init();
 	List_node* node = NULL;
-	int i = first_appearance;
+	uint64_t i = first_appearance;
 	while(i < journal->num_of_recs && journal->records[i]->transaction_id <= range_end ) {
 		node = insert_end(record_list, journal->records[i]);
 	}
@@ -170,3 +172,20 @@ void printJournal(Journal_t* journal){
 	}
 }
 
+JournalRecord_t* createJournalRecord(uint64_t transaction_id, size_t columns, const uint64_t* column_values){
+	uint64_t i;
+	JournalRecord_t* record = malloc(sizeof(JournalRecord_t));
+	record->transaction_id = transaction_id;
+	record->columns = columns;
+	record->column_values = malloc(record->columns * sizeof(uint64_t));
+	for(i = 0; i < record->columns; i++){
+		record->column_values[i] = column_values[i];
+	}
+	record->dirty_bit = False;
+	return record;
+}
+
+
+void markDirty(JournalRecord_t* record) {
+	record->dirty_bit = True;
+}

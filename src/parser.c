@@ -49,33 +49,47 @@ Journal_t** processDefineSchema(DefineSchema_t *s, int *relation_count) {
 void processTransaction(Transaction_t *t, Journal_t** journal_array) {
 	uint64_t i,j;
 	const char* reader = t->operations;
-	// printf("Transaction %lu (%u, %u) |", t->transactionId, t->deleteCount, t->insertCount);
+	printf("Transaction %lu (%u, %u) |", t->transactionId, t->deleteCount, t->insertCount);
 	for (i = 0; i < t->deleteCount; i++) {
-		const TransactionOperationDelete_t* o = (TransactionOperationDelete_t*)reader;
 		//Find the latest insert record.
 		//Use the hash table
 		//Insert the JournalRecord.
-		// printf("opdel rid %u #rows %u ", o->relationId, o->rowCount);
+		const TransactionOperationDelete_t* o = (TransactionOperationDelete_t*)reader;
+		for(j = 0; j < o->rowCount; j++){
+			uint64_t key = o->keys[j];
+			JournalRecord_t* last_insertion = getHashRecord2(journal_array[o->relationId]->index, key);
+			markDirty(last_insertion);
+			JournalRecord_t* deletion = copyJournalRecord(last_insertion);
+			insertJournalRecord(journal_array[o->relationId], deletion);
+		}
 		reader += sizeof(TransactionOperationDelete_t) + (sizeof(uint64_t) * o->rowCount);
+
+
+		// printf("opdel rid %u #rows %u ", o->relationId, o->rowCount);
 	}
 	// printf(" \t| ");
 	for (i = 0; i < t->insertCount; i++) {
 		const TransactionOperationInsert_t* o = (TransactionOperationInsert_t*)reader;
-
-		JournalRecord_t* record = malloc(sizeof(JournalRecord_t));
-		record->transaction_id = t->transactionId;
-		record->columns = schema[o->relationId];
-		record->column_values = malloc(record->columns * sizeof(uint64_t));
-		for(j = 0; j < record->columns; j++){
-			record->column_values[j] = o->values[j];
+		uint64_t* values = o->values;
+		for(j = 0; j < o->rowCount; j++){
+			int k;
+			printf("----------------\n");
+			for(k = 0; k<schema[o->relationId]; k++){
+				printf("value: %zu\n",values[k] );
+			}
+			printf("----------------\n");
+			JournalRecord_t* record = createJournalRecord(t->transactionId, schema[o->relationId], values);
+			insertJournalRecord(journal_array[o->relationId], record);			
+			values += schema[o->relationId];
 		}
-		insertJournalRecord(journal_array[o->relationId], record);
-		// printf("opins rid %u #rows %u |", o->relationId, o->rowCount);
 		reader += sizeof(TransactionOperationInsert_t) + (sizeof(uint64_t) * o->rowCount * schema[o->relationId]);
+
+		// printf("opins rid %u #rows %u |", o->relationId, o->rowCount);
 	}
 	// printf("\n");
 
 }
+
 
 void processValidationQueries(ValidationQueries_t *v, Journal_t** journal_array) {
 	// printf("ValidationQueries %lu [%lu, %lu] %u\n", v->validationId, v->from, v->to, v->queryCount);

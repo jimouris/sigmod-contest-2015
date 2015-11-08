@@ -8,6 +8,9 @@
 
 
 
+typedef enum { False = 0, True = 1 } Boolean_t;
+
+typedef struct Hash Hash;
 
 typedef struct JournalRecord_t {
 	uint64_t transaction_id;
@@ -20,6 +23,7 @@ typedef struct Journal_t {
 	JournalRecord_t** records; /*To avoid offset fix pointers problem*/
 	uint64_t num_of_recs;
 	uint64_t journal_capacity;
+	Hash* index;
 } Journal_t;
 
 typedef struct List_node {
@@ -64,5 +68,9 @@ int increaseJournal(Journal_t*);
 void printJournal(Journal_t*);
 
 void printJournalRecord(JournalRecord_t*);
+
+void markDirty(JournalRecord_t*);
+
+JournalRecord_t* createJournalRecord(uint64_t, size_t, const uint64_t*);
 
 #endif

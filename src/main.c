@@ -39,6 +39,7 @@ int main(int argc, char **argv) {
 				for(i = 0; i< relation_count; i++){
 					printf("Journal No: %d\n",i );
 					printJournal(journal_array[i]);
+					printHash(journal_array[i]->index);
 				}
 				return 0;
 			case DefineSchema:
