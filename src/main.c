@@ -12,7 +12,7 @@ int main(int argc, char **argv) {
 	void *body = NULL;
 	uint32_t len;
 	Journal_t** journal_array = NULL;
-	uint64_t relation_count = 0;
+	int relation_count = 0;
 	while (1) {
 		/* Retrieve the message head */
 		if (read(0, &head, sizeof(head)) <= 0) {
