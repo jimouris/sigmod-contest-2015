@@ -62,7 +62,6 @@ Bucket * createNewBucket(Bucket* conflict_bucket){
 void printBucket(Bucket * bucket){
 	fprintf(stderr,"------------------------------------------------------------\n");
 	fprintf(stderr,"local_depth(%zu), current_entries(%zu), capacity(%zu)\n",bucket->local_depth,bucket->current_entries,bucket->capacity);
-
 	int j = 0 ;
 	for (j = 0 ; j < bucket->current_entries ; j++) { //
 		uint64_t tid = bucket->transaction_range[j].transaction_id;
@@ -181,11 +180,13 @@ void splitBucket(Hash* myhash, uint64_t bucket_num, JournalRecord_t* rec,size_t 
 	if (flag1 == 0){
 		destroyTempBucketRecreateConflict(myhash->index[bucket_num],tmp_bucket);
 		splitBucket(myhash, new_bucket_hash, rec,1);
-	}
-	else if (flag2 == 0){
+	} else if (flag2 == 0){
 		destroyTempBucketRecreateConflict(myhash->index[bucket_num],tmp_bucket);
 		splitBucket(myhash, bucket_num, rec,1);
-	}	
+	} else {	
+		free(tmp_bucket->transaction_range);
+		free(tmp_bucket);
+	}
 }
 
 /* fix new indexes pointers after index doublicate or just splits pointers */
