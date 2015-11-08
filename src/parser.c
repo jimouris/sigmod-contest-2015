@@ -60,6 +60,8 @@ void processTransaction(Transaction_t *t, Journal_t** journal_array) {
 			JournalRecord_t* last_insertion = getHashRecord2(journal_array[o->relationId]->index, key);
 			markDirty(last_insertion);
 			JournalRecord_t* deletion = copyJournalRecord(last_insertion);
+			deletion->transaction_id = t->transactionId;
+			// printf("Deletion:: search ok!\n");
 			insertJournalRecord(journal_array[o->relationId], deletion);
 		}
 		reader += sizeof(TransactionOperationDelete_t) + (sizeof(uint64_t) * o->rowCount);
@@ -70,8 +72,8 @@ void processTransaction(Transaction_t *t, Journal_t** journal_array) {
 	// printf(" \t| ");
 	for (i = 0; i < t->insertCount; i++) {
 		const TransactionOperationInsert_t* o = (TransactionOperationInsert_t*)reader;
-		uint64_t* values = o->values;
 		for(j = 0; j < o->rowCount; j++){
+			const uint64_t *values = o->values + j*schema[o->relationId];
 			int k;
 			printf("----------------\n");
 			for(k = 0; k<schema[o->relationId]; k++){
@@ -80,7 +82,6 @@ void processTransaction(Transaction_t *t, Journal_t** journal_array) {
 			printf("----------------\n");
 			JournalRecord_t* record = createJournalRecord(t->transactionId, schema[o->relationId], values);
 			insertJournalRecord(journal_array[o->relationId], record);			
-			values += schema[o->relationId];
 		}
 		reader += sizeof(TransactionOperationInsert_t) + (sizeof(uint64_t) * o->rowCount * schema[o->relationId]);
 

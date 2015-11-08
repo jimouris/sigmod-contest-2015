@@ -87,7 +87,9 @@ int insertJournalRecord(Journal_t* journal, JournalRecord_t* record) {
 	//Insert the record
 	journal->records[journal->num_of_recs] = record;
 	journal->num_of_recs++;
+	// printf("Before insert hash\n");
 	insertHashRecord(journal->index, record->column_values[0], NULL, record);
+	// printf("After insert hash\n");
 	return 0;
 }
 
@@ -135,6 +137,7 @@ JournalRecord_t* copyJournalRecord(JournalRecord_t* old){
 	for(i = 0; i < new_d->columns; i++){
 		new_d->column_values[i] = old->column_values[i];
 	}
+	new_d->dirty_bit = old->dirty_bit;
 	return new_d;
 }
 
