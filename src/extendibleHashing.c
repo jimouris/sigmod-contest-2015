@@ -248,19 +248,20 @@ uint64_t hashFunction(uint64_t size, uint64_t n) {
     // return (value % n);
 }
 
-// int deleteHashRecordByKey(Hash* hash,Key key) { 
-// 	uint64_t bucket_num = hashFunction(hash->size,key); //get bucket num where you would delete
-// 	Bucket *bucket = hash->index[bucket_num];
-// 	int i;
-// 	for (i = 0 ; i < bucket ; i++) {
-// 		if (bucket->transaction_range[i].rec->column_values[0] == keyToSearch) { //found the record that you want to delete
-// 			bucket->current_entries --;
-// 			if (bucket->current_entries == 0) { //empty bucket
+int deleteHashRecordByKey(Hash* hash,Key key) { 
+	uint64_t bucket_num = hashFunction(hash->size,key); //get bucket num where you would delete
+	Bucket *bucket = hash->index[bucket_num];
+	int i;
+	for (i = 0 ; i < bucket->current_entries ; i++) {
+		if (bucket->transaction_range[i].rec->column_values[0] == key) { //found the record that you want to delete
+			bucket->current_entries --;
+			if (bucket->current_entries == 0) { //empty bucket
 
-// 			}
-// 		}
-// 	}
-// }
+			}
+		}
+	}
+	return 1;
+}
 
 // OK_SUCCESS deleteJournalRecord(Hash*, Key, int transaction_id) {
 
@@ -273,7 +274,7 @@ RangeArray* getHashRecord(Hash* hash, Key key) {
 
 JournalRecord_t* getHashRecord2(Hash* hash, Key key) {
 	uint64_t bucket_num = hashFunction(hash->size, key);
-	searchIndexByKey(hash,bucket_num,key);
+	return searchIndexByKey(hash,bucket_num,key);
 }
 
 JournalRecord_t* searchIndexByKey(Hash* hash,uint64_t bucket_num,uint64_t keyToSearch) {
