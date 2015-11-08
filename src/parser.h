@@ -15,6 +15,8 @@ typedef enum { Done, DefineSchema, Transaction, ValidationQueries, Flush, Forget
 /// Support operations
 typedef enum { Equal, NotEqual, Less, LessOrEqual, Greater, GreaterOrEqual } Op_t;
 
+typedef enum { False, True } Boolean_t;
+
 //---------------------------------------------------------------------------
 typedef struct MessageHead {
    /// Total message length, excluding this head

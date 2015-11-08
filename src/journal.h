@@ -13,6 +13,7 @@ typedef struct JournalRecord_t {
 	uint64_t transaction_id;
 	size_t columns;	//number of columns
 	uint64_t* column_values;
+	Boolean_t dirty_bit;
 } JournalRecord_t;
 
 typedef struct Journal_t {
