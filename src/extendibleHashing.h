@@ -6,7 +6,7 @@
 #include <inttypes.h>
 #include <errno.h>
 #include <string.h>
-
+#include "journal.h"
 
 #define GLOBAL_DEPTH_INIT 1
 #define C 4
@@ -15,10 +15,11 @@
 							exit(EXIT_FAILURE);} \
 
 typedef uint64_t Key;
+typedef struct JournalRecord_t JournalRecord_t;
 
 typedef struct Transaction_ptr {
 	uint64_t transaction_id;
-
+	JournalRecord_t * rec;
 } t_t;
 
 typedef t_t RangeArray;
@@ -40,10 +41,11 @@ uint64_t hashFunction(uint64_t, uint64_t);
 Hash* createHash(); 
 
 /*INSERT TO HASH FUNCTION AND OTHER HELPER FUNCTIONS*/
-void splitBucket(Hash*, uint64_t, uint64_t, size_t);
+void splitBucket(Hash*, uint64_t, JournalRecord_t*, size_t);
 void fixHashPointers(Bucket **, Bucket *, size_t, uint64_t);
 void doublicateIndex(Hash *);
-int insertHashRecord(Hash*, Key, RangeArray*, uint64_t);
+int insertHashRecord(Hash*, Key, RangeArray*, JournalRecord_t*);
+void addNewKeyToTempBucket(Bucket *,JournalRecord_t*);
 /****************************************************/
 
 /*PRINT FUNCTIONS*/

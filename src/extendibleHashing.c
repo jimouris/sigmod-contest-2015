@@ -27,6 +27,7 @@ void copyBucketTransactions(Bucket* dest,Bucket* src) {
 	int i = 0 ;
 	for (i = 0 ; i < src->current_entries ; i++) {
 		dest->transaction_range[i].transaction_id = src->transaction_range[i].transaction_id;
+		dest->transaction_range[i].rec = src->transaction_range[i].rec;
 	}
 }
 
@@ -53,6 +54,7 @@ Bucket * createNewBucket(Bucket* conflict_bucket){
 	int i = 0;
 	for (i = 0 ; i < new_bucket->capacity ; i++ ) {
 		new_bucket->transaction_range[i].transaction_id = 0;
+		new_bucket->transaction_range[i].rec = NULL;
 	}
 	return new_bucket;
 }
@@ -95,6 +97,7 @@ void cleanConflictBucket(Bucket* conflict_bucket,Bucket* tmp_bucket) {
 	int i = 0 ;
 	for (i = 0 ; i < conflict_bucket->current_entries ; i++ ) {
 		conflict_bucket->transaction_range[i].transaction_id = 0;
+		conflict_bucket->transaction_range[i].rec = NULL;
 	}
 	conflict_bucket->current_entries = 0;
 	conflict_bucket->capacity = C;
@@ -102,9 +105,10 @@ void cleanConflictBucket(Bucket* conflict_bucket,Bucket* tmp_bucket) {
 }
 
 /*Adds the Key that caused the conflict as the last element of the temp_bucket transactions array*/
-void addNewKeyToTempBucket(Bucket * temp_bucket,uint64_t key) {
+void addNewKeyToTempBucket(Bucket * temp_bucket,JournalRecord_t* rec) {
 	temp_bucket -> current_entries = C + 1;
-	temp_bucket -> transaction_range[C].transaction_id = key;
+	temp_bucket -> transaction_range[C].transaction_id = rec->transaction_id;
+	temp_bucket -> transaction_range[C].rec = rec;
 }
 
 /*
@@ -116,7 +120,7 @@ void destroyTempBucketRecreateConflict(Bucket * conflict_bucket,Bucket *tmp_buck
 	int i;
 	for (i = 0 ; i < C ; i++) {
 		conflict_bucket->transaction_range[i].transaction_id = tmp_bucket->transaction_range[i].transaction_id;
-		// fprintf(stderr, "TRALALALALL %llu\n", tmp_bucket->transaction_range[i].transaction_id);
+		conflict_bucket->transaction_range[i].rec = tmp_bucket->transaction_range[i].rec;
 	}
 	conflict_bucket->capacity = C;
 	conflict_bucket->current_entries = C;
@@ -139,7 +143,7 @@ void doublicateIndex(Hash * hash) {
  * doublicate_index_flag -> is Set to 1 either on Recursion or from insertHashRecord depending
  * the local_depth of Bucket with the global depth
 */
-void splitBucket(Hash* myhash, uint64_t bucket_num, uint64_t tid,size_t doublicate_index_flag) {
+void splitBucket(Hash* myhash, uint64_t bucket_num, JournalRecord_t* rec,size_t doublicate_index_flag) {
 	/* allocate a new tmp bucket and the new one (for the split) */
 	if (doublicate_index_flag){
 		doublicateIndex(myhash);	
@@ -148,9 +152,9 @@ void splitBucket(Hash* myhash, uint64_t bucket_num, uint64_t tid,size_t doublica
 	Bucket *new_bucket = createNewBucket(myhash->index[bucket_num]);
 	Bucket *tmp_bucket = createTempBucket();
 	tmp_bucket->local_depth = myhash->index[bucket_num]->local_depth; //need it for destroyTempBucketRecreateConflict
-	copyBucketTransactions(tmp_bucket,myhash->index[bucket_num]);
-	addNewKeyToTempBucket(tmp_bucket,tid); //change tid to key later
-	cleanConflictBucket(myhash->index[bucket_num],tmp_bucket);
+	copyBucketTransactions(tmp_bucket, myhash->index[bucket_num]);
+	addNewKeyToTempBucket(tmp_bucket, rec); //change tid to key later
+	cleanConflictBucket(myhash->index[bucket_num], tmp_bucket);
 	/* flags to check if the split actually changed tids or we have to doublicate index again */
 	int i;
 	size_t flag1 = 0, flag2 = 0;
@@ -161,11 +165,13 @@ void splitBucket(Hash* myhash, uint64_t bucket_num, uint64_t tid,size_t doublica
 		if (new_hash == bucket_num && myhash->index[bucket_num]->current_entries < C) { //tid on old bucket
 			size_t current_entries = myhash->index[bucket_num]->current_entries;
 			myhash->index[bucket_num]->transaction_range[current_entries].transaction_id = tmp_tid;
+			myhash->index[bucket_num]->transaction_range[current_entries].rec = tmp_bucket->transaction_range[i].rec;
 			myhash->index[bucket_num]->current_entries++;
 			flag1 = 1;
 		} else if (new_hash != bucket_num && new_bucket->current_entries < C) { //tid on new bucket
 			size_t current_entries = new_bucket->current_entries;
 			new_bucket->transaction_range[current_entries].transaction_id = tmp_tid;
+			new_bucket->transaction_range[current_entries].rec = tmp_bucket->transaction_range[i].rec;
 			new_bucket->current_entries++;
 			flag2 = 1;
 			new_bucket_hash = new_hash;
@@ -175,11 +181,11 @@ void splitBucket(Hash* myhash, uint64_t bucket_num, uint64_t tid,size_t doublica
 	// if all entries gone to one bucket 
 	if (flag1 == 0){
 		destroyTempBucketRecreateConflict(myhash->index[bucket_num],tmp_bucket);
-		splitBucket(myhash, new_bucket_hash, tid,1);
+		splitBucket(myhash, new_bucket_hash, rec,1);
 	}
 	else if (flag2 == 0){
 		destroyTempBucketRecreateConflict(myhash->index[bucket_num],tmp_bucket);
-		splitBucket(myhash, bucket_num, tid,1);
+		splitBucket(myhash, bucket_num, rec,1);
 	}	
 }
 
@@ -196,20 +202,21 @@ void fixHashPointers(Bucket **index, Bucket *new_bucket, size_t global_depth, ui
 }
 
 /*insert Record to Hash*/
-int insertHashRecord(Hash* hash, Key key, RangeArray* rangeArray, uint64_t tid) {
+int insertHashRecord(Hash* hash, Key key, RangeArray* rangeArray, JournalRecord_t* rec) {
 	/*important : change 'tid' with 'key' later */
-	uint64_t bucket_num = hashFunction(hash->size, tid); 
+	uint64_t bucket_num = hashFunction(hash->size, key); 
 	Bucket *bucket = hash->index[bucket_num];
 	if (bucket->current_entries < bucket->capacity) { // If there is space to insert it on the bucket
 		size_t current_entries = bucket->current_entries; 
-		bucket->transaction_range[current_entries].transaction_id = tid; // einai arxidia, anti gia key, 8elei Tid
+		bucket->transaction_range[current_entries].transaction_id = rec->transaction_id;
+		bucket->transaction_range[current_entries].rec = rec;
 		bucket->current_entries++;
 		return 0; // OK_SUCCESS
 	} else { // if there is no space
 		if (bucket->local_depth == hash->global_depth) { // one pointer per bucket -> doublicate index
-			splitBucket(hash, bucket_num, tid, 1);
+			splitBucket(hash, bucket_num, rec, 1);
 		} else if (bucket->local_depth < hash->global_depth) { // split bucket
-			splitBucket(hash, bucket_num, tid, 0);
+			splitBucket(hash, bucket_num, rec, 0);
 		}
 	}
 	return 0;
