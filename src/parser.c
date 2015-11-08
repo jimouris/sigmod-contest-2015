@@ -55,14 +55,16 @@ void processTransaction(Transaction_t *t, Journal_t** journal_array) {
 		//Use the hash table
 		//Insert the JournalRecord.
 		const TransactionOperationDelete_t* o = (TransactionOperationDelete_t*)reader;
-		for(j = 0; j < o->rowCount; j++){
+		for (j = 0; j < o->rowCount; j++){
 			uint64_t key = o->keys[j];
 			JournalRecord_t* last_insertion = getHashRecord2(journal_array[o->relationId]->index, key);
-			markDirty(last_insertion);
-			JournalRecord_t* deletion = copyJournalRecord(last_insertion);
-			deletion->transaction_id = t->transactionId;
-			// printf("Deletion:: search ok!\n");
-			insertJournalRecord(journal_array[o->relationId], deletion);
+			if (last_insertion != NULL) {
+				markDirty(last_insertion);
+				JournalRecord_t* deletion = copyJournalRecord(last_insertion);
+				deletion->transaction_id = t->transactionId;
+				insertJournalRecord(journal_array[o->relationId], deletion); 
+			}
+			/* else { // the deletion doesn't exist } */
 		}
 		reader += sizeof(TransactionOperationDelete_t) + (sizeof(uint64_t) * o->rowCount);
 
