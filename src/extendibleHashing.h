@@ -40,8 +40,8 @@ uint64_t hashFunction(uint64_t, uint64_t);
 Hash* createHash(); 
 
 /*INSERT TO HASH FUNCTION AND OTHER HELPER FUNCTIONS*/
-void splitBucket(Hash*, uint64_t, uint64_t, size_t,size_t);
-void fixHashPointers(Bucket **, Bucket *, size_t, uint64_t, size_t);
+void splitBucket(Hash*, uint64_t, uint64_t, size_t);
+void fixHashPointers(Bucket **, Bucket *, size_t, uint64_t);
 void doublicateIndex(Hash *);
 int insertHashRecord(Hash*, Key, RangeArray*, uint64_t);
 /****************************************************/

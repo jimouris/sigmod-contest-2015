@@ -171,20 +171,20 @@ void splitBucket(Hash* myhash, uint64_t bucket_num, uint64_t tid,size_t doublica
 			new_bucket_hash = new_hash;
 		}
 	}
-	fixHashPointers(myhash->index, new_bucket, myhash->global_depth, bucket_num, split_only);
+	fixHashPointers(myhash->index, new_bucket, myhash->global_depth, bucket_num);
 	// if all entries gone to one bucket 
 	if (flag1 == 0){
 		destroyTempBucketRecreateConflict(myhash->index[bucket_num],tmp_bucket);
-		splitBucket(myhash, new_bucket_hash, tid, 0,1);
+		splitBucket(myhash, new_bucket_hash, tid,1);
 	}
 	else if (flag2 == 0){
 		destroyTempBucketRecreateConflict(myhash->index[bucket_num],tmp_bucket);
-		splitBucket(myhash, bucket_num, tid, 0,1);
+		splitBucket(myhash, bucket_num, tid,1);
 	}	
 }
 
 /* fix new indexes pointers after index doublicate or just splits pointers */
-void fixHashPointers(Bucket **index, Bucket *new_bucket, size_t global_depth, uint64_t bucket_num, size_t split_only) {
+void fixHashPointers(Bucket **index, Bucket *new_bucket, size_t global_depth, uint64_t bucket_num) {
 	int i, j;
 	size_t old_size = 1 << (global_depth-1);
 	for (i = 0, j = old_size ; i < old_size ; i++, j++) {
@@ -207,9 +207,9 @@ int insertHashRecord(Hash* hash, Key key, RangeArray* rangeArray, uint64_t tid) 
 		return 0; // OK_SUCCESS
 	} else { // if there is no space
 		if (bucket->local_depth == hash->global_depth) { // one pointer per bucket -> doublicate index
-			splitBucket(hash, bucket_num, tid, 0,1);
+			splitBucket(hash, bucket_num, tid, 1);
 		} else if (bucket->local_depth < hash->global_depth) { // split bucket
-			splitBucket(hash, bucket_num, tid, 1,0);
+			splitBucket(hash, bucket_num, tid, 0);
 		}
 	}
 	return 0;
