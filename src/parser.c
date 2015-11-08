@@ -75,3 +75,12 @@ void processForget(Forget_t *fo, Journal_t** journal_array) {
 
 }
 
+void destroySchema(Journal_t** journal_array, uint64_t relation_count){
+	uint64_t i;
+	for(i = 0; i< relation_count; i++){
+		destroyJournal(journal_array[i]);
+	}
+	free(journal_array);
+	free(schema);
+}
+

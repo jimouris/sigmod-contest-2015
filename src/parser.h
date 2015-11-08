@@ -125,4 +125,7 @@ void processForget(Forget_t *, Journal_t**);
 
 Forget_t* forgetParser(char **);
 
+void destroySchema(Journal_t**, uint64_t);
+
+
 #endif

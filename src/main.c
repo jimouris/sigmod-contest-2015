@@ -12,7 +12,7 @@ int main(int argc, char **argv) {
 	void *body = NULL;
 	uint32_t len;
 	Journal_t** journal_array = NULL;
-	int relation_count = 0;
+	uint64_t relation_count = 0;
 	while (1) {
 		/* Retrieve the message head */
 		if (read(0, &head, sizeof(head)) <= 0) {
@@ -41,6 +41,7 @@ int main(int argc, char **argv) {
 					printJournal(journal_array[i]);
 					printHash(journal_array[i]->index);
 				}
+				destroySchema(journal_array, relation_count);
 				return 0;
 			case DefineSchema:
 				journal_array = processDefineSchema(body, &relation_count);
