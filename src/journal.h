@@ -3,10 +3,7 @@
 #include <inttypes.h>
 #include "extendibleHashing.h"
 
-
 #define JOURNAL_CAPACITY_INIT 64
-
-
 
 typedef enum { False = 0, True = 1 } Boolean_t;
 

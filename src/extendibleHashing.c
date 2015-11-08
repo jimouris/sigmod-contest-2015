@@ -31,7 +31,6 @@ void copyBucketTransactions(Bucket* dest,Bucket* src) {
 	}
 }
 
-
 /*tempBucket hash C+1 places.C places for the conflict Bucket and 1 place for the new Key*/
 Bucket * createTempBucket(){
 	Bucket *tmp_bucket = malloc(sizeof(Bucket));
@@ -67,7 +66,7 @@ void printBucket(Bucket * bucket){
 	int j = 0 ;
 	for (j = 0 ; j < bucket->current_entries ; j++) { //
 		uint64_t tid = bucket->transaction_range[j].transaction_id;
-		fprintf(stderr,"Record(%d) : %llu\n",j,tid);
+		fprintf(stderr,"Record(%d) : %zu\n",j,tid);
 	}
 	fprintf(stderr,"------------------------------------------------------------\n");
 }
@@ -277,8 +276,8 @@ JournalRecord_t* getHashRecord2(Hash* hash, Key key) {
 	return searchIndexByKey(hash,bucket_num,key);
 }
 
+/* Binary Search for first appearance */
 JournalRecord_t* searchIndexByKey(Hash* hash,uint64_t bucket_num,uint64_t keyToSearch) {
-	/*Binary Search for first appearance*/
 	Bucket *bucket = hash->index[bucket_num];
 	int i;
 	for (i = 0 ; i < bucket->current_entries ; i++) {

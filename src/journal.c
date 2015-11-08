@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include "journal.h"
 
-//List functions
+/* List functions */
 
 List_node *insert_start(List_t *l_info, JournalRecord_t* d) {
 	List_node *n = malloc(sizeof(List_node));
@@ -56,8 +56,7 @@ List_t *info_init(void) {
 }
 
 
-//Journal_t functions
-
+/* Journal_t functions */
 
 Journal_t* createJournal() {
 	Journal_t* journal = malloc(sizeof(Journal_t));
@@ -77,8 +76,6 @@ int increaseJournal(Journal_t* journal){
 	ALLOCATION_ERROR(journal->records);
 	return 0;
 }
-
-
 
 int insertJournalRecord(Journal_t* journal, JournalRecord_t* record) {
 	if(journal->num_of_recs >= journal->journal_capacity) {
@@ -141,7 +138,6 @@ JournalRecord_t* copyJournalRecord(JournalRecord_t* old){
 	return new_d;
 }
 
-
 int destroyJournalRecord(JournalRecord_t* record){
 	free(record->column_values);
 	free(record);
@@ -167,7 +163,6 @@ void printJournalRecord(JournalRecord_t* rec) {
 	printf("\n\n");
 }
 
-
 void printJournal(Journal_t* journal){
 	uint64_t i;
 	for(i = 0; i < journal->num_of_recs; i++){
@@ -187,7 +182,6 @@ JournalRecord_t* createJournalRecord(uint64_t transaction_id, size_t columns, co
 	record->dirty_bit = False;
 	return record;
 }
-
 
 void markDirty(JournalRecord_t* record) {
 	record->dirty_bit = True;

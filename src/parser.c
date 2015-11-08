@@ -1,31 +1,6 @@
-
 #include "parser.h"
 
 static uint32_t* schema = NULL;
-
-
-// void skipWhiteSpaces(char** str){
-// 	while(isspace(**str)){
-// 		(*str)++;
-// 	}
-// }
-
-// //Also eats the next white character.
-// char* getFirstToken(char** buffer){
-// 	char *init = *buffer;
-// 	int count = 0;
-// 	while (!isspace(**buffer) && (**buffer != '[') && (**buffer != ']')){
-// 		(*buffer)++;
-// 		count++;
-// 	}
-// 	char* token = malloc((count+1) * sizeof(char));
-// 	token = strncpy(token, init, count);
-// 	token[count] = '\0';
-// 	// fprintf(stderr, "COUNT: %d\n",count );
-// 	// fprintf(stderr, "TOKEN: |%s|\n",token );
-// 	return token;
-// }
-
 
 Journal_t** processDefineSchema(DefineSchema_t *s, int *relation_count) {
 	int i;
@@ -63,36 +38,22 @@ void processTransaction(Transaction_t *t, Journal_t** journal_array) {
 				JournalRecord_t* deletion = copyJournalRecord(last_insertion);
 				deletion->transaction_id = t->transactionId;
 				insertJournalRecord(journal_array[o->relationId], deletion); 
-			}
-			/* else { // the deletion doesn't exist } */
+			} /* else { // the deletion doesn't exist } */
 		}
 		reader += sizeof(TransactionOperationDelete_t) + (sizeof(uint64_t) * o->rowCount);
-
-
 		// printf("opdel rid %u #rows %u ", o->relationId, o->rowCount);
 	}
-	// printf(" \t| ");
 	for (i = 0; i < t->insertCount; i++) {
 		const TransactionOperationInsert_t* o = (TransactionOperationInsert_t*)reader;
 		for(j = 0; j < o->rowCount; j++){
 			const uint64_t *values = o->values + j*schema[o->relationId];
-			int k;
-			printf("----------------\n");
-			for(k = 0; k<schema[o->relationId]; k++){
-				printf("value: %zu\n",values[k] );
-			}
-			printf("----------------\n");
 			JournalRecord_t* record = createJournalRecord(t->transactionId, schema[o->relationId], values);
 			insertJournalRecord(journal_array[o->relationId], record);			
 		}
 		reader += sizeof(TransactionOperationInsert_t) + (sizeof(uint64_t) * o->rowCount * schema[o->relationId]);
-
 		// printf("opins rid %u #rows %u |", o->relationId, o->rowCount);
 	}
-	// printf("\n");
-
 }
-
 
 void processValidationQueries(ValidationQueries_t *v, Journal_t** journal_array) {
 	// printf("ValidationQueries %lu [%lu, %lu] %u\n", v->validationId, v->from, v->to, v->queryCount);
@@ -106,11 +67,11 @@ void processValidationQueries(ValidationQueries_t *v, Journal_t** journal_array)
 }
 
 void processFlush(Flush_t *fl, Journal_t** journal_array) {
-	// printf("Flush %lu\n", fl->validationId);
+	printf("Flush %lu\n", fl->validationId);
 }
 
 void processForget(Forget_t *fo, Journal_t** journal_array) {
-	// printf("Forget %lu\n", fo->transactionId);
-}
+	printf("Forget %lu\n", fo->transactionId);
 
+}
 
