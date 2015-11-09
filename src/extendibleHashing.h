@@ -26,15 +26,15 @@ typedef struct Transaction_ptr {
 typedef t_t RangeArray;
 
 typedef struct Bucket {
-	size_t local_depth;
-	size_t capacity;
-	size_t current_entries; //use it for deciding split or insertion
+	uint64_t local_depth;
+	uint64_t capacity;
+	uint64_t current_entries; //use it for deciding split or insertion
 	t_t *transaction_range;
 } Bucket;
 
 typedef struct Hash {
 	uint64_t size;
-	size_t global_depth;
+	uint64_t global_depth;
 	Bucket **index;
 } Hash;
 /****************************/
@@ -48,8 +48,8 @@ uint64_t hashFunction(uint64_t, uint64_t);
 /*************************************************/
 
 /*INSERT TO HASH FUNCTION AND OTHER HELPER FUNCTIONS*/
-void splitBucket(Hash*, uint64_t, JournalRecord_t*, size_t);
-void fixHashPointers(Bucket **, Bucket *, size_t, uint64_t);
+void splitBucket(Hash*, uint64_t, JournalRecord_t*, int);
+void fixHashPointers(Bucket **, Bucket *, uint64_t, uint64_t);
 void doublicateIndex(Hash *);
 int insertHashRecord(Hash*, Key, RangeArray*, JournalRecord_t*);
 void addNewKeyToTempBucket(Bucket *,JournalRecord_t*);
@@ -70,7 +70,7 @@ void printBucket(Bucket *);
 /*DELETE HASH FUNCTION*/
 int deleteHashRecord(Hash*, Key);
 // OK_SUCCESS deleteJournalRecord(Hash*, Key, int transaction_id); 
-// OK_SUCCESS destroyHash(Hash*); 
+int destroyHash(Hash*); 
 /**********************/
 
 #endif

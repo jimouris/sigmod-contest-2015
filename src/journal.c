@@ -146,6 +146,7 @@ int destroyJournalRecord(JournalRecord_t* record){
 
 int destroyJournal(Journal_t* journal) {
 	int i;
+	destroyHash(journal->index);
 	for(i=0; i<journal->num_of_recs; i++){
 		destroyJournalRecord(journal->records[i]);
 	}
