@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
 					printHash(journal_array[i]->index);
 				}
 				destroySchema(journal_array, relation_count);
-				return 0;
+				return EXIT_SUCCESS;
 			case DefineSchema:
 				journal_array = processDefineSchema(body, &relation_count);
 				break;
