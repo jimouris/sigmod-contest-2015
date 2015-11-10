@@ -8,7 +8,6 @@ Hash* createHash() {
 	hash->index = malloc(hash->size * sizeof(Bucket *));
 	ALLOCATION_ERROR(hash->index);
 	uint64_t i;
-	uint32_t j, k;
 	for (i = 0 ; i < hash->size ; i++)
 		hash->index[i] = createNewBucket(GLOBAL_DEPTH_INIT, B);
 	return hash;
