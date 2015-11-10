@@ -6,13 +6,8 @@
 #include <inttypes.h>
 #include <errno.h>
 #include <string.h>
+#include "constants.h"
 #include "journal.h"
-
-#define GLOBAL_DEPTH_INIT 1
-#define C 4
-#define ALLOCATION_ERROR(X) if (X == NULL) { \
-							perror("allocation error"); \
-							exit(EXIT_FAILURE);} \
 
 /*DATA STRUCTURES*/
 typedef uint64_t Key;
