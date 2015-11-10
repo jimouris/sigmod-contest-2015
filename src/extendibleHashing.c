@@ -111,25 +111,24 @@ void splitBucket(Hash* hash, uint64_t bucket_num, RangeArray* rangeArray, int do
 			new_bucket->current_subBuckets++;
 			new_bucket_hash = new_hash;
 			flag2 = 1;
+			hash->index[new_hash] = new_bucket;
 		}
-	}		
-
-	fixHashPointers(hash->index, new_bucket, hash->global_depth, bucket_num);
-
+	}
+	if (doublicate_index_flag) {
+		fixHashPointers(hash->index, new_bucket, hash->global_depth, bucket_num);
+	}
+	/* free tmpBucket */
+	for (i = 0 ; i <= B ; i++) { /*for each subBucket*/
+		free(tmp_bucket->key_buckets[i].transaction_range);
+	}
+	free(tmp_bucket->key_buckets);
+	free(tmp_bucket);
+	tmp_bucket = NULL;
 	// if all entries gone to one bucket 
-	if (flag1 == 0){
-		// destroyTempBucketRecreateConflict(hash->index[bucket_num],tmp_bucket);
-		splitBucket(hash, new_bucket_hash, rangeArray,1,key);
-	} else if (flag2 == 0){
-		// destroyTempBucketRecreateConflict(hash->index[bucket_num],tmp_bucket);
-		splitBucket(hash, bucket_num, rangeArray,1,key);
-	} else {
-		for (i = 0 ; i <= B ; i++) { /*for each subBucket*/
-			free(tmp_bucket->key_buckets[i].transaction_range);
-		}
-		free(tmp_bucket->key_buckets);
-		free(tmp_bucket);
-		tmp_bucket = NULL;
+	if (flag1 == 0) {
+		splitBucket(hash, new_bucket_hash, rangeArray, 1, key);
+	} else if (flag2 == 0) {
+		splitBucket(hash, bucket_num, rangeArray, 1, key);
 	}
 }
 
@@ -235,11 +234,11 @@ void printHash(Hash* hash){
 		if (hash->index[i] != NULL) { /*points somewhere*/
 			fprintf(stderr, "*****Index %zd points to Bucket address %p*******\n", i, hash->index[i]);
 			if (!hash->index[i]->current_subBuckets) {
-				fprintf(stderr,"Bucket has no subbuckets yet\n");
+				printBucket(hash->index[i]);
 			} else {
 				printBucket(hash->index[i]);
 			}
-			fprintf(stderr,"***********************************************************\n");
+			fprintf(stderr,"***********************************************************\n\n");
 		} else {
 			fprintf(stderr,"~~~~~Index (%zd) points to no bucket~~~~~\n", i);
 		}
