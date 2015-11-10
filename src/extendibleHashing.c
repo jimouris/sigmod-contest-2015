@@ -136,8 +136,9 @@ void fixHashPointers(Bucket **index, Bucket *new_bucket, uint32_t global_depth, 
 	int i, j;
 	uint64_t old_size = 1 << (global_depth-1);
 	for (i = 0, j = old_size ; i < old_size ; i++, j++) {
-		if (i == bucket_num)
+		if (i == bucket_num){
 			index[j] = new_bucket;
+		}
 		else
 			index[j] = index[i];
 	}
@@ -261,6 +262,43 @@ uint64_t getLastOffset(Hash* hash, Key key) {
 	uint64_t current_entries;
 	RangeArray* range = getHashRecord(hash, key, &current_entries);
 	return range[current_entries].rec_offset;
+}
+
+int destroyHash(Hash* hash) {
+	uint64_t i;
+	for (i = 0 ; i < hash->size ; i++) { /*for every bucket on the hash*/
+			uint32_t j,current_subBuckets = hash->index[i]->current_subBuckets;
+			Bucket * current_bucket = hash->index[i];
+			for (j = 0 ; j < B ; j++) { 
+				/*note : EDW BRIKA TO BUG GIATI PREPEI KATHE FORA NA TO KANOUME ME B
+					     gia paradeigma to swsto tha itan na legame for j = 0 mexri j < current_bucket -> current_subBuckets kai oxi B.*/
+				
+				/* note : gia tin eisagwgi pros diorthwsi
+				   Skefteite exoume B=10 kai emeis otan theloume na eisagoume ena mono 
+				   subBucket desmevoume mnimi gia 10 subBuckets, 10 pinakes transactions_range me capacity C, enw to pio pithanon einai
+				   na xrisimopoiithoun 1-4 subBuckets gia paradeigma eidika otan megalwnei to evretirio.
+
+				   pistevw : 
+				   				1.prepei na kanoume to malloc tou subBucket otan mpainei to Key sto Index
+								2.Akoma kai ta arxika buckets na min yparxoun kai oi deiktes tou index na nai null. Skepsou na 
+								  valei global_depth 8 kserw egw (pou den nomizw na einai asynithisto) kai na desmefsoume
+								  64 buckets me posa subBuckets kai posa transactions_range.
+								  		Estw p.x. oti exoume opws twra global_depth = 0 kai B=2. Exoume to index[0] = index[1] = NULL;
+								  		mas erxontai kata seira ta Keys = 10/ 11/ 12
+								  			i)10 % 2 = 0 -> Ftiaxnoume ENA Bucket me ENA SubBucket opou deixnei KAI TO 0 kai to 1 sto idio Bucket!
+											ii)11 % 2 = 1 ->PALI to pame sto idio Bucket (afou xwraei)
+											iii)12 % 2 = 0 -> den xwrane (afou B=2), ara kanoume split kai pane 10,12 sto 0 kai to 11 sto 1
+									genika kapws na to pame
+				*/
+
+				free(current_bucket->key_buckets[j].transaction_range);
+			}
+			 free(current_bucket->key_buckets);	
+			free(hash->index[i]);
+	}
+	free(hash->index);
+	free(hash);
+	return OK_SUCCESS;
 }
 
 //  Binary Search for first appearance 

@@ -9,7 +9,7 @@ int main(void)
 	RangeArray **ranges = malloc(20 *sizeof(RangeArray *));
 	int i;
 	srand(time(NULL));
-	for (i = 0 ; i < 5 ; i++) {
+	for (i = 0 ; i < 1 ; i++) {
 		ranges[i] = malloc(sizeof(RangeArray));
 		ranges[i]->transaction_id = 20 + i;
 		ranges[i]->rec_offset = rand() % 200;
@@ -25,6 +25,12 @@ int main(void)
 	// r2->rec_offset = 43;
 	// insertHashRecord(myhash, 4, r2);
 	printHash(myhash);
+	destroyHash(myhash);
+	for (i = 0 ; i < 1 ; i++) {
+		free(ranges[i]);
+		ranges[i] = NULL;
+	}
+	free(ranges);
 	// insertHashRecord(myhash,6,NULL,802);
 	// // insertHashRecord(myhash,8,NULL,803);
 	// insertHashRecord(myhash,8,NULL,804);	
