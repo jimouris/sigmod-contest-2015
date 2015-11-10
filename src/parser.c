@@ -34,10 +34,9 @@ void processTransaction(Transaction_t *t, Journal_t** journal_array) {
 			uint64_t key = o->keys[j];
 			JournalRecord_t* last_insertion = getHashRecord2(journal_array[o->relationId]->index, key);
 			if (last_insertion != NULL) {
-				markDirty(last_insertion);
-				JournalRecord_t* deletion = copyJournalRecord(last_insertion);
+				// JournalRecord_t* deletion = copyJournalRecord(last_insertion);
+				JournalRecord_t* deletion = insertJournalRecordCopy(journal_array[o->relationId], deletion); 
 				deletion->transaction_id = t->transactionId;
-				insertJournalRecord(journal_array[o->relationId], deletion); 
 			} /* else { // the deletion doesn't exist } */
 		}
 		reader += sizeof(TransactionOperationDelete_t) + (sizeof(uint64_t) * o->rowCount);
@@ -47,8 +46,9 @@ void processTransaction(Transaction_t *t, Journal_t** journal_array) {
 		const TransactionOperationInsert_t* o = (TransactionOperationInsert_t*)reader;
 		for(j = 0; j < o->rowCount; j++){
 			const uint64_t *values = o->values + j*schema[o->relationId];
-			JournalRecord_t* record = createJournalRecord(t->transactionId, schema[o->relationId], values);
-			insertJournalRecord(journal_array[o->relationId], record);			
+			// JournalRecord_t* record = createJournalRecord(t->transactionId, schema[o->relationId], values);
+			// insertJournalRecord(journal_array[o->relationId], record);			
+			insertJournalRecord(journal_array[o->relationId], t->transactionId, schema[o->relationId], values);			
 		}
 		reader += sizeof(TransactionOperationInsert_t) + (sizeof(uint64_t) * o->rowCount * schema[o->relationId]);
 		// printf("opins rid %u #rows %u |", o->relationId, o->rowCount);
