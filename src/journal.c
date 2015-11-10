@@ -93,6 +93,7 @@ JournalRecord_t* insertJournalRecord(Journal_t* journal, uint64_t transaction_id
 	}
 	// record.dirty_bit = False;
 	RangeArray* range_array = malloc(sizeof(RangeArray));
+	ALLOCATION_ERROR(range_array);
 	range_array->transaction_id = record.transaction_id;
 	range_array->rec_offset = journal->num_of_recs;
 	insertHashRecord(journal->index, record.column_values[0], range_array);
@@ -205,9 +206,11 @@ void printJournal(Journal_t* journal){
 JournalRecord_t* createJournalRecord(uint64_t transaction_id, size_t columns, const uint64_t* column_values){
 	uint64_t i;
 	JournalRecord_t* record = malloc(sizeof(JournalRecord_t));
+	ALLOCATION_ERROR(record);
 	record->transaction_id = transaction_id;
 	record->columns = columns;
 	record->column_values = malloc(record->columns * sizeof(uint64_t));
+	ALLOCATION_ERROR(record->column_values);
 	for(i = 0; i < record->columns; i++){
 		record->column_values[i] = column_values[i];
 	}
