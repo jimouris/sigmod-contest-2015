@@ -244,36 +244,24 @@ void printHash(Hash* hash){
 	}
 }
 
+RangeArray* getHashRecord(Hash* hash, Key key, uint64_t * current_entries) {
+	uint64_t bucket_num = hashFunction(hash->size, key);
+	uint32_t i;
+	/* note: May need binary search later */
+	for (i = 0 ; i < hash->index[bucket_num]->current_subBuckets ; i++) { /* for i in subBuckets */
+		if (hash->index[bucket_num]->key_buckets[i].key == key) {
+			*current_entries = hash->index[bucket_num]->key_buckets[i].current_entries;
+			return hash->index[bucket_num]->key_buckets[i].transaction_range;
+		}
+	}
+	return NULL;
+} 
 
-
-/*
-// //  * We use it on Recursion. This function recreates the conflict_bucket (remember it was empty from
-// //  * the cleanConflictBucket) and destroys the malloced tmp_bucket. After this function call, comes 
-// //  * the recursion on spliBucket
-// // */
-// void destroyTempBucketRecreateConflict(Bucket * conflict_bucket,Bucket *tmp_bucket) {
-// 	int i;
-// 	for (i = 0 ; i < C ; i++) {
-// 		conflict_bucket->transaction_range[i].transaction_id = tmp_bucket->transaction_range[i].transaction_id;
-// 		conflict_bucket->transaction_range[i].rec = tmp_bucket->transaction_range[i].rec;
-// 	}
-// 	conflict_bucket->capacity = C;
-// 	conflict_bucket->current_entries = C;
-// 	conflict_bucket->local_depth = tmp_bucket->local_depth;
-// 	free(tmp_bucket->transaction_range);
-// 	free(tmp_bucket);
-// 	tmp_bucket = NULL;
-// }
-
-// RangeArray* getHashRecord(Hash* hash, Key key) {
-// 	uint64_t bucket_num = hashFunction(hash->size, key);
-// 	return hash->index[bucket_num]->transaction_range;
-// } 
-
-// JournalRecord_t* getHashRecord2(Hash* hash, Key key) {
-// 	uint64_t bucket_num = hashFunction(hash->size, key);
-// 	return searchIndexByKey(hash,bucket_num,key);
-// }
+uint64_t getLastOffset(Hash* hash, Key key) {
+	uint64_t current_entries;
+	RangeArray* range = getHashRecord(hash, key, &current_entries);
+	return range[current_entries].rec_offset;
+}
 
 //  Binary Search for first appearance 
 // JournalRecord_t* searchIndexByKey(Hash* hash,uint64_t bucket_num,uint64_t keyToSearch) {

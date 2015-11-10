@@ -58,9 +58,8 @@ void cleanBucket(Bucket *);
 /****************************************************/
 
 /*SEARCH TO HASH AND OTHER HELPER METHODS*/
-JournalRecord_t* getHashRecord2(Hash*, Key);
-JournalRecord_t* searchIndexByKey(Hash*,uint64_t,uint64_t);
-// RangeArray* getHashRecord(Hash*, Key);
+RangeArray* getHashRecord(Hash *, Key, uint64_t *);
+uint64_t getLastOffset(Hash *, Key);
 // List<Record> getHashRecords(Hash*, Key, int range_start, int range_end);
 /****************************************/
 
