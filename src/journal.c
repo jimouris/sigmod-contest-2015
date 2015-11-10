@@ -53,6 +53,7 @@ List_t *info_init(void) {
 	ALLOCATION_ERROR(l_info);
 	l_info->list_beg = NULL;
 	l_info->list_end = NULL;
+	return l_info;
 }
 
 
