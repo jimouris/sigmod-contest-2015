@@ -9,45 +9,52 @@
 #include "constants.h"
 #include "journal.h"
 
-/*DATA STRUCTURES*/
+/* HASH DATA STRUCTURES */
 typedef uint64_t Key;
 typedef struct JournalRecord_t JournalRecord_t;
 
-typedef struct Transaction_ptr {
+typedef struct RangeArrayElement {
 	uint64_t transaction_id;
-	JournalRecord_t * rec;
-} t_t;
+	uint64_t rec_offset; /* like a pointer, but not one to avoid realloc problem */
+} RangeArray;
 
-typedef t_t RangeArray;
+typedef struct SubBucket {
+	Key key;
+	uint64_t current_entries;
+	RangeArray *transaction_range;
+} SubBucket;
 
-typedef struct Bucket {
-	uint64_t local_depth;
-	uint64_t capacity;
-	uint64_t current_entries; //use it for deciding split or insertion
-	t_t *transaction_range;
+typedef struct Bucket { /* Has a pointer (key_buckets) to one or more subBuckets */
+	uint32_t local_depth;
+	uint32_t current_subBuckets;
+	SubBucket *key_buckets;
 } Bucket;
 
 typedef struct Hash {
 	uint64_t size;
-	uint64_t global_depth;
+	uint32_t global_depth;
 	Bucket **index;
 } Hash;
 /****************************/
 
-/*HASH INIT METHOD*/
+/* HASH INIT METHOD */
 Hash* createHash(); 
-/*****************/
+/********************/
 
 /*HASH FUNCTION USED FOR TO GO TO THE RIGHT INDEX*/
 uint64_t hashFunction(uint64_t, uint64_t);
 /*************************************************/
 
 /*INSERT TO HASH FUNCTION AND OTHER HELPER FUNCTIONS*/
-void splitBucket(Hash*, uint64_t, JournalRecord_t*, int);
-void fixHashPointers(Bucket **, Bucket *, uint64_t, uint64_t);
+void splitBucket(Hash*, uint64_t, RangeArray*, int, Key);
+void fixHashPointers(Bucket **, Bucket *, uint32_t, uint64_t);
 void doublicateIndex(Hash *);
-int insertHashRecord(Hash*, Key, RangeArray*, JournalRecord_t*);
 void addNewKeyToTempBucket(Bucket *,JournalRecord_t*);
+void copyBucketTransactions(Bucket*, Bucket*);
+int insertHashRecord(Hash*, Key, RangeArray*);
+Bucket* createNewBucket(uint32_t, uint32_t);
+void addNewKeyToTmpBucket(Bucket *, Key, RangeArray*);
+void cleanBucket(Bucket *);
 /****************************************************/
 
 /*SEARCH TO HASH AND OTHER HELPER METHODS*/

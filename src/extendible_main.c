@@ -26,6 +26,6 @@ int main(void)
 	//  insertHashRecord(myhash,8,NULL,820);	
 	 // insertHashRecord(myhash,8,NULL,818);
 	 // insertHashRecord(myhash,8,NULL,819);	
-	printHash(myhash);
+	// printHash(myhash);
 	return 0;
 }
