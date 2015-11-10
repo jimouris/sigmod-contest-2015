@@ -11,11 +11,11 @@ typedef struct JournalRecord_t {
 	uint64_t transaction_id;
 	size_t columns;	//number of columns
 	uint64_t* column_values;
-	Boolean_t dirty_bit;
+	// Boolean_t dirty_bit;
 } JournalRecord_t;
 
 typedef struct Journal_t {
-	JournalRecord_t** records; /*To avoid offset fix pointers problem*/
+	JournalRecord_t* records; 
 	uint64_t num_of_recs;
 	uint64_t journal_capacity;
 	Hash* index;
@@ -47,13 +47,16 @@ void print_list(List_t *l_info);
 
 Journal_t* createJournal();
 
-int insertJournalRecord(Journal_t*, JournalRecord_t*);
+JournalRecord_t* insertJournalRecord(Journal_t*, uint64_t, size_t, const uint64_t*);
+// int insertJournalRecord(Journal_t*, JournalRecord_t*);
 
 List_t* getJournalRecords(Journal_t*, JournalRecord_t*, int range_start, int range_end);
 
 int destroyJournal(Journal_t*);
 
 int destroyJournalRecord(JournalRecord_t*);
+
+JournalRecord_t* insertJournalRecordCopy(Journal_t* journal, JournalRecord_t* old);
 
 JournalRecord_t* copyJournalRecord(JournalRecord_t*);
 

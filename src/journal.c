@@ -62,7 +62,7 @@ Journal_t* createJournal() {
 	Journal_t* journal = malloc(sizeof(Journal_t));
 	ALLOCATION_ERROR(journal);
 	journal->journal_capacity = JOURNAL_CAPACITY_INIT;
-	journal->records = malloc(journal->journal_capacity * sizeof(JournalRecord_t*));
+	journal->records = malloc(journal->journal_capacity * sizeof(JournalRecord_t));
 	ALLOCATION_ERROR(journal->records);
 	journal->num_of_recs = 0;
 	journal->index = createHash();
@@ -72,23 +72,47 @@ Journal_t* createJournal() {
 int increaseJournal(Journal_t* journal){
 	//Double the capacity
 	journal->journal_capacity *= 2;
-	journal->records = realloc(journal->records, journal->journal_capacity * sizeof(JournalRecord_t*));
+	journal->records = realloc(journal->records, journal->journal_capacity * sizeof(JournalRecord_t));
 	ALLOCATION_ERROR(journal->records);
 	return 0;
 }
 
-int insertJournalRecord(Journal_t* journal, JournalRecord_t* record) {
+JournalRecord_t* insertJournalRecord(Journal_t* journal, uint64_t transaction_id, size_t columns, const uint64_t* column_values){
 	if(journal->num_of_recs >= journal->journal_capacity) {
 		increaseJournal(journal);
 	}
 	//Insert the record
-	journal->records[journal->num_of_recs] = record;
+	JournalRecord_t record = journal->records[journal->num_of_recs];
+	record.transaction_id = transaction_id;
+	record.columns = columns;
+	record.column_values = malloc(record.columns * sizeof(uint64_t));
+	ALLOCATION_ERROR(record.column_values);
+	int i;
+	for(i = 0; i < record.columns; i++){
+		record.column_values[i] = column_values[i];
+	}
+	// record.dirty_bit = False;
+	RangeArray* range_array = malloc(sizeof(RangeArray));
+	range_array->transaction_id = record.transaction_id;
+	range_array->rec_offset = journal->num_of_recs;
+	insertHashRecord(journal->index, record.column_values[0], range_array);
+	free(range_array);
 	journal->num_of_recs++;
-	// printf("Before insert hash\n");
-	insertHashRecord(journal->index, record->column_values[0], NULL, record);
-	// printf("After insert hash\n");
-	return 0;
+	return &journal->records[journal->num_of_recs];
 }
+
+// int insertJournalRecord(Journal_t* journal, JournalRecord_t* record) {
+// 	if(journal->num_of_recs >= journal->journal_capacity) {
+// 		increaseJournal(journal);
+// 	}
+// 	//Insert the record
+// 	journal->records[journal->num_of_recs] = record;
+// 	journal->num_of_recs++;
+// 	// printf("Before insert hash\n");
+// 	insertHashRecord(journal->index, record->column_values[0], NULL, record);
+// 	// printf("After insert hash\n");
+// 	return 0;
+// }
 
 //Den xerw ti kanei akrivws
 //Den xerw pou xrhsimevei h JournalRecord_t* record. 
@@ -99,10 +123,10 @@ List_t* getJournalRecords(Journal_t* journal, JournalRecord_t* record, int range
 	uint64_t middle = (first+last)/2;
 	uint64_t first_appearance;
 	while (first <= last) {
-		if (journal->records[middle]->transaction_id < range_start){
+		if (journal->records[middle].transaction_id < range_start){
 			first = middle + 1;    
 		}
-		else if (journal->records[middle]->transaction_id == range_start) {
+		else if (journal->records[middle].transaction_id == range_start) {
 			first_appearance = middle;
 			break;
 		}
@@ -117,10 +141,17 @@ List_t* getJournalRecords(Journal_t* journal, JournalRecord_t* record, int range
 	List_t* record_list = info_init();
 	List_node* node = NULL;
 	uint64_t i = first_appearance;
-	while(i < journal->num_of_recs && journal->records[i]->transaction_id <= range_end ) {
-		node = insert_end(record_list, journal->records[i]);
+	while(i < journal->num_of_recs && journal->records[i].transaction_id <= range_end ) {
+		node = insert_end(record_list, &journal->records[i]);
 	}
 	return record_list;
+}
+
+JournalRecord_t* insertJournalRecordCopy(Journal_t* journal, JournalRecord_t* old){
+	uint64_t transaction_id = old->transaction_id;
+	size_t columns = old->columns;
+	uint64_t* column_values = old->column_values;
+	return insertJournalRecord(journal, transaction_id, columns, column_values);
 }
 
 JournalRecord_t* copyJournalRecord(JournalRecord_t* old){
@@ -134,13 +165,13 @@ JournalRecord_t* copyJournalRecord(JournalRecord_t* old){
 	for(i = 0; i < new_d->columns; i++){
 		new_d->column_values[i] = old->column_values[i];
 	}
-	new_d->dirty_bit = old->dirty_bit;
+	// new_d->dirty_bit = old->dirty_bit;
 	return new_d;
 }
 
 int destroyJournalRecord(JournalRecord_t* record){
 	free(record->column_values);
-	free(record);
+	// free(record);
 	return 0;
 }
 
@@ -148,7 +179,7 @@ int destroyJournal(Journal_t* journal) {
 	int i;
 	destroyHash(journal->index);
 	for(i=0; i<journal->num_of_recs; i++){
-		destroyJournalRecord(journal->records[i]);
+		destroyJournalRecord(&journal->records[i]);
 	}
 	free(journal->records);
 	free(journal);
@@ -167,7 +198,7 @@ void printJournalRecord(JournalRecord_t* rec) {
 void printJournal(Journal_t* journal){
 	uint64_t i;
 	for(i = 0; i < journal->num_of_recs; i++){
-		printJournalRecord(journal->records[i]);
+		printJournalRecord(&journal->records[i]);
 	}
 }
 
@@ -180,10 +211,10 @@ JournalRecord_t* createJournalRecord(uint64_t transaction_id, size_t columns, co
 	for(i = 0; i < record->columns; i++){
 		record->column_values[i] = column_values[i];
 	}
-	record->dirty_bit = False;
+	// record->dirty_bit = False;
 	return record;
 }
 
-void markDirty(JournalRecord_t* record) {
-	record->dirty_bit = True;
-}
+// void markDirty(JournalRecord_t* record) {
+// 	record->dirty_bit = True;
+// }
