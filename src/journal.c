@@ -19,7 +19,7 @@ List_node *insert_start(List_t *l_info, JournalRecord_t* d) {
 	return n;
 }
 
-List_node *insert_end(List_t *l_info, JournalRecord_t* d) {
+void insert_end(List_t *l_info, JournalRecord_t* d) {
 	List_node *n = malloc(sizeof(List_node));
 	ALLOCATION_ERROR(n);
 	JournalRecord_t* new_d = copyJournalRecord(d);
@@ -31,7 +31,6 @@ List_node *insert_end(List_t *l_info, JournalRecord_t* d) {
 		n->prev->next = n;
 	if (l_info->list_beg == NULL)
 		l_info->list_beg = n;
-	return l_info->list_beg;
 }
 
 List_node *remove_end(List_t *l_info) {
@@ -142,10 +141,9 @@ List_t* getJournalRecords(Journal_t* journal, JournalRecord_t* record, int range
 		return NULL;
 	}
 	List_t* record_list = info_init();
-	List_node* node = NULL;
 	uint64_t i = first_appearance;
 	while(i < journal->num_of_recs && journal->records[i].transaction_id <= range_end ) {
-		node = insert_end(record_list, &journal->records[i]);
+		insert_end(record_list, &journal->records[i]);
 	}
 	return record_list;
 }
@@ -182,7 +180,7 @@ int destroyJournalRecord(JournalRecord_t* record){
 
 int destroyJournal(Journal_t* journal) {
 	int i;
-	destroyHash(journal->index);
+	// destroyHash(journal->index);
 	for(i=0; i<journal->num_of_recs; i++){
 		destroyJournalRecord(&journal->records[i]);
 	}
