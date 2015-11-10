@@ -36,7 +36,7 @@ typedef struct List_t {
 
 List_node* insert_start(List_t* l_info, JournalRecord_t* d);
 
-List_node* insert_end(List_t* l_info, JournalRecord_t* d);
+void insert_end(List_t* l_info, JournalRecord_t* d);
 
 List_node* remove_end(List_t* l_info);
 
