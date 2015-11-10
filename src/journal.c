@@ -84,14 +84,13 @@ JournalRecord_t* insertJournalRecord(Journal_t* journal, uint64_t transaction_id
 		increaseJournal(journal);
 	}
 	//Insert the record
-	JournalRecord_t record = journal->records[journal->num_of_recs];
-	record.transaction_id = transaction_id;
-	record.columns = columns;
-	record.column_values = malloc(record.columns * sizeof(uint64_t));
-	ALLOCATION_ERROR(record.column_values);
+	journal->records[journal->num_of_recs].transaction_id = transaction_id;
+	journal->records[journal->num_of_recs].columns = columns;
+	journal->records[journal->num_of_recs].column_values = malloc(journal->records[journal->num_of_recs].columns * sizeof(uint64_t));
+	ALLOCATION_ERROR(journal->records[journal->num_of_recs].column_values);
 	int i;
-	for(i = 0; i < record.columns; i++){
-		record.column_values[i] = column_values[i];
+	for(i = 0; i < journal->records[journal->num_of_recs].columns; i++){
+		journal->records[journal->num_of_recs].column_values[i] = column_values[i];
 	}
 	// record.dirty_bit = False;
 	RangeArray* range_array = malloc(sizeof(RangeArray));

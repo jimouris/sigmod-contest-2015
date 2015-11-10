@@ -12,6 +12,7 @@ int main(int argc, char **argv) {
 	void *body = NULL;
 	uint32_t len;
 	Journal_t** journal_array = NULL;
+	ValidationList_t* validation_list = validationListCreate();
 	int relation_count = 0;
 	while (1) {
 		/* Retrieve the message head */
@@ -39,9 +40,11 @@ int main(int argc, char **argv) {
 				for(i = 0; i< relation_count; i++){
 					printf("Journal No: %d\n",i );
 					printJournal(journal_array[i]);
-					printHash(journal_array[i]->index);
+					// printHash(journal_array[i]->index);
 				}
+				validationListPrint(validation_list);
 				destroySchema(journal_array, relation_count);
+				validationListDestroy(validation_list);
 				return EXIT_SUCCESS;
 			case DefineSchema:
 				journal_array = processDefineSchema(body, &relation_count);
@@ -50,7 +53,7 @@ int main(int argc, char **argv) {
 				processTransaction(body,journal_array);
 				break;
 			case ValidationQueries:
-				processValidationQueries(body,journal_array);
+				processValidationQueries(body,journal_array,validation_list);
 				break;
 			case Flush:
 				processFlush(body,journal_array);
