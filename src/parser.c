@@ -32,10 +32,11 @@ void processTransaction(Transaction_t *t, Journal_t** journal_array) {
 		const TransactionOperationDelete_t* o = (TransactionOperationDelete_t*)reader;
 		for (j = 0; j < o->rowCount; j++){
 			uint64_t key = o->keys[j];
-			JournalRecord_t* last_insertion = getHashRecord2(journal_array[o->relationId]->index, key);
+			uint64_t last_offset = getLastOffset(journal_array[o->relationId]->index, key);
+			JournalRecord_t* last_insertion = &journal_array[o->relationId]->records[last_offset];
 			if (last_insertion != NULL) {
 				// JournalRecord_t* deletion = copyJournalRecord(last_insertion);
-				JournalRecord_t* deletion = insertJournalRecordCopy(journal_array[o->relationId], deletion); 
+				JournalRecord_t* deletion = insertJournalRecordCopy(journal_array[o->relationId], last_insertion); 
 				deletion->transaction_id = t->transactionId;
 			} /* else { // the deletion doesn't exist } */
 		}
