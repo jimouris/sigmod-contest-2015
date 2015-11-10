@@ -77,6 +77,8 @@ int increaseJournal(Journal_t* journal){
 	return 0;
 }
 
+/*Returns a pointer to the inserted record*/
+
 JournalRecord_t* insertJournalRecord(Journal_t* journal, uint64_t transaction_id, size_t columns, const uint64_t* column_values){
 	if(journal->num_of_recs >= journal->journal_capacity) {
 		increaseJournal(journal);
@@ -147,6 +149,8 @@ List_t* getJournalRecords(Journal_t* journal, JournalRecord_t* record, int range
 	}
 	return record_list;
 }
+
+/*Returns a pointer to the inserted record*/
 
 JournalRecord_t* insertJournalRecordCopy(Journal_t* journal, JournalRecord_t* old){
 	uint64_t transaction_id = old->transaction_id;
