@@ -140,6 +140,7 @@ typedef struct ValidationList {
 
 // void skipWhiteSpaces(char**);
 // char* getFirstToken(char**);
+int validationListInsert(ValidationList_t* , ValQuery_t*);
 
 void validationListPrint(ValidationList_t*);
 
