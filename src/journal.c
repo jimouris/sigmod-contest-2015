@@ -95,9 +95,9 @@ JournalRecord_t* insertJournalRecord(Journal_t* journal, uint64_t transaction_id
 	// record.dirty_bit = False;
 	RangeArray* range_array = malloc(sizeof(RangeArray));
 	ALLOCATION_ERROR(range_array);
-	range_array->transaction_id = record.transaction_id;
+	range_array->transaction_id = transaction_id;
 	range_array->rec_offset = journal->num_of_recs;
-	insertHashRecord(journal->index, record.column_values[0], range_array);
+	insertHashRecord(journal->index, column_values[0], range_array);
 	free(range_array);
 	journal->num_of_recs++;
 	return &journal->records[journal->num_of_recs];
