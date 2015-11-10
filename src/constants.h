@@ -5,6 +5,7 @@
 #define B 1							/* Number of keys for each bucket */
 #define C 4							/* Initial capacity for transactions in bucket */
 #define JOURNAL_CAPACITY_INIT 64	
+#define VALIDATION_COUNT_INIT 64	
 #define OK_SUCCESS 0
 #define NOK_FAILURE 1
 

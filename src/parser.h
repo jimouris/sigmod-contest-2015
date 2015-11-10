@@ -107,16 +107,55 @@ typedef struct Forget {
    uint64_t transactionId;
 } Forget_t;
 
+typedef struct SingleQuery {
+   /// The relation
+   uint32_t relationId;
+   /// The number of bound columns
+   uint32_t columnCount;
+   /// The bindings
+   Column_t** columns;
+} SingleQuery_t;
+
+
+typedef struct ValQuery {
+	/// The validation id. Monotonic increasing
+	uint64_t validationId;
+	/// The transaction range
+	uint64_t from,to;
+	/// The query count
+	uint32_t queryCount;
+	/// The queries
+	SingleQuery_t** queries;
+} ValQuery_t;
+
+
+
+typedef struct ValidationList {
+	ValQuery_t** validation_array;
+	uint64_t num_of_validations;
+	uint64_t capacity;
+} ValidationList_t;
+
+
 
 // void skipWhiteSpaces(char**);
 // char* getFirstToken(char**);
 
+void validationListPrint(ValidationList_t*);
+
+ValidationList_t* validationListCreate();
+
+void validationListDestroy(ValidationList_t*);
+
+void destroyValQuery(ValQuery_t*);
+
+void destroySingleQuery(SingleQuery_t*);
 
 Journal_t** processDefineSchema(DefineSchema_t *, int*);
 
 void processTransaction(Transaction_t *, Journal_t**);
 
-void processValidationQueries(ValidationQueries_t *, Journal_t**);
+void processValidationQueries(ValidationQueries_t *, Journal_t**, ValidationList_t*);
 
 void processFlush(Flush_t *, Journal_t**);
 
@@ -127,5 +166,8 @@ Forget_t* forgetParser(char **);
 
 void destroySchema(Journal_t**, int);
 
+void printValidation(ValQuery_t*);
+
+// void copyValidation(ValidationQueries_t*, ValidationQueries_t*);
 
 #endif
