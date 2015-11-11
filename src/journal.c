@@ -99,8 +99,7 @@ JournalRecord_t* insertJournalRecord(Journal_t* journal, uint64_t transaction_id
 	range_array->rec_offset = journal->num_of_recs;
 	insertHashRecord(journal->index, column_values[0], range_array);
 	free(range_array);
-	journal->num_of_recs++;
-	return &journal->records[journal->num_of_recs];
+	return &journal->records[journal->num_of_recs++];
 }
 
 // int insertJournalRecord(Journal_t* journal, JournalRecord_t* record) {
