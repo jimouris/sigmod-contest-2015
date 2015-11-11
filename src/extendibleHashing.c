@@ -221,7 +221,8 @@ void printBucket(Bucket* bucket){
 		fprintf(stderr, "\tSubBucket(%zd): key: %zd, current_entries: %zd\n", i, key, current_entries);
 		for (j = 0 ; j < current_entries ; j++) {
 			uint64_t tid = bucket->key_buckets[i].transaction_range[j].transaction_id;
-			fprintf(stderr, "\t\ttid: %zd\n", tid);
+			uint64_t rec_offset = bucket->key_buckets[i].transaction_range[j].rec_offset;
+			fprintf(stderr, "\t\ttid: %zd, offset :%zd\n", tid, rec_offset);
 		}
 	}
 	fprintf(stderr, "------------------------------------------------------------\n");
@@ -261,7 +262,7 @@ RangeArray* getHashRecord(Hash* hash, Key key, uint64_t * current_entries) {
 uint64_t getLastOffset(Hash* hash, Key key) {
 	uint64_t current_entries;
 	RangeArray* range = getHashRecord(hash, key, &current_entries);
-	return range[current_entries].rec_offset;
+	return range[current_entries-1].rec_offset;
 }
 
 int destroyHash(Hash* hash) {
