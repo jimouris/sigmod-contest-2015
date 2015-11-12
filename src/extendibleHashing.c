@@ -268,37 +268,18 @@ uint64_t getLastOffset(Hash* hash, Key key) {
 int destroyHash(Hash* hash) {
 	uint64_t i;
 	for (i = 0 ; i < hash->size ; i++) { /*for every bucket on the hash*/
-			uint32_t j;
-			Bucket * current_bucket = hash->index[i];
-			for (j = 0 ; j < B ; j++) { 
-				/*note : EDW BRIKA TO BUG GIATI PREPEI KATHE FORA NA TO KANOUME ME B
-					     gia paradeigma to swsto tha itan na legame for j = 0 mexri j < current_bucket -> current_subBuckets kai oxi B.*/
-				
-				/* note : gia tin eisagwgi pros diorthwsi
-				   Skefteite exoume B=10 kai emeis otan theloume na eisagoume ena mono 
-				   subBucket desmevoume mnimi gia 10 subBuckets, 10 pinakes transactions_range me capacity C, enw to pio pithanon einai
-				   na xrisimopoiithoun 1-4 subBuckets gia paradeigma eidika otan megalwnei to evretirio.
-
-				   pistevw : 
-				   				1.prepei na kanoume to malloc tou subBucket otan mpainei to Key sto Index
-								2.Akoma kai ta arxika buckets na min yparxoun kai oi deiktes tou index na nai null. Skepsou na 
-								  valei global_depth 8 kserw egw (pou den nomizw na einai asynithisto) kai na desmefsoume
-								  64 buckets me posa subBuckets kai posa transactions_range.
-								  		Estw p.x. oti exoume opws twra global_depth = 0 kai B=2. Exoume to index[0] = index[1] = NULL;
-								  		mas erxontai kata seira ta Keys = 10/ 11/ 12
-								  			i)10 % 2 = 0 -> Ftiaxnoume ENA Bucket me ENA SubBucket opou deixnei KAI TO 0 kai to 1 sto idio Bucket!
-											ii)11 % 2 = 1 ->PALI to pame sto idio Bucket (afou xwraei)
-											iii)12 % 2 = 0 -> den xwrane (afou B=2), ara kanoume split kai pane 10,12 sto 0 kai to 11 sto 1
-									genika kapws na to pame
-				*/
-
-				free(current_bucket->key_buckets[j].transaction_range);
-			}
-			 free(current_bucket->key_buckets);	
-			free(hash->index[i]);
+		uint32_t j;
+		if (hash->index[i] != NULL) {
+			// for (j = 0 ; j < B ; j++)	 for all subBuckets 
+			// 	free(hash->index[i]->key_buckets[j].transaction_range);
+			// free(hash->index[i]->key_buckets);
+			// free(hash->index[i]);
+			hash->index[i] = NULL;
+		}
 	}
 	free(hash->index);
 	free(hash);
+	hash = NULL;
 	return OK_SUCCESS;
 }
 
@@ -313,26 +294,3 @@ int destroyHash(Hash* hash) {
 // 	}
 // 	return NULL;
 // }
-
-// int destroyHash(Hash* hash) {
-// 	uint64_t i, j;
-// 	fprintf(stderr, "deleting: size is %zd\n", hash->size);
-// 	for (i = 0 ; i < hash->size ; i++) {	/* for all buckets */
-// 		if (hash->index[i] != NULL) {	/* if is not already freed */
-// 			if (hash->index[i]->transaction_range != NULL) {
-// 				for (j = 0 ; j < hash->index[i]->current_entries ; j++) {
-// 					hash->index[i]->transaction_range[j].rec = NULL;
-// 				}
-// 				free(hash->index[i]->transaction_range);
-// 				hash->index[i]->transaction_range = NULL;
-// 			}
-// 			/*
-// 			* oi 2 apo katw grammes exoun to provlhma, otan tis 3esxoliazw vgazei errors to valgrind
-// 			* profanws to error den einai sto free
-// 			*/
-// 			// free(hash->index[i]);
-// 			// hash->index[i] = NULL;
-// 		}
-// 	}
-// 	free(hash);
-// } 
