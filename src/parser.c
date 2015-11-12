@@ -187,6 +187,7 @@ Boolean_t checkColumn(Journal_t* journal,Column_t* column, uint64_t from, uint64
 	} else {
 		List_t* record_list = getJournalRecords(journal, column, from, to);
 		result = (!isEmpty(record_list));
+		destroy_list(record_list);
 	}
 	return result;
 }

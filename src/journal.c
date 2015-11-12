@@ -35,7 +35,7 @@ void insert_end(List_t *l_info, JournalRecord_t* d) {
 	l_info->size++;
 }
 
-List_node *remove_end(List_t *l_info) {
+void remove_end(List_t *l_info) {
 	List_node *n = l_info->list_end;
 	destroyJournalRecord(n->data);
 	if (n->prev == NULL)
@@ -47,7 +47,7 @@ List_node *remove_end(List_t *l_info) {
 	else
 		n->next->prev = n->prev;
 	l_info->size--;
-	return n;
+	free(n);
 }
 
 List_t *info_init(void) {
@@ -57,6 +57,15 @@ List_t *info_init(void) {
 	l_info->list_end = NULL;
 	l_info->size = 0;
 	return l_info;
+}
+
+void destroy_list(List_t* list){
+	uint64_t i;
+	uint64_t initial_size = list->size;
+	for(i = 0; i < initial_size; i++){
+		remove_end(list);
+	}
+	free(list);
 }
 
 Boolean_t isEmpty(List_t* list){
@@ -215,13 +224,13 @@ JournalRecord_t* copyJournalRecord(JournalRecord_t* old){
 
 int destroyJournalRecord(JournalRecord_t* record){
 	free(record->column_values);
-	// free(record);
+	free(record);
 	return 0;
 }
 
 int destroyJournal(Journal_t* journal) {
 	int i;
-	// destroyHash(journal->index);
+	destroyHash(journal->index);
 	for(i=0; i<journal->num_of_recs; i++){
 		destroyJournalRecord(&journal->records[i]);
 	}

@@ -45,13 +45,15 @@ typedef struct List_t {
 
 Boolean_t isEmpty(List_t*);
 
+void destroy_list(List_t*);
+
 Boolean_t checkConstraint(JournalRecord_t*, Column_t*);
 
 List_node* insert_start(List_t* l_info, JournalRecord_t* d);
 
 void insert_end(List_t* l_info, JournalRecord_t* d);
 
-List_node* remove_end(List_t* l_info);
+void remove_end(List_t* l_info);
 
 List_t* info_init();
 
