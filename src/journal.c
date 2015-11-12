@@ -16,6 +16,7 @@ List_node *insert_start(List_t *l_info, JournalRecord_t* d) {
 		n->next->prev = n;
 	if (l_info->list_end == NULL)
 		l_info->list_end = n;
+	l_info->size++;
 	return n;
 }
 
@@ -31,6 +32,7 @@ void insert_end(List_t *l_info, JournalRecord_t* d) {
 		n->prev->next = n;
 	if (l_info->list_beg == NULL)
 		l_info->list_beg = n;
+	l_info->size++;
 }
 
 List_node *remove_end(List_t *l_info) {
@@ -44,6 +46,7 @@ List_node *remove_end(List_t *l_info) {
 		l_info->list_end = n->prev;
 	else
 		n->next->prev = n->prev;
+	l_info->size--;
 	return n;
 }
 
@@ -52,7 +55,12 @@ List_t *info_init(void) {
 	ALLOCATION_ERROR(l_info);
 	l_info->list_beg = NULL;
 	l_info->list_end = NULL;
+	l_info->size = 0;
 	return l_info;
+}
+
+Boolean_t isEmpty(List_t* list){
+	return (list->size == 0);
 }
 
 
@@ -115,9 +123,12 @@ JournalRecord_t* insertJournalRecord(Journal_t* journal, uint64_t transaction_id
 // 	return 0;
 // }
 
-//Den xerw ti kanei akrivws
-//Den xerw pou xrhsimevei h JournalRecord_t* record. 
-List_t* getJournalRecords(Journal_t* journal, JournalRecord_t* record, int range_start, int range_end) {
+
+/*
+	In Columnt_t* constraint is the information for our constraint
+	call it with NULL if you want all the records in the range.
+*/
+List_t* getJournalRecords(Journal_t* journal, Column_t* constraint, int range_start, int range_end) {
 	/*Binary Search for first appearance*/
 	uint64_t first = 0;
 	uint64_t last = journal->num_of_recs - 1;
@@ -137,14 +148,42 @@ List_t* getJournalRecords(Journal_t* journal, JournalRecord_t* record, int range
 		middle = (first + last)/2;
 	}
 	if (first > last){	//Not found
-		return NULL;
+		first_appearance = last;
+		while(journal->records[first_appearance].transaction_id < range_start){
+			first_appearance++;
+		}
 	}
 	List_t* record_list = info_init();
 	uint64_t i = first_appearance;
 	while(i < journal->num_of_recs && journal->records[i].transaction_id <= range_end ) {
-		insert_end(record_list, &journal->records[i]);
+		JournalRecord_t* record = &journal->records[i];
+		if(constraint == NULL || checkConstraint(record, constraint)){
+			insert_end(record_list, record);
+		}
+		i++;
 	}
 	return record_list;
+}
+
+Boolean_t checkConstraint(JournalRecord_t* record, Column_t* constraint){
+	uint32_t column = constraint->column;
+	Op_t operator = constraint->op;
+	uint64_t value = constraint->value;
+	switch(operator){
+		case Equal:
+			return (record->column_values[column] == value);
+		case NotEqual:
+			return (record->column_values[column] != value);
+		case Less:
+			return (record->column_values[column] < value);
+		case LessOrEqual:
+			return (record->column_values[column] <= value);
+		case Greater:
+			return (record->column_values[column] > value);
+		case GreaterOrEqual:
+			return (record->column_values[column] >= value);
+	}
+	return False;
 }
 
 /*Returns a pointer to the inserted record*/
@@ -218,6 +257,8 @@ JournalRecord_t* createJournalRecord(uint64_t transaction_id, size_t columns, co
 	// record->dirty_bit = False;
 	return record;
 }
+
+
 
 // void markDirty(JournalRecord_t* record) {
 // 	record->dirty_bit = True;

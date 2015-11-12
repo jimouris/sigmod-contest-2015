@@ -15,4 +15,14 @@
 
 
 
+typedef enum { False = 0, True = 1 } Boolean_t;
+
+
+/// Message types
+typedef enum { Done, DefineSchema, Transaction, ValidationQueries, Flush, Forget } Type_t;
+
+/// Support operations
+typedef enum { Equal, NotEqual, Less, LessOrEqual, Greater, GreaterOrEqual } Op_t;
+
+
 #endif

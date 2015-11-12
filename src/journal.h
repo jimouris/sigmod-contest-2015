@@ -3,9 +3,19 @@
 #include <inttypes.h>
 #include "extendibleHashing.h"
 
-typedef enum { False = 0, True = 1 } Boolean_t;
 
 typedef struct Hash Hash;
+
+typedef struct Column {
+  /// The column id
+  uint32_t column;
+  /// The operations
+  Op_t op;
+  /// The constant
+  uint64_t value;
+} Column_t;
+
+
 
 typedef struct JournalRecord_t {
 	uint64_t transaction_id;
@@ -30,9 +40,12 @@ typedef struct List_node {
 typedef struct List_t {
 	List_node *list_beg;
 	List_node *list_end;
+	uint64_t size;
 } List_t;
 
+Boolean_t isEmpty(List_t*);
 
+Boolean_t checkConstraint(JournalRecord_t*, Column_t*);
 
 List_node* insert_start(List_t* l_info, JournalRecord_t* d);
 
@@ -50,7 +63,7 @@ Journal_t* createJournal();
 JournalRecord_t* insertJournalRecord(Journal_t*, uint64_t, size_t, const uint64_t*);
 // int insertJournalRecord(Journal_t*, JournalRecord_t*);
 
-List_t* getJournalRecords(Journal_t*, JournalRecord_t*, int range_start, int range_end);
+List_t* getJournalRecords(Journal_t*, Column_t*, int range_start, int range_end);
 
 int destroyJournal(Journal_t*);
 

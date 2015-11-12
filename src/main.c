@@ -36,13 +36,13 @@ int main(int argc, char **argv) {
 		switch (head.type) {
 			case Done:
 				printf("\n");
-				int i;
+				uint64_t i;
 				for(i = 0; i< relation_count; i++){
-					printf("Journal No: %d\n",i );
+					printf("Journal No: %zu\n",i );
 					printJournal(journal_array[i]);
 					// printHash(journal_array[i]->index);
 				}
-				validationListPrint(validation_list);
+				// validationListPrint(validation_list);
 				destroySchema(journal_array, relation_count);
 				validationListDestroy(validation_list);
 				return EXIT_SUCCESS;
@@ -56,7 +56,7 @@ int main(int argc, char **argv) {
 				processValidationQueries(body,journal_array,validation_list);
 				break;
 			case Flush:
-				processFlush(body,journal_array);
+				processFlush(body,journal_array,validation_list);
 				break;
 			case Forget:
 				processForget(body,journal_array);

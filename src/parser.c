@@ -90,14 +90,76 @@ void processValidationQueries(ValidationQueries_t *v, Journal_t** journal_array,
 	validationListInsert(validation_list, val_query);
 }
 
-void processFlush(Flush_t *fl, Journal_t** journal_array) {
+void processFlush(Flush_t *fl, Journal_t** journal_array, ValidationList_t* validation_list) {
 	printf("Flush %lu\n", fl->validationId);
+	uint64_t i;
+	for(i = 0; i <= fl->validationId; i++){
+		ValQuery_t* val_query = validation_list->validation_array[i];
+		printf("\tResult for ValID %zu is: %d\n",i,checkValidation(journal_array, val_query));
+	}
 }
 
 void processForget(Forget_t *fo, Journal_t** journal_array) {
 	printf("Forget %lu\n", fo->transactionId);
 
 }
+
+Boolean_t checkValidation(Journal_t** journal_array, ValQuery_t* val_query){
+	Boolean_t result = False;
+	uint64_t i;
+	for(i = 0; i < val_query->queryCount; i++){
+		SingleQuery_t* query = val_query->queries[i];
+		Boolean_t partial_result = checkSingleQuery(journal_array, query, val_query->from, val_query->to);
+		if(partial_result == True){	/*Short circuiting*/
+			return True;
+		}
+		result = result || partial_result;
+	}
+	return result;
+}
+
+Boolean_t checkSingleQuery(Journal_t** journal_array, SingleQuery_t* query, uint64_t from, uint64_t to){
+	Boolean_t result = True;
+	Journal_t* journal = journal_array[query->relationId];
+	uint64_t i;
+	for(i = 0; i < query->columnCount; i++){
+		Column_t* column = query->columns[i];
+		Boolean_t partial_result = checkColumn(journal, column, from, to);
+		if(partial_result == False){	/*Short circuiting*/
+			return False;
+		}
+		result = result && partial_result;
+	}
+	return result;
+}
+
+Boolean_t checkColumn(Journal_t* journal,Column_t* column, uint64_t from, uint64_t to){
+	Boolean_t  result;
+	if(column->column == 0 && column->op == Equal){  /*Primary Key*/
+		uint64_t range_size;
+		RangeArray* range_array = getHashRecord(journal->index, column->value, &range_size);
+		if(range_array == NULL){
+			return False;
+		}
+		uint64_t i;
+		Boolean_t exists = False;
+		for(i = 0; i < range_size; i++){
+			uint64_t offset = range_array[i].rec_offset;
+			JournalRecord_t* record = &journal->records[offset];
+			Boolean_t partial_result = checkConstraint(record, column);
+			if(partial_result == True){
+				return True;
+			}
+			exists = exists ||  partial_result;
+		}
+		return exists;
+	} else {
+		List_t* record_list = getJournalRecords(journal, column, from, to);
+		result = (!isEmpty(record_list));
+	}
+	return result;
+}
+
 
 void destroySchema(Journal_t** journal_array, int relation_count){
 	int i;
@@ -157,7 +219,7 @@ int validationListInsert(ValidationList_t* validation_list, ValQuery_t* val_quer
 }
 
 void validationListPrint(ValidationList_t* validation_list){
-	int i;
+	uint64_t i;
 	for(i = 0; i < validation_list->num_of_validations; i++ ){
 		printValidation(validation_list->validation_array[i]);
 	}

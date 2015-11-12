@@ -9,12 +9,6 @@
 #include "extendibleHashing.h"
 
 
-/// Message types
-typedef enum { Done, DefineSchema, Transaction, ValidationQueries, Flush, Forget } Type_t;
-
-/// Support operations
-typedef enum { Equal, NotEqual, Less, LessOrEqual, Greater, GreaterOrEqual } Op_t;
-
 
 //---------------------------------------------------------------------------
 typedef struct MessageHead {
@@ -75,14 +69,6 @@ typedef struct ValidationQueries {
 } ValidationQueries_t;
 
 //---------------------------------------------------------------------------
-typedef struct Column {
-  /// The column id
-  uint32_t column;
-  /// The operations
-  Op_t op;
-  /// The constant
-  uint64_t value;
-} Column_t;
 
 //---------------------------------------------------------------------------
 typedef struct Query {
@@ -158,7 +144,14 @@ void processTransaction(Transaction_t *, Journal_t**);
 
 void processValidationQueries(ValidationQueries_t *, Journal_t**, ValidationList_t*);
 
-void processFlush(Flush_t *, Journal_t**);
+void processFlush(Flush_t *, Journal_t**, ValidationList_t*);
+
+Boolean_t checkValidation(Journal_t**, ValQuery_t*);
+
+Boolean_t checkSingleQuery(Journal_t**, SingleQuery_t*, uint64_t, uint64_t);
+
+Boolean_t checkColumn(Journal_t*, Column_t*, uint64_t, uint64_t);
+
 
 void processForget(Forget_t *, Journal_t**);
 
@@ -168,6 +161,7 @@ Forget_t* forgetParser(char **);
 void destroySchema(Journal_t**, int);
 
 void printValidation(ValQuery_t*);
+
 
 // void copyValidation(ValidationQueries_t*, ValidationQueries_t*);
 
