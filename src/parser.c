@@ -142,14 +142,10 @@ Boolean_t checkColumn(Journal_t* journal,Column_t* column, uint64_t from, uint64
 		}
 		uint64_t i;
 		Boolean_t exists = False;
-
 		/*Binary Search for first appearance*/
 		uint64_t first = 0;
 		uint64_t last = range_size - 1;
 		uint64_t middle = (first+last)/2;
-		if(middle == 0){
-			return False;					
-		}
 		uint64_t first_appearance;
 		while (first <= last ) {
 			if (range_array[middle].transaction_id < from){
@@ -160,6 +156,9 @@ Boolean_t checkColumn(Journal_t* journal,Column_t* column, uint64_t from, uint64
 				break;
 			}
 			else{
+				if(middle == 0){
+					return False;
+				}
 				last = middle - 1;
 			}
 			middle = (first + last)/2;

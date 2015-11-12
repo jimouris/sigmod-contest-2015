@@ -143,9 +143,6 @@ List_t* getJournalRecords(Journal_t* journal, Column_t* constraint, int range_st
 	uint64_t first = 0;
 	uint64_t last = journal->num_of_recs - 1;
 	uint64_t middle = (first+last)/2;
-	if(middle == 0){ /*return empty list*/
-		return info_init();
-	}
 	uint64_t first_appearance;
 	while (first <= last ) {
 		if (journal->records[middle].transaction_id < range_start){
@@ -156,6 +153,9 @@ List_t* getJournalRecords(Journal_t* journal, Column_t* constraint, int range_st
 			break;
 		}
 		else{
+			if(middle == 0){
+				return info_init();
+			}
 			last = middle - 1;
 		}
 		middle = (first + last)/2;
