@@ -275,6 +275,7 @@ int destroyHash(Hash* hash) {
 			for (j = 0 ; j < bucketPtr->current_subBuckets ; j++) {
 				free(bucketPtr->key_buckets[j].transaction_range);
 			}
+			free(bucketPtr->key_buckets);
 			uint32_t k;
 			for (k = i ; k < hash->size ; k++) {
 				if (hash->index[k] == bucketPtr) {
