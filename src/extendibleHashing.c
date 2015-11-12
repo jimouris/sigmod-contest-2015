@@ -269,11 +269,20 @@ int destroyHash(Hash* hash) {
 	uint64_t i;
 	for (i = 0 ; i < hash->size ; i++) { /*for every bucket on the hash*/
 		uint32_t j;
+		Bucket * bucketPtr = hash->index[i];
 		if (hash->index[i] != NULL) {
-			// for (j = 0 ; j < B ; j++)	 for all subBuckets 
-			// 	free(hash->index[i]->key_buckets[j].transaction_range);
-			// free(hash->index[i]->key_buckets);
-			// free(hash->index[i]);
+
+			for (j = 0 ; j < bucketPtr->current_subBuckets ; j++) {
+				free(bucketPtr->key_buckets[j].transaction_range);
+			}
+			uint32_t k;
+			for (k = i ; k < hash->size ; k++) {
+				if (hash->index[k] == bucketPtr) {
+					hash->index[k] = NULL ;
+				}
+			}
+			free(bucketPtr);
+			bucketPtr = NULL;
 			hash->index[i] = NULL;
 		}
 	}
