@@ -268,7 +268,7 @@ uint64_t getLastOffset(Hash* hash, Key key) {
 int destroyHash(Hash* hash) {
 	uint64_t i;
 	for (i = 0 ; i < hash->size ; i++) { /*for every bucket on the hash*/
-			uint32_t j,current_subBuckets = hash->index[i]->current_subBuckets;
+			uint32_t j;
 			Bucket * current_bucket = hash->index[i];
 			for (j = 0 ; j < B ; j++) { 
 				/*note : EDW BRIKA TO BUG GIATI PREPEI KATHE FORA NA TO KANOUME ME B
