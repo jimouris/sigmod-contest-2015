@@ -259,10 +259,14 @@ RangeArray* getHashRecord(Hash* hash, Key key, uint64_t * current_entries) {
 	return NULL;
 } 
 
-uint64_t getLastOffset(Hash* hash, Key key) {
+JournalRecord_t* getLastRecord(Journal_t* journal, Key key) {
+	Hash* hash = journal->index;
 	uint64_t current_entries;
 	RangeArray* range = getHashRecord(hash, key, &current_entries);
-	return range[current_entries-1].rec_offset;
+	if(range == NULL){
+		return NULL;
+	}
+	return &journal->records[range[current_entries-1].rec_offset];
 }
 
 int destroyHash(Hash* hash) {

@@ -12,6 +12,7 @@
 /* HASH DATA STRUCTURES */
 typedef uint64_t Key;
 typedef struct JournalRecord_t JournalRecord_t;
+typedef struct Journal_t Journal_t;
 
 typedef struct RangeArrayElement {
 	uint64_t transaction_id;
@@ -59,7 +60,7 @@ void cleanBucket(Bucket *);
 
 /*SEARCH TO HASH AND OTHER HELPER METHODS*/
 RangeArray* getHashRecord(Hash *, Key, uint64_t *);
-uint64_t getLastOffset(Hash *, Key);
+JournalRecord_t* getLastRecord(Journal_t*, Key);
 // List<Record> getHashRecords(Hash*, Key, int range_start, int range_end);
 /****************************************/
 
