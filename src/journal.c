@@ -38,6 +38,7 @@ void insert_end(List_t *l_info, JournalRecord_t* d) {
 void remove_end(List_t *l_info) {
 	List_node *n = l_info->list_end;
 	destroyJournalRecord(n->data);
+	free(n->data);
 	if (n->prev == NULL)
 		l_info->list_beg = n->next;
 	else
@@ -224,7 +225,7 @@ JournalRecord_t* copyJournalRecord(JournalRecord_t* old){
 
 int destroyJournalRecord(JournalRecord_t* record){
 	free(record->column_values);
-	free(record);
+	// free(record);
 	return 0;
 }
 
