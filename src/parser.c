@@ -143,7 +143,37 @@ Boolean_t checkColumn(Journal_t* journal,Column_t* column, uint64_t from, uint64
 		}
 		uint64_t i;
 		Boolean_t exists = False;
-		for(i = 0; i < range_size; i++){
+
+		/*Binary Search for first appearance*/
+		uint64_t first = 0;
+		uint64_t last = range_size - 1;
+		uint64_t middle = (first+last)/2;
+		if(middle == 0){
+			return False;					
+		}
+		uint64_t first_appearance;
+		while (first <= last ) {
+			if (range_array[middle].transaction_id < from){
+				first = middle + 1;    
+			}
+			else if (range_array[middle].transaction_id == from) {
+				first_appearance = middle;
+				break;
+			}
+			else{
+				last = middle - 1;
+			}
+			middle = (first + last)/2;
+		}
+		if (first > last){	//Not found
+			first_appearance = last;
+			while(range_array[first_appearance].transaction_id < from){
+				first_appearance++;
+			}
+		}
+
+		i = first_appearance;
+		while(i < range_size && range_array[i].transaction_id <= from ) {
 			uint64_t offset = range_array[i].rec_offset;
 			JournalRecord_t* record = &journal->records[offset];
 			Boolean_t partial_result = checkConstraint(record, column);
@@ -151,6 +181,7 @@ Boolean_t checkColumn(Journal_t* journal,Column_t* column, uint64_t from, uint64
 				return True;
 			}
 			exists = exists ||  partial_result;
+			i++;
 		}
 		return exists;
 	} else {
