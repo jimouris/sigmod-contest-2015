@@ -21,9 +21,10 @@ int insertHashRecord(Hash* hash, Key key, RangeArray* rangeArray) {
 	for (i = 0 ; i < bucket->current_subBuckets; i++) {			/* for all subbuckets */
 		if (bucket->key_buckets[i].key == key) {				/* if there is a subBucket with this key */
 			uint64_t current_entries = bucket->key_buckets[i].current_entries;
-			if (current_entries >= C) { 	/* if there isn't enough free space, realloc */
+			if (current_entries == bucket->key_buckets[i].limit) { 	/* if there isn't enough free space, realloc */
 				bucket->key_buckets[i].transaction_range = realloc(bucket->key_buckets[i].transaction_range, ((current_entries)+C) * sizeof(RangeArray));
 				ALLOCATION_ERROR(bucket->key_buckets[i].transaction_range);
+				bucket->key_buckets[i].limit += C;
 			}
 			/* Insert entry */
 			bucket->key_buckets[i].transaction_range[current_entries].transaction_id = rangeArray->transaction_id;
@@ -172,6 +173,7 @@ Bucket* createNewBucket(uint32_t local_depth, uint32_t b_size) {
 	for (i = 0 ; i < b_size ; i++) {	/* create subBuckets */
 		new_bucket->key_buckets[i].key = 0;
 		new_bucket->key_buckets[i].current_entries = 0;
+		new_bucket->key_buckets[i].limit = C;
 		new_bucket->key_buckets[i].transaction_range = malloc(C * sizeof(RangeArray));
 		ALLOCATION_ERROR(new_bucket->key_buckets[i].transaction_range);
 		for (j = 0 ; j < C ; j++) {		/* create transaction Range */

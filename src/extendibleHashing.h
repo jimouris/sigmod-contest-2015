@@ -22,6 +22,7 @@ typedef struct RangeArrayElement {
 typedef struct SubBucket {
 	Key key;
 	uint64_t current_entries;
+	uint64_t limit;
 	RangeArray *transaction_range;
 } SubBucket;
 
