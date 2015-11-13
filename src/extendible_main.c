@@ -6,10 +6,10 @@ int main(void)
 	Hash* myhash = createHash();
 	
 	// printf("hash->size: %llu , hash->global_depth: %zu\n",myhash->size,myhash->global_depth);
-	RangeArray **ranges = malloc(20 *sizeof(RangeArray *));
+	RangeArray **ranges = malloc(30 *sizeof(RangeArray *));
 	int i;
 	srand(time(NULL));
-	for (i = 0 ; i < 1 ; i++) {
+	for (i = 0 ; i < 5 ; i++) {
 		ranges[i] = malloc(sizeof(RangeArray));
 		ranges[i]->transaction_id = 20 + i;
 		ranges[i]->rec_offset = rand() % 200;
@@ -17,6 +17,13 @@ int main(void)
 			insertHashRecord(myhash, i, ranges[i]);
 		// else 
 			// insertHashRecord(myhash, 8, ranges[i]);
+	}
+
+	for (i = 5 ; i < 14 ;i++) {
+		ranges[i] = malloc(sizeof(RangeArray));
+		ranges[i]->transaction_id = 20 + i;
+		ranges[i]->rec_offset = rand() % 200;
+		insertHashRecord(myhash,132,ranges[i]);
 	}
 
 	// r1->transaction_id = 800;
