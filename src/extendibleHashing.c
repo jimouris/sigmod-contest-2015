@@ -118,18 +118,36 @@ void splitBucket(Hash* hash, uint64_t bucket_num, RangeArray* rangeArray, int do
 		fixHashPointers(hash->index, new_bucket, hash->global_depth, bucket_num);
 	}
 	/* free tmpBucket */
-	for (i = 0 ; i <= B ; i++) { /*for each subBucket*/
-		free(tmp_bucket->key_buckets[i].transaction_range);
-	}
-	free(tmp_bucket->key_buckets);
-	free(tmp_bucket);
-	tmp_bucket = NULL;
+	destroyBucket(tmp_bucket,B+1);
 	// if all entries gone to one bucket 
 	if (flag1 == 0) {
+		destroyBucket(hash->index[bucket_num],B);
+		hash->index[bucket_num] = hash->index[new_bucket_hash];
 		splitBucket(hash, new_bucket_hash, rangeArray, 1, key);
 	} else if (flag2 == 0) {
+		destroyBucket(new_bucket,B);
+		uint64_t old_size;
+		if (doublicate_index_flag) {
+			old_size = 1 << (hash->global_depth-1);
+		}else{
+			old_size = 1 << hash->global_depth;
+		}
+
+		if ( hash->index[old_size+bucket_num] == NULL) {
+			hash->index[old_size+bucket_num] = hash->index[bucket_num];
+		}
 		splitBucket(hash, bucket_num, rangeArray, 1, key);
 	}
+}
+
+void destroyBucket(Bucket *bucket,uint32_t b) {
+	uint32_t i;
+	for (i = 0 ; i < b ; i++) { /*for each subBucket*/
+		free(bucket->key_buckets[i].transaction_range);
+	}
+	free(bucket->key_buckets);
+	free(bucket);
+	bucket = NULL;
 }
 
 /* fix new indexes pointers after index doublicate or just splits pointers */
@@ -207,8 +225,12 @@ void cleanBucket(Bucket* conflict_bucket) {
 	conflict_bucket->current_subBuckets = 0;
 }
 
-uint64_t hashFunction(uint64_t size, uint64_t n) {
-	return n % size;
+uint64_t hashFunction(uint64_t size, uint64_t x) {
+	// x = ((x >> 16) ^ x) * 0x45d9f3b;
+ //    x = ((x >> 16) ^ x) * 0x45d9f3b;
+ //    x = ((x >> 16) ^ x);
+    return (x % size);
+	// return ((n*2654435761+1223) % size);
 }
 
 /* printsBucket various info */

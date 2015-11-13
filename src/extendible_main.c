@@ -23,7 +23,7 @@ int main(void)
 		ranges[i] = malloc(sizeof(RangeArray));
 		ranges[i]->transaction_id = 20 + i;
 		ranges[i]->rec_offset = rand() % 200;
-		insertHashRecord(myhash,132,ranges[i]);
+		insertHashRecord(myhash,16,ranges[i]);
 	}
 
 	// r1->transaction_id = 800;

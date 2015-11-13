@@ -72,6 +72,7 @@ void printBucket(Bucket *);
 
 /*DELETE HASH FUNCTION*/
 int deleteHashRecord(Hash*, Key);
+void destroyBucket(Bucket *bucket,uint32_t b);
 // OK_SUCCESS deleteJournalRecord(Hash*, Key, int transaction_id); 
 int destroyHash(Hash*); 
 /**********************/
