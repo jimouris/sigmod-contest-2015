@@ -226,8 +226,8 @@ uint64_t hashFunction(uint64_t size, uint64_t x) {
 	// x = ((x >> 16) ^ x) * 0x45d9f3b;
  //    x = ((x >> 16) ^ x) * 0x45d9f3b;
  //    x = ((x >> 16) ^ x);
-    return (x % size);
-	// return ((n*2654435761+1223) % size);
+    // return (x % size);
+	return ((x*2654435761+1223) % size);
 }
 
 /* printsBucket various info */
