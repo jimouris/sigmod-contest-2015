@@ -3,7 +3,7 @@
 static uint32_t* schema = NULL;
 
 Journal_t** processDefineSchema(DefineSchema_t *s, int *relation_count) {
-	int i;
+	uint64_t i;
 	printf("DefineSchema %d |", s->relationCount);
 	if (schema == NULL)
 		free(schema);
@@ -15,7 +15,7 @@ Journal_t** processDefineSchema(DefineSchema_t *s, int *relation_count) {
 	for (i = 0; i < s->relationCount; i++) {
 		printf(" %d ",s->columnCounts[i]);
 		schema[i] = s->columnCounts[i];
-		journal_array[i] = createJournal();
+		journal_array[i] = createJournal(i);
 	}
 	printf("\n");
 	return journal_array;
@@ -24,7 +24,7 @@ Journal_t** processDefineSchema(DefineSchema_t *s, int *relation_count) {
 void processTransaction(Transaction_t *t, Journal_t** journal_array) {
 	uint64_t i,j;
 	const char* reader = t->operations;
-	printf("Transaction %lu (%u, %u)\n", t->transactionId, t->deleteCount, t->insertCount);
+	// printf("Transaction %lu (%u, %u)\n", t->transactionId, t->deleteCount, t->insertCount);
 	for (i = 0; i < t->deleteCount; i++) {
 		//Find the latest insert record.
 		//Use the hash table
@@ -90,16 +90,16 @@ void processValidationQueries(ValidationQueries_t *v, Journal_t** journal_array,
 }
 
 void processFlush(Flush_t *fl, Journal_t** journal_array, ValidationList_t* validation_list) {
-	printf("Flush %lu\n", fl->validationId);
+	// printf("Flush %lu\n", fl->validationId);
 	uint64_t i;
 	for(i = 0; i <= fl->validationId; i++){
 		ValQuery_t* val_query = validation_list->validation_array[i];
-		printf("\tResult for ValID %zu is: %d\n",i,checkValidation(journal_array, val_query));
+		// printf("\tResult for ValID %zu is: %d\n",i,checkValidation(journal_array, val_query));
 	}
 }
 
 void processForget(Forget_t *fo, Journal_t** journal_array) {
-	printf("Forget %lu\n", fo->transactionId);
+	// printf("Forget %lu\n", fo->transactionId);
 
 }
 
