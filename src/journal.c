@@ -76,13 +76,14 @@ Boolean_t isEmpty(List_t* list){
 
 /* Journal_t functions */
 
-Journal_t* createJournal() {
+Journal_t* createJournal(uint64_t relation_id) {
 	Journal_t* journal = malloc(sizeof(Journal_t));
 	ALLOCATION_ERROR(journal);
 	journal->journal_capacity = JOURNAL_CAPACITY_INIT;
 	journal->records = malloc(journal->journal_capacity * sizeof(JournalRecord_t));
 	ALLOCATION_ERROR(journal->records);
 	journal->num_of_recs = 0;
+	journal->relation_id = relation_id;
 	journal->index = createHash();
 	return journal;
 }
@@ -115,6 +116,7 @@ JournalRecord_t* insertJournalRecord(Journal_t* journal, uint64_t transaction_id
 	ALLOCATION_ERROR(range_array);
 	range_array->transaction_id = transaction_id;
 	range_array->rec_offset = journal->num_of_recs;
+	printf("Relation: %zu, Key: %zu\n",journal->relation_id, column_values[0] );
 	insertHashRecord(journal->index, column_values[0], range_array);
 	free(range_array);
 	return &journal->records[journal->num_of_recs++];

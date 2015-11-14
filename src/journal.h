@@ -29,6 +29,7 @@ typedef struct Journal_t {
 	uint64_t num_of_recs;
 	uint64_t journal_capacity;
 	Hash* index;
+	uint64_t relation_id;
 } Journal_t;
 
 typedef struct List_node {
@@ -60,7 +61,7 @@ List_t* info_init();
 void print_list(List_t *l_info);
 
 
-Journal_t* createJournal();
+Journal_t* createJournal(uint64_t);
 
 JournalRecord_t* insertJournalRecord(Journal_t*, uint64_t, size_t, const uint64_t*);
 // int insertJournalRecord(Journal_t*, JournalRecord_t*);

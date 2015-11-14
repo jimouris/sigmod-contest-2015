@@ -38,8 +38,8 @@ int main(int argc, char **argv) {
 				printf("\n");
 				uint64_t i;
 				for(i = 0; i< relation_count; i++){
-					printf("Journal No: %zu\n",i );
-					printJournal(journal_array[i]);
+					// printf("Journal No: %zu\n",i );
+					// printJournal(journal_array[i]);
 					// printHash(journal_array[i]->index);
 				}
 				// validationListPrint(validation_list);
