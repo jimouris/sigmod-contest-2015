@@ -48,7 +48,6 @@ uint64_t hashFunction(uint64_t, uint64_t);
 /*************************************************/
 
 /*INSERT TO HASH FUNCTION AND OTHER HELPER FUNCTIONS*/
-void splitBucket(Hash*, uint64_t, RangeArray*, int, Key);
 void fixHashPointers(Bucket **, Bucket *, uint32_t, uint64_t);
 void doublicateIndex(Hash *);
 void addNewKeyToTempBucket(Bucket *,JournalRecord_t*);
