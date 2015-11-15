@@ -151,7 +151,7 @@ void destroyBucket(Bucket *bucket,uint32_t b) {
 
 /* fix new indexes pointers after index doublicate or just splits pointers */
 void fixHashPointers(Bucket **index, Bucket *new_bucket, uint32_t global_depth, uint64_t bucket_num) {
-	int i, j;
+	uint64_t i, j;
 	uint64_t old_size = 1 << (global_depth-1);
 	for (i = 0, j = old_size ; i < old_size ; i++, j++) {
 		if (i == bucket_num){
@@ -308,7 +308,7 @@ int destroyHash(Hash* hash) {
 		Bucket * bucketPtr = hash->index[i];
 		if (hash->index[i] != NULL) {
 
-			for (j = 0 ; j < bucketPtr->current_subBuckets ; j++) {
+			for (j = 0 ; j < B ; j++) {
 				free(bucketPtr->key_buckets[j].transaction_range);
 			}
 			free(bucketPtr->key_buckets);
