@@ -95,6 +95,10 @@ void processFlush(Flush_t *fl, Journal_t** journal_array, ValidationList_t* vali
 	uint64_t i;
 	for(i = current; i <= fl->validationId; i++){
 		ValQuery_t* val_query = validation_list->validation_array[i];
+		if (val_query == NULL) {
+			fprintf(stderr, "giannopoulos here is the bug\n");
+			exit(1);
+		}
 		printf("\tResult for ValID %zu is: %d\n",i,checkValidation(journal_array, val_query));
 	}
 	current = fl->validationId;
