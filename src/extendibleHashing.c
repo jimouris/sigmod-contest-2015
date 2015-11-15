@@ -76,6 +76,7 @@ int insertHashRecord(Hash* hash, Key key, RangeArray* rangeArray) {
 					new_bucket->current_subBuckets++;
 				}
 			}
+			destroyBucket(tmp_bucket, B);
 			insertHashRecord(hash, key, rangeArray);
 		} 
 		/* split bucket */
@@ -118,6 +119,7 @@ int insertHashRecord(Hash* hash, Key key, RangeArray* rangeArray) {
 			} else {
 				destroyBucket(new_bucket, B);
 			} 
+			destroyBucket(tmp_bucket, B);
 			insertHashRecord(hash, key, rangeArray);
 		}
 	}
