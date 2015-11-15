@@ -42,19 +42,19 @@ int insertHashRecord(Hash* hash, Key key, RangeArray* rangeArray) {
 		return OK_SUCCESS;
 	} else {	/* if there is no space for a new key in this bucket */
 		/* Doublicate index */
-		if (bucket->local_depth == hash->global_depth) { // one pointer per bucket -> doublicate index
-			doublicateIndex(hash);	/* doublicates and increases global depth */
+		if (bucket->local_depth >= hash->global_depth) { // one pointer per bucket -> doublicate index
+			duplicateIndex(hash);	/* doublicates and increases global depth */
 			bucket->local_depth++;
-			Bucket *new_bucket = createNewBucket(hash->index[bucket_num]->local_depth, B);
-			Bucket *tmp_bucket = createNewBucket(hash->index[bucket_num]->local_depth, B);
-			copyBucketTransactions(tmp_bucket, hash->index[bucket_num]);
-			cleanBucket(hash->index[bucket_num]);
+			Bucket *new_bucket = createNewBucket(bucket->local_depth, B);
+			Bucket *tmp_bucket = createNewBucket(bucket->local_depth, B);
+			copyBucketTransactions(tmp_bucket, bucket);
+			cleanBucket(bucket);
 			fixHashPointers(hash->index, new_bucket, hash->global_depth, bucket_num);
 			uint32_t i;
 			uint64_t new_hash, j;
 			for (i = 0 ; i < B ; i++) {	/* for all subBuckets in tmpBucket */
 				new_hash = hashFunction(1 << hash->global_depth, tmp_bucket->key_buckets[i].key); /* new_hash has a bucket number */
-				if (new_hash == bucket_num && hash->index[bucket_num]->current_subBuckets < B) {	/* if the new bucket is the previous one and there is available subBucket space */
+				if (new_hash == bucket_num) {	/* if the new bucket is the previous one and there is available subBucket space */
 					uint32_t current_subBuckets = hash->index[new_hash]->current_subBuckets;
 					hash->index[new_hash]->key_buckets[current_subBuckets].key = tmp_bucket->key_buckets[i].key;
 					hash->index[new_hash]->key_buckets[current_subBuckets].current_entries = tmp_bucket->key_buckets[i].current_entries;
@@ -64,7 +64,7 @@ int insertHashRecord(Hash* hash, Key key, RangeArray* rangeArray) {
 						hash->index[new_hash]->key_buckets[current_subBuckets].transaction_range[j].rec_offset = tmp_bucket->key_buckets[i].transaction_range[j].rec_offset;
 					}
 					hash->index[new_hash]->current_subBuckets++;
-				} else if (new_hash != bucket_num && new_bucket->current_subBuckets < B) {
+				} else if (new_hash != bucket_num) {
 					uint32_t current_subBuckets = new_bucket->current_subBuckets;
 					new_bucket->key_buckets[current_subBuckets].key = tmp_bucket->key_buckets[i].key;
 					new_bucket->key_buckets[current_subBuckets].current_entries = tmp_bucket->key_buckets[i].current_entries;
@@ -82,43 +82,82 @@ int insertHashRecord(Hash* hash, Key key, RangeArray* rangeArray) {
 		/* split bucket */
 		else if (bucket->local_depth < hash->global_depth) { 
 			bucket->local_depth++;
-			Bucket *new_bucket = createNewBucket(hash->index[bucket_num]->local_depth, B);
-			Bucket *tmp_bucket = createNewBucket(hash->index[bucket_num]->local_depth, B);
-			copyBucketTransactions(tmp_bucket, hash->index[bucket_num]);
-			cleanBucket(hash->index[bucket_num]);
+			Bucket *new_bucket = createNewBucket(bucket->local_depth, B);
+			Bucket *tmp_bucket = createNewBucket(bucket->local_depth, B);
+			copyBucketTransactions(tmp_bucket, bucket);
+			cleanBucket(bucket);
 			uint32_t i;
 			uint64_t new_hash, j;
-			int flag = 0;
+			// Boolean_t all_in_old = True;
+			// Boolean_t all_in_new = True;
+			fixSplitPointers(hash, bucket, new_bucket, bucket_num);
+
 			for (i = 0 ; i < B ; i++) {	/* for all subBuckets in tmpBucket */
-				new_hash = hashFunction(1 << hash->global_depth, tmp_bucket->key_buckets[i].key); /* new_hash has a bucket number */
-				if (new_hash == bucket_num && hash->index[bucket_num]->current_subBuckets < B) {	/* if the new bucket is the previous one and there is available subBucket space */
-					uint32_t current_subBuckets = hash->index[new_hash]->current_subBuckets;
-					hash->index[new_hash]->key_buckets[current_subBuckets].key = tmp_bucket->key_buckets[i].key;
-					hash->index[new_hash]->key_buckets[current_subBuckets].current_entries = tmp_bucket->key_buckets[i].current_entries;
-					uint64_t current_entries = hash->index[new_hash]->key_buckets[current_subBuckets].current_entries;
-					for (j = 0 ; j < current_entries ; j++) {	/* for j in transactionRange of the bucket to be copied */
-						hash->index[new_hash]->key_buckets[current_subBuckets].transaction_range[j].transaction_id = tmp_bucket->key_buckets[i].transaction_range[j].transaction_id;
-						hash->index[new_hash]->key_buckets[current_subBuckets].transaction_range[j].rec_offset = tmp_bucket->key_buckets[i].transaction_range[j].rec_offset;
+				SubBucket *subbucket = tmp_bucket->key_buckets;
+				new_hash = hashFunction(hash->size, key);
+				if (new_hash == bucket_num){	/*If new_hash points to the old bucket*/
+					uint32_t current_subBuckets = bucket->current_subBuckets;
+					bucket->key_buckets[current_subBuckets].key = subbucket[i].key;
+					bucket->key_buckets[current_subBuckets].current_entries = subbucket[i].current_entries;
+					uint64_t current_entries = subbucket[i].current_entries;
+					for (j = 0; j < current_entries; j++){
+						bucket->key_buckets[current_subBuckets].transaction_range[j].transaction_id = subbucket[i].transaction_range[j].transaction_id;
+						bucket->key_buckets[current_subBuckets].transaction_range[j].rec_offset = subbucket[i].transaction_range[j].rec_offset;
 					}
-					hash->index[new_hash]->current_subBuckets++;
-				} else if (new_hash != bucket_num && new_bucket->current_subBuckets < B) {
+					bucket->current_subBuckets++;
+					// all_in_new = False;
+				} else {	/*Points to new bucket*/
 					uint32_t current_subBuckets = new_bucket->current_subBuckets;
-					new_bucket->key_buckets[current_subBuckets].key = tmp_bucket->key_buckets[i].key;
-					new_bucket->key_buckets[current_subBuckets].current_entries = tmp_bucket->key_buckets[i].current_entries;
-					uint64_t current_entries = new_bucket->key_buckets[current_subBuckets].current_entries;
-					for (j = 0 ; j < current_entries ; j++ ) {
-						new_bucket->key_buckets[current_subBuckets].transaction_range[j].transaction_id = tmp_bucket->key_buckets[i].transaction_range[j].transaction_id;
-						new_bucket->key_buckets[current_subBuckets].transaction_range[j].rec_offset = tmp_bucket->key_buckets[i].transaction_range[j].rec_offset;
+					new_bucket->key_buckets[current_subBuckets].key = subbucket[i].key;
+					new_bucket->key_buckets[current_subBuckets].current_entries = subbucket[i].current_entries;
+					uint64_t current_entries = subbucket[i].current_entries;
+					for(j = 0; j < current_entries; j++){
+						new_bucket->key_buckets[current_subBuckets].transaction_range[j].transaction_id = subbucket[i].transaction_range[j].transaction_id;
+						new_bucket->key_buckets[current_subBuckets].transaction_range[j].rec_offset = subbucket[i].transaction_range[j].rec_offset;
 					}
 					new_bucket->current_subBuckets++;
-					flag = 1;
+					// all_in_old = False;
 				}
 			}
-			if (flag) {
-				hash->index[new_hash] = new_bucket;
-			} else {
-				destroyBucket(new_bucket, B);
-			} 
+			// if (all_in_new) {
+
+			// } else if (all_in_old) {
+
+			// }
+
+
+			// for (i = 0 ; i < B ; i++) {	/* for all subBuckets in tmpBucket */
+			// 	new_hash = hashFunction(1 << hash->global_depth, tmp_bucket->key_buckets[i].key); /* new_hash has a bucket number */
+			// 	if (new_hash == bucket_num && hash->index[bucket_num]->current_subBuckets < B) {	/* if the new bucket is the previous one and there is available subBucket space */
+			// 		uint32_t current_subBuckets = hash->index[new_hash]->current_subBuckets;
+			// 		hash->index[new_hash]->key_buckets[current_subBuckets].key = tmp_bucket->key_buckets[i].key;
+			// 		hash->index[new_hash]->key_buckets[current_subBuckets].current_entries = tmp_bucket->key_buckets[i].current_entries;
+			// 		uint64_t current_entries = hash->index[new_hash]->key_buckets[current_subBuckets].current_entries;
+			// 		for (j = 0 ; j < current_entries ; j++) {	/* for j in transactionRange of the bucket to be copied */
+			// 			hash->index[new_hash]->key_buckets[current_subBuckets].transaction_range[j].transaction_id = tmp_bucket->key_buckets[i].transaction_range[j].transaction_id;
+			// 			hash->index[new_hash]->key_buckets[current_subBuckets].transaction_range[j].rec_offset = tmp_bucket->key_buckets[i].transaction_range[j].rec_offset;
+			// 		}
+			// 		hash->index[new_hash]->current_subBuckets++;
+			// 	} else if (new_hash != bucket_num && new_bucket->current_subBuckets < B) {
+			// 		uint32_t current_subBuckets = new_bucket->current_subBuckets;
+			// 		new_bucket->key_buckets[current_subBuckets].key = tmp_bucket->key_buckets[i].key;
+			// 		new_bucket->key_buckets[current_subBuckets].current_entries = tmp_bucket->key_buckets[i].current_entries;
+			// 		uint64_t current_entries = new_bucket->key_buckets[current_subBuckets].current_entries;
+			// 		for (j = 0 ; j < current_entries ; j++ ) {
+			// 			new_bucket->key_buckets[current_subBuckets].transaction_range[j].transaction_id = tmp_bucket->key_buckets[i].transaction_range[j].transaction_id;
+			// 			new_bucket->key_buckets[current_subBuckets].transaction_range[j].rec_offset = tmp_bucket->key_buckets[i].transaction_range[j].rec_offset;
+			// 		}
+			// 		new_bucket->current_subBuckets++;
+			// 		flag = 1;
+			// 	}
+			// }
+			// if (flag) {
+			// 	fprintf(stderr, "hash->index[%zu] = new_bucket\n",new_hash );
+			// 	hash->index[new_hash] = new_bucket;
+			// } else {
+			// 	destroyBucket(new_bucket, B);
+			// }
+
 			destroyBucket(tmp_bucket, B);
 			insertHashRecord(hash, key, rangeArray);
 		}
@@ -127,7 +166,7 @@ int insertHashRecord(Hash* hash, Key key, RangeArray* rangeArray) {
 }  
 
 /*Does whatever it says*/
-void doublicateIndex(Hash * hash) {
+void duplicateIndex(Hash * hash) {
 	hash->global_depth++;
 	uint64_t old_size = hash->size;
 	hash->size *= 2;
@@ -137,7 +176,6 @@ void doublicateIndex(Hash * hash) {
 	for (i = old_size; i < hash->size; i++)
 		hash->index[i] = NULL;
 }
-
 
 void destroyBucket(Bucket *bucket,uint32_t b) {
 	uint32_t i;
@@ -149,16 +187,32 @@ void destroyBucket(Bucket *bucket,uint32_t b) {
 	bucket = NULL;
 }
 
-/* fix new indexes pointers after index doublicate or just splits pointers */
+/* fix new indexes pointers after index doublicate */
 void fixHashPointers(Bucket **index, Bucket *new_bucket, uint32_t global_depth, uint64_t bucket_num) {
 	uint64_t i, j;
 	uint64_t old_size = 1 << (global_depth-1);
+	// fprintf(stderr, "-----------------------------------------------------\n");
 	for (i = 0, j = old_size ; i < old_size ; i++, j++) {
-		if (i == bucket_num){
+		if (i == bucket_num) {
+			// fprintf(stderr, "index[%zu] = new_bucket\n",j);
 			index[j] = new_bucket;
-		}
-		else
+		} else {
+			// fprintf(stderr, "index[%zu] = index[%zu]\n",j,i );
 			index[j] = index[i];
+		}
+	}
+	// fprintf(stderr, "-----------------------------------------------------\n");
+}
+
+/* fix new indexes pointers after index splits */
+void fixSplitPointers(Hash* hash, Bucket* old_bucket, Bucket* new_bucket, uint64_t bucket_num){
+	uint64_t prev_local_depth = old_bucket->local_depth-1;
+	uint64_t i;
+	uint64_t ld_size = 1 << prev_local_depth;
+	uint32_t first_pointer = bucket_num % ld_size;
+	for (i = first_pointer ; i < hash->size ; i+=(2*ld_size)) { /* i in all old_bucket pointers */
+		hash->index[i] = old_bucket;
+		hash->index[i+ld_size] = new_bucket;
 	}
 }
 
@@ -234,9 +288,9 @@ void cleanBucket(Bucket* conflict_bucket) {
 }
 
 uint64_t hashFunction(uint64_t size, uint64_t x) {
-	x = ((x >> 16) ^ x) * 0x45d9f3b;
-    x = ((x >> 16) ^ x) * 0x45d9f3b;
-    x = ((x >> 16) ^ x);
+	// x = ((x >> 16) ^ x) * 0x45d9f3b;
+ //    x = ((x >> 16) ^ x) * 0x45d9f3b;
+ //    x = ((x >> 16) ^ x);
     return (x % size);
 	// return ((x*2654435761+1223) % size);
 }

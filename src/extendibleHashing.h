@@ -49,7 +49,8 @@ uint64_t hashFunction(uint64_t, uint64_t);
 
 /*INSERT TO HASH FUNCTION AND OTHER HELPER FUNCTIONS*/
 void fixHashPointers(Bucket **, Bucket *, uint32_t, uint64_t);
-void doublicateIndex(Hash *);
+void fixSplitPointers(Hash *, Bucket *, Bucket *, uint64_t);
+void duplicateIndex(Hash *);
 void addNewKeyToTempBucket(Bucket *,JournalRecord_t*);
 void copyBucketTransactions(Bucket*, Bucket*);
 int insertHashRecord(Hash*, Key, RangeArray*);
