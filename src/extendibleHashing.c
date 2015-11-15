@@ -163,14 +163,23 @@ void fixHashPointers(Bucket **index, Bucket *new_bucket, uint32_t global_depth, 
 /* copy transactions from one Bucket to another one*/
 void copyBucketTransactions(Bucket* dst, Bucket* src) {
 	uint64_t i;
-	uint32_t j;
+	uint64_t j;
 	dst->local_depth = src->local_depth;
 	dst->current_subBuckets = src->current_subBuckets;
+
 	for (i = 0 ; i < src->current_subBuckets ; i++) {	/* for i in subBuckets */
 		dst->key_buckets[i].key = src->key_buckets[i].key;
 		dst->key_buckets[i].current_entries = src->key_buckets[i].current_entries;
+		dst->key_buckets[i].limit = src->key_buckets[i].limit;
+
+		if (dst->key_buckets[i].current_entries > dst->key_buckets[i].limit) {
+			dst->key_buckets[i].transaction_range = realloc(dst->key_buckets[i].transaction_range, src->key_buckets[i].limit*sizeof(RangeArray));
+			ALLOCATION_ERROR(dst->key_buckets[i].transaction_range);
+		}
+		// printf("dst limit: %zu   src limit: %zu\n",dst->key_buckets[i].limit, src->key_buckets[i].limit );
 		for (j = 0 ; j < src->key_buckets[i].current_entries ; j++) { /* for j in transactionRange */
-			dst->key_buckets[i].transaction_range[j].transaction_id = src->key_buckets[i].transaction_range[j].transaction_id;
+			// fprintf(stderr, "j = %zu\n",j );
+			dst->key_buckets[i].transaction_range[j].transaction_id = src->key_buckets[i].transaction_range[j].transaction_id;			
 			dst->key_buckets[i].transaction_range[j].rec_offset = src->key_buckets[i].transaction_range[j].rec_offset;
 		}
 	}
@@ -223,9 +232,9 @@ void cleanBucket(Bucket* conflict_bucket) {
 }
 
 uint64_t hashFunction(uint64_t size, uint64_t x) {
-	// x = ((x >> 16) ^ x) * 0x45d9f3b;
- //    x = ((x >> 16) ^ x) * 0x45d9f3b;
- //    x = ((x >> 16) ^ x);
+	x = ((x >> 16) ^ x) * 0x45d9f3b;
+    x = ((x >> 16) ^ x) * 0x45d9f3b;
+    x = ((x >> 16) ^ x);
     // return (x % size);
 	return ((x*2654435761+1223) % size);
 }
