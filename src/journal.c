@@ -116,7 +116,7 @@ JournalRecord_t* insertJournalRecord(Journal_t* journal, uint64_t transaction_id
 	ALLOCATION_ERROR(range_array);
 	range_array->transaction_id = transaction_id;
 	range_array->rec_offset = journal->num_of_recs;
-	printf("Relation: %zu, Key: %zu\n",journal->relation_id, column_values[0] );
+	// printf("Relation: %zu, Key: %zu\n",journal->relation_id, column_values[0] );
 	insertHashRecord(journal->index, column_values[0], range_array);
 	free(range_array);
 	return &journal->records[journal->num_of_recs++];
