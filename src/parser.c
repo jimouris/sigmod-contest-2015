@@ -90,12 +90,15 @@ void processValidationQueries(ValidationQueries_t *v, Journal_t** journal_array,
 }
 
 void processFlush(Flush_t *fl, Journal_t** journal_array, ValidationList_t* validation_list) {
-	// printf("Flush %lu\n", fl->validationId);
+	static uint64_t current = 0;
+	printf("Flush %lu\n", fl->validationId);
 	uint64_t i;
-	for(i = 0; i <= fl->validationId; i++){
+	for(i = current; i <= fl->validationId; i++){
 		ValQuery_t* val_query = validation_list->validation_array[i];
-		// printf("\tResult for ValID %zu is: %d\n",i,checkValidation(journal_array, val_query));
+		printf("\tResult for ValID %zu is: %d\n",i,checkValidation(journal_array, val_query));
 	}
+	current = fl->validationId;
+	fprintf(stderr, "current: %zu\n",current );
 }
 
 void processForget(Forget_t *fo, Journal_t** journal_array) {
