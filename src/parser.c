@@ -4,7 +4,7 @@ static uint32_t* schema = NULL;
 
 Journal_t** processDefineSchema(DefineSchema_t *s, int *relation_count) {
 	uint64_t i;
-	printf("DefineSchema %d |", s->relationCount);
+	// printf("DefineSchema %d |", s->relationCount);
 	if (schema == NULL)
 		free(schema);
 	schema = malloc(sizeof(uint32_t) * s->relationCount);
@@ -13,11 +13,11 @@ Journal_t** processDefineSchema(DefineSchema_t *s, int *relation_count) {
 	Journal_t** journal_array = malloc(s->relationCount * sizeof(Journal_t*));
 	ALLOCATION_ERROR(journal_array);
 	for (i = 0; i < s->relationCount; i++) {
-		printf(" %d ",s->columnCounts[i]);
+		// printf(" %d ",s->columnCounts[i]);
 		schema[i] = s->columnCounts[i];
 		journal_array[i] = createJournal(i);
 	}
-	printf("\n");
+	// printf("\n");
 	return journal_array;
 }
 
