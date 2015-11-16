@@ -85,12 +85,32 @@ void processValidationQueries(ValidationQueries_t *v, Journal_t** journal_array,
 			val_query->queries[i]->columns[j]->op = column.op;
 			val_query->queries[i]->columns[j]->value = column.value;
 		}
+		/* sort the column to bring indexed c0 first */
+		qsort(val_query->queries[i]->columns, val_query->queries[i]->columnCount, sizeof(Column_t*), cmp_col);
+
 		reader += sizeof(Query_t) + (sizeof(Column_t) * query->columnCount);
 	}
 	validationListInsert(validation_list, val_query);
 }
 
-
+int cmp_col(const void *p1, const void *p2) {
+	const Column_t *f1 = *(Column_t**) p1;
+	const Column_t *f2 = *(Column_t**) p2;
+	if (f1->column == f2->column) {
+		if (f1->op == Equal) {
+			return -1;
+		} else if (f2->op == Equal) {
+			return 1;
+		} else
+			return 0;
+	} else {
+		if(f1->column < f2->column){
+			return -1;
+		} else {
+			return 1;
+		}
+	}	
+}
 
 void processFlush(Flush_t *fl, Journal_t** journal_array, ValidationList_t* validation_list) {
 	static uint64_t current = 0;
@@ -109,7 +129,6 @@ void processFlush(Flush_t *fl, Journal_t** journal_array, ValidationList_t* vali
 
 void processForget(Forget_t *fo, Journal_t** journal_array) {
 	// printf("Forget %lu\n", fo->transactionId);
-
 }
 
 Boolean_t checkValidation(Journal_t** journal_array, ValQuery_t* val_query){
@@ -130,7 +149,7 @@ Boolean_t checkSingleQuery(Journal_t** journal_array, SingleQuery_t* query, uint
 	Boolean_t result = True;
 	Journal_t* journal = journal_array[query->relationId];
 	uint64_t i;
-	for(i = 0; i < query->columnCount; i++){
+		for(i = 0; i < query->columnCount; i++){
 		Column_t* column = query->columns[i];
 		Boolean_t partial_result = checkColumn(journal, column, from, to);
 		if(partial_result == False){	/* Short circuiting */
@@ -265,13 +284,13 @@ void validationListPrint(ValidationList_t* validation_list){
 }
 
 void printValidation(ValQuery_t* val_query){
-	// printf("ValidationQueries %lu [%lu, %lu] %u\n", val_query->validationId, val_query->from, val_query->to, val_query->queryCount);
+	printf("ValidationQueries %lu [%lu, %lu] %u\n", val_query->validationId, val_query->from, val_query->to, val_query->queryCount);
 	
 	int i,j;
 	/*For each query*/
 	for (i = 0; i < val_query->queryCount; i++) {
 		const SingleQuery_t* query = val_query->queries[i];
-		// printf("Query for relation %" PRIu32 " query columnCount = %d\n", query->relationId,query->columnCount);
+		printf("Query for relation %" PRIu32 " query columnCount = %d\n", query->relationId,query->columnCount);
 
 		for(j = 0; j<query->columnCount; j++){
 			const Column_t* column = query->columns[j];
@@ -295,7 +314,7 @@ void printValidation(ValQuery_t* val_query){
 					printf("\tC%" PRIu32 " >= %zu\n",column->column, column->value);
 					break;
 				default:
-					printf("Wronf operatorn\n");
+					printf("Wrong operator\n");
 					exit(1);
 			}			
 		}

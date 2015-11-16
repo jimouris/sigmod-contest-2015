@@ -162,6 +162,7 @@ void destroySchema(Journal_t**, int);
 
 void printValidation(ValQuery_t*);
 
+int cmp_col(const void *, const void *);
 
 // void copyValidation(ValidationQueries_t*, ValidationQueries_t*);
 
