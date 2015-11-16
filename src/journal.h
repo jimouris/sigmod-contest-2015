@@ -46,6 +46,8 @@ typedef struct List_t {
 
 Boolean_t isEmpty(List_t*);
 
+void printList(List_t*);
+
 void destroy_list(List_t*);
 
 Boolean_t checkConstraint(JournalRecord_t*, Column_t*);

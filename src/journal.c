@@ -74,6 +74,15 @@ Boolean_t isEmpty(List_t* list){
 }
 
 
+void printList(List_t* list){
+	List_node* n = list->list_beg;
+	while(n != NULL){
+		printJournalRecord(n->data);
+		n = n->next;
+	}
+	printf("\n");
+}
+
 /* Journal_t functions */
 
 Journal_t* createJournal(uint64_t relation_id) {
@@ -121,7 +130,6 @@ JournalRecord_t* insertJournalRecord(Journal_t* journal, uint64_t transaction_id
 	free(range_array);
 	return &journal->records[journal->num_of_recs++];
 }
-
 // int insertJournalRecord(Journal_t* journal, JournalRecord_t* record) {
 // 	if(journal->num_of_recs >= journal->journal_capacity) {
 // 		increaseJournal(journal);

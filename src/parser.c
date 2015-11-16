@@ -90,6 +90,8 @@ void processValidationQueries(ValidationQueries_t *v, Journal_t** journal_array,
 	validationListInsert(validation_list, val_query);
 }
 
+
+
 void processFlush(Flush_t *fl, Journal_t** journal_array, ValidationList_t* validation_list) {
 	static uint64_t current = 0;
 	// printf("Flush %lu\n", fl->validationId);
@@ -131,7 +133,7 @@ Boolean_t checkSingleQuery(Journal_t** journal_array, SingleQuery_t* query, uint
 	for(i = 0; i < query->columnCount; i++){
 		Column_t* column = query->columns[i];
 		Boolean_t partial_result = checkColumn(journal, column, from, to);
-		if(partial_result == False){	/*Short circuiting*/
+		if(partial_result == False){	/* Short circuiting */
 			return False;
 		}
 		result = result && partial_result;
@@ -178,7 +180,7 @@ Boolean_t checkColumn(Journal_t* journal,Column_t* column, uint64_t from, uint64
 		}
 
 		i = first_appearance;
-		while(i < range_size && range_array[i].transaction_id <= from ) {
+		while(i < range_size && range_array[i].transaction_id <= to ) {
 			uint64_t offset = range_array[i].rec_offset;
 			JournalRecord_t* record = &journal->records[offset];
 			Boolean_t partial_result = checkConstraint(record, column);
@@ -263,13 +265,13 @@ void validationListPrint(ValidationList_t* validation_list){
 }
 
 void printValidation(ValQuery_t* val_query){
-	printf("ValidationQueries %lu [%lu, %lu] %u\n", val_query->validationId, val_query->from, val_query->to, val_query->queryCount);
+	// printf("ValidationQueries %lu [%lu, %lu] %u\n", val_query->validationId, val_query->from, val_query->to, val_query->queryCount);
 	
 	int i,j;
 	/*For each query*/
 	for (i = 0; i < val_query->queryCount; i++) {
 		const SingleQuery_t* query = val_query->queries[i];
-		printf("Query for relation %" PRIu32 " query columnCount = %d\n", query->relationId,query->columnCount);
+		// printf("Query for relation %" PRIu32 " query columnCount = %d\n", query->relationId,query->columnCount);
 
 		for(j = 0; j<query->columnCount; j++){
 			const Column_t* column = query->columns[j];
@@ -292,6 +294,9 @@ void printValidation(ValQuery_t* val_query){
 				case GreaterOrEqual:
 					printf("\tC%" PRIu32 " >= %zu\n",column->column, column->value);
 					break;
+				default:
+					printf("Wronf operatorn\n");
+					exit(1);
 			}			
 		}
 	}
