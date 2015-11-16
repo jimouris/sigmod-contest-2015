@@ -98,7 +98,8 @@ void processFlush(Flush_t *fl, Journal_t** journal_array, ValidationList_t* vali
 		if(i < validation_list->num_of_validations){
 			ValQuery_t* val_query = validation_list->validation_array[i];	
 			// checkValidation(journal_array, val_query);
-			printf("\tResult for ValID %zu is: %d\n",i,checkValidation(journal_array, val_query));
+			// printf("\tResult for ValID %zu is: %d\n",i,checkValidation(journal_array, val_query));
+			printf("%d", checkValidation(journal_array, val_query));
 		}
 	}
 	current = fl->validationId;
