@@ -87,7 +87,7 @@ int insertHashRecord(Hash* hash, Key key, RangeArray* rangeArray) {
 			copyBucketTransactions(tmp_bucket, bucket);
 			cleanBucket(bucket);
 			uint32_t i;
-			uint64_t new_hash, j;
+			uint64_t new_hash;
 			// Boolean_t all_in_old = True;
 			// Boolean_t all_in_new = True;
 			fixSplitPointers(hash, bucket, new_bucket, bucket_num);
@@ -164,7 +164,6 @@ void fixSplitPointers(Hash* hash, Bucket* old_bucket, Bucket* new_bucket, uint64
 /* copy transactions from one Bucket to another one*/
 void copyBucketTransactions(Bucket* dst, Bucket* src) {
 	uint64_t i;
-	uint64_t j;
 	dst->local_depth = src->local_depth;
 	dst->current_subBuckets = src->current_subBuckets;
 
