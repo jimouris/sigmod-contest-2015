@@ -56,6 +56,7 @@ void processTransaction(Transaction_t *t, Journal_t** journal_array) {
 }
 
 void processValidationQueries(ValidationQueries_t *v, Journal_t** journal_array, ValidationList_t* validation_list) {
+	// fprintf(stderr, "Valid: %zu\n",v->validationId );
 	ValQuery_t* val_query = malloc(sizeof(ValQuery_t));
 	ALLOCATION_ERROR(val_query);
 	val_query->validationId = v->validationId;
@@ -91,18 +92,16 @@ void processValidationQueries(ValidationQueries_t *v, Journal_t** journal_array,
 
 void processFlush(Flush_t *fl, Journal_t** journal_array, ValidationList_t* validation_list) {
 	static uint64_t current = 0;
-	printf("Flush %lu\n", fl->validationId);
+	// printf("Flush %lu\n", fl->validationId);
 	uint64_t i;
 	for(i = current; i <= fl->validationId; i++){
-		ValQuery_t* val_query = validation_list->validation_array[i];
-		if (val_query == NULL) {
-			fprintf(stderr, "giannopoulos here is the bug\n");
-			exit(1);
+		if(i < validation_list->num_of_validations){
+			ValQuery_t* val_query = validation_list->validation_array[i];	
+			// checkValidation(journal_array, val_query);
+			printf("\tResult for ValID %zu is: %d\n",i,checkValidation(journal_array, val_query));
 		}
-		printf("\tResult for ValID %zu is: %d\n",i,checkValidation(journal_array, val_query));
 	}
 	current = fl->validationId;
-	fprintf(stderr, "current: %zu\n",current );
 }
 
 void processForget(Forget_t *fo, Journal_t** journal_array) {
@@ -172,7 +171,7 @@ Boolean_t checkColumn(Journal_t* journal,Column_t* column, uint64_t from, uint64
 		}
 		if (first > last){	//Not found
 			first_appearance = last;
-			while(range_array[first_appearance].transaction_id < from){
+			while(first_appearance < range_size && range_array[first_appearance].transaction_id < from){
 				first_appearance++;
 			}
 		}

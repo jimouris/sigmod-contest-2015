@@ -53,6 +53,7 @@ void fixSplitPointers(Hash *, Bucket *, Bucket *, uint64_t);
 void duplicateIndex(Hash *);
 void addNewKeyToTempBucket(Bucket *,JournalRecord_t*);
 void copyBucketTransactions(Bucket*, Bucket*);
+void copySubbucketTransactions(SubBucket*, SubBucket*);
 int insertHashRecord(Hash*, Key, RangeArray*);
 Bucket* createNewBucket(uint32_t, uint32_t);
 void addNewKeyToTmpBucket(Bucket *, Key, RangeArray*);

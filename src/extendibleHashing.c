@@ -93,70 +93,15 @@ int insertHashRecord(Hash* hash, Key key, RangeArray* rangeArray) {
 			fixSplitPointers(hash, bucket, new_bucket, bucket_num);
 
 			for (i = 0 ; i < B ; i++) {	/* for all subBuckets in tmpBucket */
-				SubBucket *subbucket = tmp_bucket->key_buckets;
+				SubBucket *subbuckets = tmp_bucket->key_buckets;
+				Key key = subbuckets[i].key;
 				new_hash = hashFunction(hash->size, key);
-				if (new_hash == bucket_num){	/*If new_hash points to the old bucket*/
-					uint32_t current_subBuckets = bucket->current_subBuckets;
-					bucket->key_buckets[current_subBuckets].key = subbucket[i].key;
-					bucket->key_buckets[current_subBuckets].current_entries = subbucket[i].current_entries;
-					uint64_t current_entries = subbucket[i].current_entries;
-					for (j = 0; j < current_entries; j++){
-						bucket->key_buckets[current_subBuckets].transaction_range[j].transaction_id = subbucket[i].transaction_range[j].transaction_id;
-						bucket->key_buckets[current_subBuckets].transaction_range[j].rec_offset = subbucket[i].transaction_range[j].rec_offset;
-					}
-					bucket->current_subBuckets++;
-					// all_in_new = False;
-				} else {	/*Points to new bucket*/
-					uint32_t current_subBuckets = new_bucket->current_subBuckets;
-					new_bucket->key_buckets[current_subBuckets].key = subbucket[i].key;
-					new_bucket->key_buckets[current_subBuckets].current_entries = subbucket[i].current_entries;
-					uint64_t current_entries = subbucket[i].current_entries;
-					for(j = 0; j < current_entries; j++){
-						new_bucket->key_buckets[current_subBuckets].transaction_range[j].transaction_id = subbucket[i].transaction_range[j].transaction_id;
-						new_bucket->key_buckets[current_subBuckets].transaction_range[j].rec_offset = subbucket[i].transaction_range[j].rec_offset;
-					}
-					new_bucket->current_subBuckets++;
-					// all_in_old = False;
-				}
+				// fprintf(stderr, "New hash for %zu is %zu\n",key,new_hash );
+				Bucket* destination = hash->index[new_hash];
+				uint32_t current_subBuckets = destination->current_subBuckets;
+				copySubbucketTransactions(&destination->key_buckets[current_subBuckets], &subbuckets[i]);
+				destination->current_subBuckets++;
 			}
-			// if (all_in_new) {
-
-			// } else if (all_in_old) {
-
-			// }
-
-
-			// for (i = 0 ; i < B ; i++) {	/* for all subBuckets in tmpBucket */
-			// 	new_hash = hashFunction(1 << hash->global_depth, tmp_bucket->key_buckets[i].key); /* new_hash has a bucket number */
-			// 	if (new_hash == bucket_num && hash->index[bucket_num]->current_subBuckets < B) {	/* if the new bucket is the previous one and there is available subBucket space */
-			// 		uint32_t current_subBuckets = hash->index[new_hash]->current_subBuckets;
-			// 		hash->index[new_hash]->key_buckets[current_subBuckets].key = tmp_bucket->key_buckets[i].key;
-			// 		hash->index[new_hash]->key_buckets[current_subBuckets].current_entries = tmp_bucket->key_buckets[i].current_entries;
-			// 		uint64_t current_entries = hash->index[new_hash]->key_buckets[current_subBuckets].current_entries;
-			// 		for (j = 0 ; j < current_entries ; j++) {	/* for j in transactionRange of the bucket to be copied */
-			// 			hash->index[new_hash]->key_buckets[current_subBuckets].transaction_range[j].transaction_id = tmp_bucket->key_buckets[i].transaction_range[j].transaction_id;
-			// 			hash->index[new_hash]->key_buckets[current_subBuckets].transaction_range[j].rec_offset = tmp_bucket->key_buckets[i].transaction_range[j].rec_offset;
-			// 		}
-			// 		hash->index[new_hash]->current_subBuckets++;
-			// 	} else if (new_hash != bucket_num && new_bucket->current_subBuckets < B) {
-			// 		uint32_t current_subBuckets = new_bucket->current_subBuckets;
-			// 		new_bucket->key_buckets[current_subBuckets].key = tmp_bucket->key_buckets[i].key;
-			// 		new_bucket->key_buckets[current_subBuckets].current_entries = tmp_bucket->key_buckets[i].current_entries;
-			// 		uint64_t current_entries = new_bucket->key_buckets[current_subBuckets].current_entries;
-			// 		for (j = 0 ; j < current_entries ; j++ ) {
-			// 			new_bucket->key_buckets[current_subBuckets].transaction_range[j].transaction_id = tmp_bucket->key_buckets[i].transaction_range[j].transaction_id;
-			// 			new_bucket->key_buckets[current_subBuckets].transaction_range[j].rec_offset = tmp_bucket->key_buckets[i].transaction_range[j].rec_offset;
-			// 		}
-			// 		new_bucket->current_subBuckets++;
-			// 		flag = 1;
-			// 	}
-			// }
-			// if (flag) {
-			// 	fprintf(stderr, "hash->index[%zu] = new_bucket\n",new_hash );
-			// 	hash->index[new_hash] = new_bucket;
-			// } else {
-			// 	destroyBucket(new_bucket, B);
-			// }
 
 			destroyBucket(tmp_bucket, B);
 			insertHashRecord(hash, key, rangeArray);
@@ -224,20 +169,37 @@ void copyBucketTransactions(Bucket* dst, Bucket* src) {
 	dst->current_subBuckets = src->current_subBuckets;
 
 	for (i = 0 ; i < src->current_subBuckets ; i++) {	/* for i in subBuckets */
-		dst->key_buckets[i].key = src->key_buckets[i].key;
-		dst->key_buckets[i].current_entries = src->key_buckets[i].current_entries;
-		dst->key_buckets[i].limit = src->key_buckets[i].limit;
+		copySubbucketTransactions(&dst->key_buckets[i], &src->key_buckets[i]);
+		// dst->key_buckets[i].key = src->key_buckets[i].key;
+		// dst->key_buckets[i].current_entries = src->key_buckets[i].current_entries;
 
-		if (dst->key_buckets[i].current_entries > dst->key_buckets[i].limit) {
-			dst->key_buckets[i].transaction_range = realloc(dst->key_buckets[i].transaction_range, src->key_buckets[i].limit*sizeof(RangeArray));
-			ALLOCATION_ERROR(dst->key_buckets[i].transaction_range);
-		}
-		// printf("dst limit: %zu   src limit: %zu\n",dst->key_buckets[i].limit, src->key_buckets[i].limit );
-		for (j = 0 ; j < src->key_buckets[i].current_entries ; j++) { /* for j in transactionRange */
-			// fprintf(stderr, "j = %zu\n",j );
-			dst->key_buckets[i].transaction_range[j].transaction_id = src->key_buckets[i].transaction_range[j].transaction_id;			
-			dst->key_buckets[i].transaction_range[j].rec_offset = src->key_buckets[i].transaction_range[j].rec_offset;
-		}
+		// if (dst->key_buckets[i].current_entries > dst->key_buckets[i].limit) {
+		// 	dst->key_buckets[i].transaction_range = realloc(dst->key_buckets[i].transaction_range, src->key_buckets[i].limit*sizeof(RangeArray));
+		// 	ALLOCATION_ERROR(dst->key_buckets[i].transaction_range);
+		// }
+		// dst->key_buckets[i].limit = src->key_buckets[i].limit;
+		// // printf("dst limit: %zu   src limit: %zu\n",dst->key_buckets[i].limit, src->key_buckets[i].limit );
+		// for (j = 0 ; j < src->key_buckets[i].current_entries ; j++) { /* for j in transactionRange */
+		// 	// fprintf(stderr, "j = %zu\n",j );
+		// 	dst->key_buckets[i].transaction_range[j].transaction_id = src->key_buckets[i].transaction_range[j].transaction_id;			
+		// 	dst->key_buckets[i].transaction_range[j].rec_offset = src->key_buckets[i].transaction_range[j].rec_offset;
+		// }
+	}
+}
+
+void copySubbucketTransactions(SubBucket* dst, SubBucket* src){
+	uint64_t j;
+	dst->key = src->key;
+	dst->current_entries = src->current_entries;
+
+	if (dst->current_entries > dst->limit) {
+		dst->transaction_range = realloc(dst->transaction_range, src->limit*sizeof(RangeArray));
+		ALLOCATION_ERROR(dst->transaction_range);
+	}
+	dst->limit = src->limit;
+	for (j = 0 ; j < src->current_entries ; j++) { /* for j in transactionRange */
+		dst->transaction_range[j].transaction_id = src->transaction_range[j].transaction_id;			
+		dst->transaction_range[j].rec_offset = src->transaction_range[j].rec_offset;
 	}
 }
 

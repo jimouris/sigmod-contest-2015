@@ -164,7 +164,7 @@ List_t* getJournalRecords(Journal_t* journal, Column_t* constraint, int range_st
 	}
 	if (first > last){	//Not found
 		first_appearance = last;
-		while(journal->records[first_appearance].transaction_id < range_start){
+		while(first_appearance < journal->num_of_recs && journal->records[first_appearance].transaction_id < range_start){
 			first_appearance++;
 		}
 	}
