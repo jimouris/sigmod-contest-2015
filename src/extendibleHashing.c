@@ -249,6 +249,7 @@ RangeArray* getHashRecord(Hash* hash, Key key, uint64_t * current_entries) {
 			return hash->index[bucket_num]->key_buckets[i].transaction_range;
 		}
 	}
+	*current_entries = 0;
 	return NULL;
 } 
 

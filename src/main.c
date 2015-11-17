@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
 					// printJournal(journal_array[i]);
 					// printHash(journal_array[i]->index);
 				// }
-				validationListPrint(validation_list, journal_array);
+				// validationListPrint(validation_list, journal_array);
 
 				destroySchema(journal_array, relation_count);
 				validationListDestroy(validation_list);

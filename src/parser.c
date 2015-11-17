@@ -122,11 +122,37 @@ void processFlush(Flush_t *fl, Journal_t** journal_array, ValidationList_t* vali
 			// checkValidation(journal_array, val_query);
 			// printf("\tResult for ValID %zu is: %d\n",i,checkValidation(journal_array, val_query));
 			printf("%d", checkValidation(journal_array, val_query));
-			if(val_query->validationId == 405){
-				printf("\n");
-				printValidation(val_query, journal_array);
-				exit(1);
-			}
+			// if(val_query->validationId == 405){
+			// 	printf("\n");
+			// 	printValidation(val_query, journal_array);
+			// 	printf("\n\n");
+			// 	// Column_t* constraint = malloc(sizeof(Column_t));
+			// 	// constraint->column = 7;
+			// 	// constraint->op = GreaterOrEqual;
+			// 	// constraint->value = 4412;
+			// 	// List_t* record_list = getJournalRecords(journal_array[15], constraint, val_query->from, val_query->to);
+			// 	// if(!isEmpty(record_list)){
+			// 	// 	printf("Not Empty\n");
+			// 	// 	printList(record_list);
+			// 	// } else{
+			// 	// 	printf("Empty\n");
+			// 	// }
+			// 	// destroy_list(record_list);
+			// 	// free(constraint);
+			// 	uint64_t range_size;
+			// 	uint64_t i;
+			// 	RangeArray* range_array = getHashRecord(journal_array[16]->index, 4, &i);
+			// 	if(range_array != NULL){
+			// 		printf("Not Empty size = %zu\n",range_size);
+			// 		for(i=0; i<range_size; i++){
+			// 			printf("Transaction ID: %zu\n",range_array[i].transaction_id);
+			// 		}
+			// 	} else{
+			// 		printf("Empty\n");
+			// 	}
+
+			// 	exit(1);
+			// }
 		}
 	}
 	current = fl->validationId;
@@ -162,7 +188,7 @@ Boolean_t checkSingleQuery(Journal_t** journal_array, SingleQuery_t* query, uint
 	// fprintf(stderr, "Column count = %" PRIu32 "\n",query->columnCount );
 	if (query->columns[0]->column == 0 && query->columns[0]->op == Equal){ /* if primary key */
 		range_array = getHashRecord(journal->index, query->columns[0]->value, &range_size);
-		if(range_array == NULL){
+		if(range_array == NULL || range_size == 0){
 			return False;
 		}
 	}
