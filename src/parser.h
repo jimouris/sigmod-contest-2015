@@ -128,7 +128,7 @@ typedef struct ValidationList {
 // char* getFirstToken(char**);
 int validationListInsert(ValidationList_t* , ValQuery_t*);
 
-void validationListPrint(ValidationList_t*);
+void validationListPrint(ValidationList_t*, Journal_t**);
 
 ValidationList_t* validationListCreate();
 
@@ -160,7 +160,7 @@ Forget_t* forgetParser(char **);
 
 void destroySchema(Journal_t**, int);
 
-void printValidation(ValQuery_t*);
+void printValidation(ValQuery_t*, Journal_t**);
 
 int cmp_col(const void *, const void *);
 

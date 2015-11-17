@@ -61,9 +61,12 @@ List_t *info_init(void) {
 }
 
 void destroy_list(List_t* list){
-	uint64_t i;
-	uint64_t initial_size = list->size;
-	for(i = 0; i < initial_size; i++){
+	// uint64_t i;
+	// uint64_t initial_size = list->size;
+	// for(i = 0; i < initial_size; i++){
+	// 	remove_end(list);
+	// }
+	while(!isEmpty(list)){
 		remove_end(list);
 	}
 	free(list);
@@ -154,7 +157,9 @@ List_t* getJournalRecords(Journal_t* journal, Column_t* constraint, int range_st
 	uint64_t last = journal->num_of_recs - 1;
 	uint64_t middle = (first+last)/2;
 	uint64_t first_appearance;
-	while (first <= last ) {
+	Boolean_t not_found = False;
+
+	while (first <= last && not_found == False) {
 		if (journal->records[middle].transaction_id < range_start){
 			first = middle + 1;    
 		}
@@ -164,13 +169,14 @@ List_t* getJournalRecords(Journal_t* journal, Column_t* constraint, int range_st
 		}
 		else{
 			if(middle == 0){
-				return info_init();
+				not_found = True;
+				break;
 			}
 			last = middle - 1;
 		}
 		middle = (first + last)/2;
 	}
-	if (first > last){	//Not found
+	if (first > last || not_found == True){	//Not found
 		first_appearance = last;
 		while(first_appearance < journal->num_of_recs && journal->records[first_appearance].transaction_id < range_start){
 			first_appearance++;
