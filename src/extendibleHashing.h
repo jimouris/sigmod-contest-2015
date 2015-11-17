@@ -30,6 +30,8 @@ typedef struct Bucket { /* Has a pointer (key_buckets) to one or more subBuckets
 	uint32_t local_depth;
 	uint32_t current_subBuckets;
 	SubBucket *key_buckets;
+	unsigned char deletion_started;
+	uint64_t pointers_num;
 } Bucket;
 
 typedef struct Hash {

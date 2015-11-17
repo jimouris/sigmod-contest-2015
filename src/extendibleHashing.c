@@ -154,6 +154,7 @@ Bucket* createNewBucket(uint32_t local_depth, uint32_t b_size) {
 	ALLOCATION_ERROR(new_bucket);
 	new_bucket->local_depth = local_depth;
 	new_bucket->current_subBuckets = 0;
+	new_bucket->deletion_started = 0;
 	new_bucket->key_buckets = malloc(b_size * sizeof(SubBucket));
 	ALLOCATION_ERROR(new_bucket->key_buckets);
 	uint32_t i, j;
@@ -268,22 +269,22 @@ int destroyHash(Hash* hash) {
 	for (i = 0 ; i < hash->size ; i++) { /*for every bucket on the hash*/
 		uint32_t j;
 		Bucket * bucketPtr = hash->index[i];
-		if (hash->index[i] != NULL) {
+		if (!bucketPtr->deletion_started) { /*it is the first bucket*/
+			bucketPtr->deletion_started = 1;
+			bucketPtr->pointers_num = 1 << (hash->global_depth - bucketPtr->local_depth);
+		}
 
+		if (bucketPtr->pointers_num == 1 ) { /*if it is the last remaining pointer that points to the bucket*/
 			for (j = 0 ; j < B ; j++) {
 				free(bucketPtr->key_buckets[j].transaction_range);
 			}
 			free(bucketPtr->key_buckets);
-			uint32_t k;
-			for (k = i ; k < hash->size ; k++) {
-				if (hash->index[k] == bucketPtr) {
-					hash->index[k] = NULL ;
-				}
-			}
 			free(bucketPtr);
-			bucketPtr = NULL;
-			hash->index[i] = NULL;
+		}else{
+			bucketPtr->pointers_num--;
 		}
+		hash->index[i] = NULL;
+		bucketPtr = NULL;
 	}
 	free(hash->index);
 	free(hash);
