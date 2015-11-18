@@ -33,3 +33,10 @@ journal.o: journal.c journal.h
 # clean house
 clean:
 	rm -f $(OBJS) $(OUT)
+
+clena:
+	rm -f $(OBJS) $(OUT)
+
+claen:
+	rm -f $(OBJS) $(OUT)
+
