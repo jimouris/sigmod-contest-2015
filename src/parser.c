@@ -141,7 +141,7 @@ void processFlush(Flush_t *fl, Journal_t** journal_array, ValidationList_t* vali
 			// 	// free(constraint);
 			// 	uint64_t range_size;
 			// 	uint64_t i;
-			// 	RangeArray* range_array = getHashRecord(journal_array[16]->index, 4, &i);
+			// 	RangeArray* range_array = getHashRecord(journal_array[16]->index, 480, &range_size);
 			// 	if(range_array != NULL){
 			// 		printf("Not Empty size = %zu\n",range_size);
 			// 		for(i=0; i<range_size; i++){
@@ -179,7 +179,7 @@ Boolean_t checkValidation(Journal_t** journal_array, ValQuery_t* val_query){
 Boolean_t checkSingleQuery(Journal_t** journal_array, SingleQuery_t* query, uint64_t from, uint64_t to){
 	Boolean_t result = False; 
 	Journal_t* journal = journal_array[query->relationId];
-	uint64_t i, j, range_size;
+	uint64_t i, j, range_size = 0;
 	RangeArray* range_array = NULL;
 	if(query->columnCount == 0){
 		return True;
@@ -222,6 +222,11 @@ Boolean_t checkSingleQuery(Journal_t** journal_array, SingleQuery_t* query, uint
 			}
 		}
 		i = first_appearance;
+		////////////
+		// if(first_appearance > from && range_array[first_appearance-1].transaction_id == range_array[first_appearance].transaction_id){
+		// 	i = first_appearance-1;
+		// }
+		////////////
 		while(i < range_size && range_array[i].transaction_id <= to ) {				/* for i in range_array */
 			uint64_t offset = range_array[i].rec_offset;
 			JournalRecord_t* record = &journal->records[offset];

@@ -184,6 +184,10 @@ List_t* getJournalRecords(Journal_t* journal, Column_t* constraint, int range_st
 	}
 	List_t* record_list = info_init();
 	uint64_t i = first_appearance;
+	// while(first_appearance > range_start && journal->records[first_appearance-1].transaction_id == journal->records[first_appearance].transaction_id){
+	// 	i = first_appearance-1;
+	// 	first_appearance--;
+	// }
 	while(i < journal->num_of_recs && journal->records[i].transaction_id <= range_end ) {
 		JournalRecord_t* record = &journal->records[i];
 		if(constraint == NULL || checkConstraint(record, constraint)){
