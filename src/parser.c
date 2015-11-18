@@ -413,7 +413,7 @@ void printValidation(ValQuery_t* val_query, Journal_t** journal_array){
 	int i,j;
 	/*For each query*/
 	for (i = 0; i < val_query->queryCount; i++) {
-		const SingleQuery_t* query = val_query->queries[i];
+		SingleQuery_t* query = val_query->queries[i];
 		printf("Query for relation %" PRIu32 " query columnCount = %d RESULT: %d\n", query->relationId,query->columnCount,checkSingleQuery(journal_array,query,val_query->from,val_query->to));
 
 		for(j = 0; j<query->columnCount; j++){
