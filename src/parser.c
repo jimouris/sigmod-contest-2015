@@ -121,8 +121,8 @@ void processFlush(Flush_t *fl, Journal_t** journal_array, ValidationList_t* vali
 			ValQuery_t* val_query = validation_list->validation_array[i];	
 			// checkValidation(journal_array, val_query);
 			// printf("\tResult for ValID %zu is: %d\n",i,checkValidation(journal_array, val_query));
-			printf("%d", checkValidation(journal_array, val_query));
-			// if(val_query->validationId == 405){
+			// printf("%d", checkValidation(journal_array, val_query));
+			// if(val_query->validationId == 0){
 			// 	printf("\n");
 			// 	printValidation(val_query, journal_array);
 			// 	printf("\n\n");
@@ -141,11 +141,14 @@ void processFlush(Flush_t *fl, Journal_t** journal_array, ValidationList_t* vali
 			// 	// free(constraint);
 			// 	uint64_t range_size;
 			// 	uint64_t i;
-			// 	RangeArray* range_array = getHashRecord(journal_array[16]->index, 480, &range_size);
+			// 	RangeArray* range_array = getHashRecord(journal_array[15]->index, 1344, &range_size);
 			// 	if(range_array != NULL){
 			// 		printf("Not Empty size = %zu\n",range_size);
 			// 		for(i=0; i<range_size; i++){
-			// 			printf("Transaction ID: %zu\n",range_array[i].transaction_id);
+			// 			JournalRecord_t* record = &journal_array[15]->records[range_array[i].rec_offset];
+			// 			// printf("Transaction ID: %zu\n",range_array[i].transaction_id);
+			// 			printJournalRecord(record);
+			// 			printValidation(validation_list->validation_array[0], journal_array);
 			// 		}
 			// 	} else{
 			// 		printf("Empty\n");
@@ -221,10 +224,13 @@ Boolean_t checkSingleQuery(Journal_t** journal_array, SingleQuery_t* query, uint
 				first_appearance++;
 			}
 		}
+		if(first_appearance >= range_size){
+			return False;
+		}
 		////////////
-		// while(first_appearance > 0 && range_array[first_appearance-1].transaction_id == range_array[first_appearance].transaction_id){
-		// 	first_appearance--;
-		// }
+		while(first_appearance > 0 && range_array[first_appearance-1].transaction_id == range_array[first_appearance].transaction_id){
+			first_appearance--;
+		}
 		////////////
 		i = first_appearance;
 		while(i < range_size && range_array[i].transaction_id <= to ) {				/* for i in range_array */
@@ -406,44 +412,45 @@ int validationListInsert(ValidationList_t* validation_list, ValQuery_t* val_quer
 
 void validationListPrint(ValidationList_t* validation_list, Journal_t ** journal_array){
 	uint64_t i;
-	// for(i = 0; i < validation_list->num_of_validations; i++ ){
-	for(i = 405; i < 408; i++ ){
+	for(i = 0; i < validation_list->num_of_validations; i++ ){
+	// for(i = 405; i < 408; i++ ){
 		printValidation(validation_list->validation_array[i], journal_array);
 	}
+	// printValidation(validation_list->validation_array[2650], journal_array);
 }
 
 void printValidation(ValQuery_t* val_query, Journal_t** journal_array){
-	printf("ValidationQueries %lu [%lu, %lu] %u RESLUT: %d\n", val_query->validationId, val_query->from, val_query->to, val_query->queryCount,checkValidation(journal_array,val_query));
+	fprintf(stderr,"\nValidationQueries %lu [%lu, %lu] %u RESLUT: %d\n", val_query->validationId, val_query->from, val_query->to, val_query->queryCount,checkValidation(journal_array,val_query));
 	
 	int i,j;
 	/*For each query*/
 	for (i = 0; i < val_query->queryCount; i++) {
 		SingleQuery_t* query = val_query->queries[i];
-		printf("Query for relation %" PRIu32 " query columnCount = %d RESULT: %d\n", query->relationId,query->columnCount,checkSingleQuery(journal_array,query,val_query->from,val_query->to));
+		fprintf(stderr,"Query for relation %" PRIu32 " query columnCount = %d RESULT: %d\n", query->relationId,query->columnCount,checkSingleQuery(journal_array,query,val_query->from,val_query->to));
 
 		for(j = 0; j<query->columnCount; j++){
 			const Column_t* column = query->columns[j];
 			switch(column->op){
 				case Equal:
-					printf("\tC%" PRIu32 " == %zu\n",column->column, column->value);
+					fprintf(stderr,"\tC%" PRIu32 " == %zu\n",column->column, column->value);
 					break;
 				case NotEqual:
-					printf("\tC%" PRIu32 " != %zu\n",column->column, column->value);
+					fprintf(stderr,"\tC%" PRIu32 " != %zu\n",column->column, column->value);
 					break;
 				case Less:
-					printf("\tC%" PRIu32 " < %zu\n",column->column, column->value);
+					fprintf(stderr,"\tC%" PRIu32 " < %zu\n",column->column, column->value);
 					break;
 				case LessOrEqual:
-					printf("\tC%" PRIu32 " <= %zu\n",column->column, column->value);
+					fprintf(stderr,"\tC%" PRIu32 " <= %zu\n",column->column, column->value);
 					break;
 				case Greater:
-					printf("\tC%" PRIu32 " > %zu\n",column->column, column->value);
+					fprintf(stderr,"\tC%" PRIu32 " > %zu\n",column->column, column->value);
 					break;
 				case GreaterOrEqual:
-					printf("\tC%" PRIu32 " >= %zu\n",column->column, column->value);
+					fprintf(stderr,"\tC%" PRIu32 " >= %zu\n",column->column, column->value);
 					break;
 				default:
-					printf("Wrong operator\n");
+					fprintf(stderr,"Wrong operator\n");
 					exit(1);
 			}			
 		}
