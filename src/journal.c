@@ -110,7 +110,7 @@ int increaseJournal(Journal_t* journal){
 
 /*Returns a pointer to the inserted record*/
 
-JournalRecord_t* insertJournalRecord(Journal_t* journal, uint64_t transaction_id, size_t columns, const uint64_t* column_values){
+void insertJournalRecord(Journal_t* journal, uint64_t transaction_id, size_t columns, const uint64_t* column_values){
 	if(journal->num_of_recs >= journal->journal_capacity) {
 		increaseJournal(journal);
 	}
@@ -131,7 +131,7 @@ JournalRecord_t* insertJournalRecord(Journal_t* journal, uint64_t transaction_id
 	// printf("Relation: %zu, Key: %zu\n",journal->relation_id, column_values[0] );
 	insertHashRecord(journal->index, column_values[0], range_array);
 	free(range_array);
-	return &journal->records[journal->num_of_recs++];
+	journal->num_of_recs++;
 }
 // int insertJournalRecord(Journal_t* journal, JournalRecord_t* record) {
 // 	if(journal->num_of_recs >= journal->journal_capacity) {
@@ -224,12 +224,11 @@ Boolean_t checkConstraint(JournalRecord_t* record, Column_t* constraint){
 }
 
 /*Returns a pointer to the inserted record*/
-
-JournalRecord_t* insertJournalRecordCopy(Journal_t* journal, JournalRecord_t* old, uint64_t new_transaction_id){
+void insertJournalRecordCopy(Journal_t* journal, JournalRecord_t* old, uint64_t new_transaction_id){
 	uint64_t transaction_id = new_transaction_id;
 	size_t columns = old->columns;
 	uint64_t* column_values = old->column_values;
-	return insertJournalRecord(journal, transaction_id, columns, column_values);
+	insertJournalRecord(journal, transaction_id, columns, column_values);
 }
 
 JournalRecord_t* copyJournalRecord(JournalRecord_t* old){

@@ -65,7 +65,7 @@ void print_list(List_t *l_info);
 
 Journal_t* createJournal(uint64_t);
 
-JournalRecord_t* insertJournalRecord(Journal_t*, uint64_t, size_t, const uint64_t*);
+void insertJournalRecord(Journal_t*, uint64_t, size_t, const uint64_t*);
 // int insertJournalRecord(Journal_t*, JournalRecord_t*);
 
 List_t* getJournalRecords(Journal_t*, Column_t*, int range_start, int range_end);
@@ -74,7 +74,7 @@ int destroyJournal(Journal_t*);
 
 int destroyJournalRecord(JournalRecord_t*);
 
-JournalRecord_t* insertJournalRecordCopy(Journal_t* journal, JournalRecord_t* old, uint64_t);
+void insertJournalRecordCopy(Journal_t* journal, JournalRecord_t* old, uint64_t);
 
 JournalRecord_t* copyJournalRecord(JournalRecord_t*);
 
