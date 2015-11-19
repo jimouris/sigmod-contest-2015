@@ -74,7 +74,7 @@ int destroyJournal(Journal_t*);
 
 int destroyJournalRecord(JournalRecord_t*);
 
-JournalRecord_t* insertJournalRecordCopy(Journal_t* journal, JournalRecord_t* old);
+JournalRecord_t* insertJournalRecordCopy(Journal_t* journal, JournalRecord_t* old, uint64_t);
 
 JournalRecord_t* copyJournalRecord(JournalRecord_t*);
 

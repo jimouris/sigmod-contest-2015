@@ -35,7 +35,7 @@ void processTransaction(Transaction_t *t, Journal_t** journal_array) {
 			JournalRecord_t* last_insertion = getLastRecord(journal_array[o->relationId], key);
 			if (last_insertion != NULL) {
 				// JournalRecord_t* deletion = copyJournalRecord(last_insertion);
-				JournalRecord_t* deletion = insertJournalRecordCopy(journal_array[o->relationId], last_insertion); 
+				JournalRecord_t* deletion = insertJournalRecordCopy(journal_array[o->relationId], last_insertion, t->transactionId); 
 				deletion->transaction_id = t->transactionId;
 			} /* else { // the deletion doesn't exist } */
 		}
@@ -121,8 +121,9 @@ void processFlush(Flush_t *fl, Journal_t** journal_array, ValidationList_t* vali
 			ValQuery_t* val_query = validation_list->validation_array[i];	
 			// checkValidation(journal_array, val_query);
 			// printf("\tResult for ValID %zu is: %d\n",i,checkValidation(journal_array, val_query));
-			// printf("%d", checkValidation(journal_array, val_query));
-			// if(val_query->validationId == 0){
+			printf("%d", checkValidation(journal_array, val_query));
+			// if(val_query->validationId == 2650){
+				// printValidation(validation_list->validation_array[2650], journal_array);
 			// 	printf("\n");
 			// 	printValidation(val_query, journal_array);
 			// 	printf("\n\n");
@@ -141,14 +142,13 @@ void processFlush(Flush_t *fl, Journal_t** journal_array, ValidationList_t* vali
 			// 	// free(constraint);
 			// 	uint64_t range_size;
 			// 	uint64_t i;
-			// 	RangeArray* range_array = getHashRecord(journal_array[15]->index, 1344, &range_size);
+			// 	RangeArray* range_array = getHashRecord(journal_array[17]->index, 1476, &range_size);
 			// 	if(range_array != NULL){
 			// 		printf("Not Empty size = %zu\n",range_size);
 			// 		for(i=0; i<range_size; i++){
-			// 			JournalRecord_t* record = &journal_array[15]->records[range_array[i].rec_offset];
+			// 			JournalRecord_t* record = &journal_array[17]->records[range_array[i].rec_offset];
 			// 			// printf("Transaction ID: %zu\n",range_array[i].transaction_id);
 			// 			printJournalRecord(record);
-			// 			printValidation(validation_list->validation_array[0], journal_array);
 			// 		}
 			// 	} else{
 			// 		printf("Empty\n");
@@ -188,7 +188,6 @@ Boolean_t checkSingleQuery(Journal_t** journal_array, SingleQuery_t* query, uint
 		return True;
 	}
 	/* check the first column of validation */
-	// fprintf(stderr, "Column count = %" PRIu32 "\n",query->columnCount );
 	if (query->columns[0]->column == 0 && query->columns[0]->op == Equal){ /* if primary key */
 		range_array = getHashRecord(journal->index, query->columns[0]->value, &range_size);
 		if(range_array == NULL || range_size == 0){
@@ -204,12 +203,10 @@ Boolean_t checkSingleQuery(Journal_t** journal_array, SingleQuery_t* query, uint
 		while (first <= last && not_found == False) {
 			if (range_array[middle].transaction_id < from){
 				first = middle + 1;    
-			}
-			else if (range_array[middle].transaction_id == from) {
+			} else if (range_array[middle].transaction_id == from) {
 				first_appearance = middle;
 				break;
-			}
-			else{
+			} else {
 				if(middle == 0){
 					not_found = True;
 					break;
@@ -219,7 +216,7 @@ Boolean_t checkSingleQuery(Journal_t** journal_array, SingleQuery_t* query, uint
 			middle = (first + last)/2;
 		}
 		if (first > last || not_found == True){	//Not found
-			first_appearance = last <= first ? last : first;
+			first_appearance = (last <= first) ? last : first;
 			while(first_appearance < range_size && range_array[first_appearance].transaction_id < from){
 				first_appearance++;
 			}
@@ -227,11 +224,9 @@ Boolean_t checkSingleQuery(Journal_t** journal_array, SingleQuery_t* query, uint
 		if(first_appearance >= range_size){
 			return False;
 		}
-		////////////
 		while(first_appearance > 0 && range_array[first_appearance-1].transaction_id == range_array[first_appearance].transaction_id){
 			first_appearance--;
 		}
-		////////////
 		i = first_appearance;
 		while(i < range_size && range_array[i].transaction_id <= to ) {				/* for i in range_array */
 			uint64_t offset = range_array[i].rec_offset;
@@ -294,63 +289,63 @@ Boolean_t checkSingleQuery(Journal_t** journal_array, SingleQuery_t* query, uint
 // 	return result;
 // }
 
-Boolean_t checkColumn(Journal_t* journal,Column_t* column, uint64_t from, uint64_t to){
-	Boolean_t  result;
-	if(column->column == 0 && column->op == Equal){  /*Primary Key*/
-		uint64_t range_size;
-		RangeArray* range_array = getHashRecord(journal->index, column->value, &range_size);
-		if(range_array == NULL){
-			return False;
-		}
-		uint64_t i;
-		Boolean_t exists = False;
-		/*Binary Search for first appearance*/
-		uint64_t first = 0;
-		uint64_t last = range_size - 1;
-		uint64_t middle = (first+last)/2;
-		uint64_t first_appearance;
-		while (first <= last ) {
-			if (range_array[middle].transaction_id < from){
-				first = middle + 1;    
-			}
-			else if (range_array[middle].transaction_id == from) {
-				first_appearance = middle;
-				break;
-			}
-			else{
-				if(middle == 0){
-					return False;
-				}
-				last = middle - 1;
-			}
-			middle = (first + last)/2;
-		}
-		if (first > last){	//Not found
-			first_appearance = last;
-			while(first_appearance < range_size && range_array[first_appearance].transaction_id < from){
-				first_appearance++;
-			}
-		}
+// Boolean_t checkColumn(Journal_t* journal,Column_t* column, uint64_t from, uint64_t to){
+// 	Boolean_t  result;
+// 	if(column->column == 0 && column->op == Equal){  /*Primary Key*/
+// 		uint64_t range_size;
+// 		RangeArray* range_array = getHashRecord(journal->index, column->value, &range_size);
+// 		if(range_array == NULL){
+// 			return False;
+// 		}
+// 		uint64_t i;
+// 		Boolean_t exists = False;
+// 		/*Binary Search for first appearance*/
+// 		uint64_t first = 0;
+// 		uint64_t last = range_size - 1;
+// 		uint64_t middle = (first+last)/2;
+// 		uint64_t first_appearance;
+// 		while (first <= last ) {
+// 			if (range_array[middle].transaction_id < from){
+// 				first = middle + 1;    
+// 			}
+// 			else if (range_array[middle].transaction_id == from) {
+// 				first_appearance = middle;
+// 				break;
+// 			}
+// 			else{
+// 				if(middle == 0){
+// 					return False;
+// 				}
+// 				last = middle - 1;
+// 			}
+// 			middle = (first + last)/2;
+// 		}
+// 		if (first > last){	//Not found
+// 			first_appearance = last;
+// 			while(first_appearance < range_size && range_array[first_appearance].transaction_id < from){
+// 				first_appearance++;
+// 			}
+// 		}
 
-		i = first_appearance;
-		while(i < range_size && range_array[i].transaction_id <= to ) {
-			uint64_t offset = range_array[i].rec_offset;
-			JournalRecord_t* record = &journal->records[offset];
-			Boolean_t partial_result = checkConstraint(record, column);
-			if(partial_result == True){
-				return True;
-			}
-			exists = exists ||  partial_result;
-			i++;
-		}
-		return exists;
-	} else {
-		List_t* record_list = getJournalRecords(journal, column, from, to);
-		result = (!isEmpty(record_list));
-		destroy_list(record_list);
-	}
-	return result;
-}
+// 		i = first_appearance;
+// 		while(i < range_size && range_array[i].transaction_id <= to ) {
+// 			uint64_t offset = range_array[i].rec_offset;
+// 			JournalRecord_t* record = &journal->records[offset];
+// 			Boolean_t partial_result = checkConstraint(record, column);
+// 			if(partial_result == True){
+// 				return True;
+// 			}
+// 			exists = exists ||  partial_result;
+// 			i++;
+// 		}
+// 		return exists;
+// 	} else {
+// 		List_t* record_list = getJournalRecords(journal, column, from, to);
+// 		result = (!isEmpty(record_list));
+// 		destroy_list(record_list);
+// 	}
+// 	return result;
+// }
 
 
 void destroySchema(Journal_t** journal_array, int relation_count){

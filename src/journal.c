@@ -177,7 +177,7 @@ List_t* getJournalRecords(Journal_t* journal, Column_t* constraint, int range_st
 		middle = (first + last)/2;
 	}
 	if (first > last || not_found == True){	//Not found
-		first_appearance = last;
+		first_appearance = (last <= first) ? last : first;
 		while(first_appearance < journal->num_of_recs && journal->records[first_appearance].transaction_id < range_start){
 			first_appearance++;
 		}
@@ -225,8 +225,8 @@ Boolean_t checkConstraint(JournalRecord_t* record, Column_t* constraint){
 
 /*Returns a pointer to the inserted record*/
 
-JournalRecord_t* insertJournalRecordCopy(Journal_t* journal, JournalRecord_t* old){
-	uint64_t transaction_id = old->transaction_id;
+JournalRecord_t* insertJournalRecordCopy(Journal_t* journal, JournalRecord_t* old, uint64_t new_transaction_id){
+	uint64_t transaction_id = new_transaction_id;
 	size_t columns = old->columns;
 	uint64_t* column_values = old->column_values;
 	return insertJournalRecord(journal, transaction_id, columns, column_values);
