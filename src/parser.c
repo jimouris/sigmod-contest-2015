@@ -221,12 +221,12 @@ Boolean_t checkSingleQuery(Journal_t** journal_array, SingleQuery_t* query, uint
 				first_appearance++;
 			}
 		}
-		i = first_appearance;
 		////////////
-		// if(first_appearance > from && range_array[first_appearance-1].transaction_id == range_array[first_appearance].transaction_id){
-		// 	i = first_appearance-1;
+		// while(first_appearance > 0 && range_array[first_appearance-1].transaction_id == range_array[first_appearance].transaction_id){
+		// 	first_appearance--;
 		// }
 		////////////
+		i = first_appearance;
 		while(i < range_size && range_array[i].transaction_id <= to ) {				/* for i in range_array */
 			uint64_t offset = range_array[i].rec_offset;
 			JournalRecord_t* record = &journal->records[offset];
