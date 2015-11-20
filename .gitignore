@@ -30,3 +30,9 @@
 
 # Debug files
 *.dSYM/
+
+# Big input files
+*.test
+
+
+
