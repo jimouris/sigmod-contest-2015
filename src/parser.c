@@ -66,7 +66,7 @@ void processValidationQueries(ValidationQueries_t *v, Journal_t** journal_array,
 	ALLOCATION_ERROR(val_query->queries);
 
 	const char* reader = v->queries;
-	int i,j;
+	uint32_t i,j;
 	for (i = 0; i < v->queryCount; i++) {
 		const Query_t* query = (Query_t*)reader;
 		val_query->queries[i] = malloc(sizeof(SingleQuery_t));
@@ -274,7 +274,7 @@ Boolean_t checkSingleQuery(Journal_t** journal_array, SingleQuery_t* query, uint
 }
 
 void destroySchema(Journal_t** journal_array, int relation_count){
-	int i;
+	uint32_t i;
 	for(i = 0; i< relation_count; i++){
 		destroyJournal(journal_array[i]);
 	}
@@ -342,7 +342,7 @@ void validationListPrint(ValidationList_t* validation_list, Journal_t ** journal
 void printValidation(ValQuery_t* val_query, Journal_t** journal_array){
 	fprintf(stderr,"\nValidationQueries %lu [%lu, %lu] %u RESLUT: %d\n", val_query->validationId, val_query->from, val_query->to, val_query->queryCount,checkValidation(journal_array,val_query));
 	
-	int i,j;
+	uint32_t i,j;
 	/*For each query*/
 	for (i = 0; i < val_query->queryCount; i++) {
 		SingleQuery_t* query = val_query->queries[i];
