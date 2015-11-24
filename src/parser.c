@@ -26,17 +26,15 @@ void processTransaction(Transaction_t *t, Journal_t** journal_array) {
 	const char* reader = t->operations;
 	// printf("Transaction %lu (%u, %u)\n", t->transactionId, t->deleteCount, t->insertCount);
 	for (i = 0; i < t->deleteCount; i++) {
-		//Find the latest insert record.
-		//Use the hash table
-		//Insert the JournalRecord.
 		const TransactionOperationDelete_t* o = (TransactionOperationDelete_t*)reader;
 		for (j = 0; j < o->rowCount; j++){
+			//Find the latest insert record.
 			uint64_t key = o->keys[j];
 			JournalRecord_t* last_insertion = getLastRecord(journal_array[o->relationId], key);
-			if (last_insertion != NULL) {
-				// JournalRecord_t* deletion = copyJournalRecord(last_insertion);
-				insertJournalRecordCopy(journal_array[o->relationId], last_insertion, t->transactionId); 
-			} /* else { // the deletion doesn't exist } */
+			if (last_insertion != NULL && last_insertion->dirty_bit == False) {
+				//Insert the JournalRecord.
+				insertJournalRecordCopy(journal_array[o->relationId], last_insertion, t->transactionId, True); 
+			} /* else { // the key doesn't exist, skip it } */
 		}
 		reader += sizeof(TransactionOperationDelete_t) + (sizeof(uint64_t) * o->rowCount);
 		// printf("opdel rid %u #rows %u ", o->relationId, o->rowCount);
@@ -45,9 +43,7 @@ void processTransaction(Transaction_t *t, Journal_t** journal_array) {
 		const TransactionOperationInsert_t* o = (TransactionOperationInsert_t*)reader;
 		for(j = 0; j < o->rowCount; j++){
 			const uint64_t *values = o->values + j*schema[o->relationId];
-			// JournalRecord_t* record = createJournalRecord(t->transactionId, schema[o->relationId], values);
-			// insertJournalRecord(journal_array[o->relationId], record);			
-			insertJournalRecord(journal_array[o->relationId], t->transactionId, schema[o->relationId], values);			
+			insertJournalRecord(journal_array[o->relationId], t->transactionId, schema[o->relationId], values, False);			
 		}
 		reader += sizeof(TransactionOperationInsert_t) + (sizeof(uint64_t) * o->rowCount * schema[o->relationId]);
 		// printf("opins rid %u #rows %u |", o->relationId, o->rowCount);
@@ -121,8 +117,8 @@ void processFlush(Flush_t *fl, Journal_t** journal_array, ValidationList_t* vali
 			// checkValidation(journal_array, val_query);
 			// printf("\tResult for ValID %zu is: %d\n",i,checkValidation(journal_array, val_query));
 			printf("%d", checkValidation(journal_array, val_query));
-			// if(val_query->validationId == 19631){
-			// 	printValidation(val_query, journal_array);
+			// if(val_query->validationId == 51252){
+				// printValidation(val_query, journal_array);
 			// 	printf("\n");
 				// printf("\n\n");
 				// Column_t* constraint = malloc(sizeof(Column_t));
@@ -153,7 +149,7 @@ void processFlush(Flush_t *fl, Journal_t** journal_array, ValidationList_t* vali
 			// 		printf("Empty\n");
 			// 	}
 
-			// 	exit(1);
+				// exit(1);
 			// }
 		}
 	}
@@ -184,8 +180,9 @@ Boolean_t checkSingleQuery(Journal_t** journal_array, SingleQuery_t* query, uint
 	Journal_t* journal = journal_array[query->relationId];
 	uint64_t i, j, range_size = 0;
 	RangeArray* range_array = NULL;
-	if(query->columnCount == 0){
+	if(query->columnCount == 0){	/* Empty query! */
 		return False;
+		// return True;
 	}
 	/* check the first column of validation */
 	if (query->columns[0]->column == 0 && query->columns[0]->op == Equal){ /* if primary key */
@@ -333,10 +330,8 @@ int validationListInsert(ValidationList_t* validation_list, ValQuery_t* val_quer
 void validationListPrint(ValidationList_t* validation_list, Journal_t ** journal_array){
 	uint64_t i;
 	for(i = 0; i < validation_list->num_of_validations; i++ ){
-	// for(i = 405; i < 408; i++ ){
 		printValidation(validation_list->validation_array[i], journal_array);
 	}
-	// printValidation(validation_list->validation_array[2650], journal_array);
 }
 
 void printValidation(ValQuery_t* val_query, Journal_t** journal_array){

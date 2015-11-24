@@ -21,7 +21,7 @@ typedef struct JournalRecord_t {
 	uint64_t transaction_id;
 	size_t columns;	//number of columns
 	uint64_t* column_values;
-	// Boolean_t dirty_bit;
+	Boolean_t dirty_bit;
 } JournalRecord_t;
 
 typedef struct Journal_t {
@@ -65,7 +65,7 @@ void print_list(List_t *l_info);
 
 Journal_t* createJournal(uint64_t);
 
-void insertJournalRecord(Journal_t*, uint64_t, size_t, const uint64_t*);
+void insertJournalRecord(Journal_t*, uint64_t, size_t, const uint64_t*, Boolean_t);
 // int insertJournalRecord(Journal_t*, JournalRecord_t*);
 
 List_t* getJournalRecords(Journal_t*, Column_t*, int range_start, int range_end);
@@ -74,7 +74,7 @@ int destroyJournal(Journal_t*);
 
 int destroyJournalRecord(JournalRecord_t*);
 
-void insertJournalRecordCopy(Journal_t* journal, JournalRecord_t* old, uint64_t);
+void insertJournalRecordCopy(Journal_t* journal, JournalRecord_t* old, uint64_t, Boolean_t);
 
 JournalRecord_t* copyJournalRecord(JournalRecord_t*);
 

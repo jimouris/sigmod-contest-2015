@@ -110,12 +110,13 @@ int increaseJournal(Journal_t* journal){
 
 /*Returns a pointer to the inserted record*/
 
-void insertJournalRecord(Journal_t* journal, uint64_t transaction_id, size_t columns, const uint64_t* column_values){
+void insertJournalRecord(Journal_t* journal, uint64_t transaction_id, size_t columns, const uint64_t* column_values, Boolean_t dirty_bit){
 	if(journal->num_of_recs >= journal->journal_capacity) {
 		increaseJournal(journal);
 	}
 	//Insert the record
 	journal->records[journal->num_of_recs].transaction_id = transaction_id;
+	journal->records[journal->num_of_recs].dirty_bit = dirty_bit;
 	journal->records[journal->num_of_recs].columns = columns;
 	journal->records[journal->num_of_recs].column_values = malloc(journal->records[journal->num_of_recs].columns * sizeof(uint64_t));
 	ALLOCATION_ERROR(journal->records[journal->num_of_recs].column_values);
@@ -224,11 +225,11 @@ Boolean_t checkConstraint(JournalRecord_t* record, Column_t* constraint){
 }
 
 /*Returns a pointer to the inserted record*/
-void insertJournalRecordCopy(Journal_t* journal, JournalRecord_t* old, uint64_t new_transaction_id){
+void insertJournalRecordCopy(Journal_t* journal, JournalRecord_t* old, uint64_t new_transaction_id, Boolean_t dirty_bit){
 	uint64_t transaction_id = new_transaction_id;
 	size_t columns = old->columns;
 	uint64_t* column_values = old->column_values;
-	insertJournalRecord(journal, transaction_id, columns, column_values);
+	insertJournalRecord(journal, transaction_id, columns, column_values, dirty_bit);
 }
 
 JournalRecord_t* copyJournalRecord(JournalRecord_t* old){
