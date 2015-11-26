@@ -186,7 +186,6 @@ void cleanBucket(Bucket* conflict_bucket) {
 }
 
 void cleanSubBucket(SubBucket* subBucket) {
-
 	uint64_t j,iter = subBucket->current_entries; /* reduce iterations */
 	subBucket->key = 0;
 	if (subBucket->current_entries > C ) { /* we must realloc to the default capacity C */
@@ -308,18 +307,22 @@ int deleteHashRecord(Hash* hash, Key key) {
 	return 1;
 }
 
+void moveSubBucketsLeft(Bucket* bucket,uint32_t index) {
+	uint32_t i;
+	fprintf(stderr,"Called with index %u",index);
+	for(i = index ; i < bucket->current_subBuckets; i++) {
+		copySubbucketTransactions(&bucket->key_buckets[i-1],&bucket->key_buckets[i]);
+		cleanSubBucket(&bucket->key_buckets[i]);
+	}
+}
+
 int deleteSubBucket(Bucket* bucket,Key key) {
 	uint32_t i;
 	for (i = 0 ; i < bucket->current_subBuckets; i++) {	/* for all subbuckets */
 		if (bucket->key_buckets[i].key == key) {	/* SubBucket for deletion found*/
-			
-			/*	now we have to delete this subBucket and move 
-				the remaining right SubBuckets one SubBucket left.
-			*/
-
-			/*clean the SubBucket*/
-
-			/*end of clean*/
+			cleanSubBucket(&bucket->key_buckets[i]);
+			moveSubBucketsLeft(bucket,i+1);
+			bucket->current_subBuckets--;
 			return 1;
 		}
 	}

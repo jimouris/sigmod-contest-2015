@@ -66,6 +66,7 @@ void cleanSubBucket(SubBucket *);
 /*SEARCH TO HASH AND OTHER HELPER METHODS*/
 RangeArray* getHashRecord(Hash *, Key, uint64_t *);
 JournalRecord_t* getLastRecord(Journal_t*, Key);
+void moveSubBucketsLeft(Bucket*,uint32_t);
 // List<Record> getHashRecords(Hash*, Key, int range_start, int range_end);
 /****************************************/
 
