@@ -1,17 +1,38 @@
 #!/bin/sh
 
+DEFAULTINPUT="./inputs/small.bin"
+DEFAULTOUTPUT="./outputs/small.out.bin"
+
 make clean
 make
-
-echo "\nNow running!"
-./a.out < inputs/small.bin > myout.test
-echo "done :)\n"
 gcc -o perlineprinter src/printperline.c
-./perlineprinter < myout.test > myoutperline.test
-./perlineprinter < outputs/small.out.bin > smalloutperline.test
 
-diff myoutperline.test smalloutperline.test
+echo "\n\nNow running!"
+if [ $# -eq 0 ] ; then
+    echo "No arguments supplied, running with $DEFAULTINPUT"
+	./a.out < $DEFAULTINPUT > myout.test
+	echo "done :)\n"
+	./perlineprinter < myout.test > myoutperline.test
+	rm myout.test
+	./perlineprinter < $DEFAULTOUTPUT > $DEFAULTOUTPUT.perline.test
+	diff myoutperline.test $DEFAULTOUTPUT.perline.test
+	echo "\n\n"
+else
+	echo "running with $1"
+	input="${1}"
+	./a.out < $input > myout.test
+	echo "done :)\n"
+	./perlineprinter < myout.test > myoutperline.test
+	rm myout.test
+	output="./outputs/"${input#*/}
+	ending=${output##*.}
+	output=${output%.*}".out."$ending
+	# echo "$output"
+	./perlineprinter < $output > $output.perline.test
+	diff myoutperline.test $output.perline.test
+	DEFAULTOUTPUT=$output
+	echo "\n\n"
+fi
 
-rm myoutperline.test smalloutperline.test perlineprinter
+rm myoutperline.test $DEFAULTOUTPUT.perline.test perlineprinter
 make clean
-
