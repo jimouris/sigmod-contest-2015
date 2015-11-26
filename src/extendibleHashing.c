@@ -96,17 +96,13 @@ void destroyBucket(Bucket *bucket,uint32_t b) {
 void fixHashPointers(Bucket **index, Bucket *new_bucket, uint32_t global_depth, uint64_t bucket_num) {
 	uint64_t i, j;
 	uint64_t old_size = 1 << (global_depth-1);
-	// fprintf(stderr, "-----------------------------------------------------\n");
 	for (i = 0, j = old_size ; i < old_size ; i++, j++) {
 		if (i == bucket_num) {
-			// fprintf(stderr, "index[%zu] = new_bucket\n",j);
 			index[j] = new_bucket;
 		} else {
-			// fprintf(stderr, "index[%zu] = index[%zu]\n",j,i );
 			index[j] = index[i];
 		}
 	}
-	// fprintf(stderr, "-----------------------------------------------------\n");
 }
 
 /* fix new indexes pointers after index splits */
@@ -183,23 +179,34 @@ void addNewKeyToTmpBucket(Bucket *tmp_bucket, Key key, RangeArray* rangeArray) {
 /* The conflict bucket is empty of transaction, just hold the local_depth */
 void cleanBucket(Bucket* conflict_bucket) {
 	uint32_t i;
-	uint64_t j;
-	for (i = 0 ; i < conflict_bucket->current_subBuckets ; i++) {					/* for i in all subBuckets */
-		conflict_bucket->key_buckets[i].key = 0;
-		conflict_bucket->key_buckets[i].current_entries = 0;
-		for (j = 0 ; j < conflict_bucket->key_buckets[i].current_entries ; j++) {	/* for j in transaction range */
-			conflict_bucket->key_buckets[i].transaction_range[j].transaction_id = 0;
-			conflict_bucket->key_buckets[i].transaction_range[j].rec_offset = 0;
-		}
+	for (i = 0 ; i < conflict_bucket->current_subBuckets ; i++) {	/* for i in all subBuckets */
+		cleanSubBucket(&conflict_bucket->key_buckets[i]);
 	}
 	conflict_bucket->current_subBuckets = 0;
 }
 
+void cleanSubBucket(SubBucket* subBucket) {
+
+	uint64_t j,iter = subBucket->current_entries; /* reduce iterations */
+	subBucket->key = 0;
+	if (subBucket->current_entries > C ) { /* we must realloc to the default capacity C */
+		subBucket->transaction_range = realloc(subBucket->transaction_range,C * sizeof(RangeArray));
+		ALLOCATION_ERROR(subBucket->transaction_range);
+		subBucket->limit = C;
+		iter = C;
+	}
+	for (j = 0 ; j < iter ; j++) {	/* for j in transaction range */
+		subBucket->transaction_range[j].transaction_id = 0;
+		subBucket->transaction_range[j].rec_offset = 0;
+	}
+	subBucket->current_entries = 0;
+}
+
 uint64_t hashFunction(uint64_t size, uint64_t x) {
-	// x = ((x >> 16) ^ x) * 0x45d9f3b;
- //    x = ((x >> 16) ^ x) * 0x45d9f3b;
- //    x = ((x >> 16) ^ x);
     return (x % size);
+    // x = ((x >> 16) ^ x) * 0x45d9f3b;
+	//    x = ((x >> 16) ^ x) * 0x45d9f3b;
+	//    x = ((x >> 16) ^ x);
 	// return ((x*2654435761+1223) % size);
 }
 
@@ -290,6 +297,33 @@ int destroyHash(Hash* hash) {
 	free(hash);
 	hash = NULL;
 	return OK_SUCCESS;
+}
+int deleteHashRecord(Hash* hash, Key key) {
+	uint64_t bucket_num = hashFunction(hash->size, key);
+	Bucket *bucket = hash->index[bucket_num];
+	int deletion_found = deleteSubBucket(bucket,key);
+	if (!deletion_found)
+		return 0;
+
+	return 1;
+}
+
+int deleteSubBucket(Bucket* bucket,Key key) {
+	uint32_t i;
+	for (i = 0 ; i < bucket->current_subBuckets; i++) {	/* for all subbuckets */
+		if (bucket->key_buckets[i].key == key) {	/* SubBucket for deletion found*/
+			
+			/*	now we have to delete this subBucket and move 
+				the remaining right SubBuckets one SubBucket left.
+			*/
+
+			/*clean the SubBucket*/
+
+			/*end of clean*/
+			return 1;
+		}
+	}
+	return 0;
 }
 
 //  Binary Search for first appearance 

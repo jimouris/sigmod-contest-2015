@@ -60,6 +60,7 @@ int insertHashRecord(Hash*, Key, RangeArray*);
 Bucket* createNewBucket(uint32_t, uint32_t);
 void addNewKeyToTmpBucket(Bucket *, Key, RangeArray*);
 void cleanBucket(Bucket *);
+void cleanSubBucket(SubBucket *);
 /****************************************************/
 
 /*SEARCH TO HASH AND OTHER HELPER METHODS*/
@@ -75,6 +76,7 @@ void printBucket(Bucket *);
 
 /*DELETE HASH FUNCTION*/
 int deleteHashRecord(Hash*, Key);
+int deleteSubBucket(Bucket*, Key);
 void destroyBucket(Bucket *bucket,uint32_t b);
 // OK_SUCCESS deleteJournalRecord(Hash*, Key, int transaction_id); 
 int destroyHash(Hash*); 
