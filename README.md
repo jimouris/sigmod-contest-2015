@@ -15,9 +15,9 @@ A basic description of the workload is described in the following section. After
 During the contest we will also hand out larger test datasets, similar to those used during evaluation.
 
 Running:
-  default input:
+  1) default input:
     "./execute"
-  path-to-input:
+  2) path-to-input:
     "./execute ./path-to-input/file.bin"
     (e.g. "./execute ./inputs/small.bin")
 
