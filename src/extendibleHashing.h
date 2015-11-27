@@ -57,7 +57,7 @@ void addNewKeyToTempBucket(Bucket *,JournalRecord_t*);
 void copyBucketTransactions(Bucket*, Bucket*);
 void copySubbucketTransactions(SubBucket*, SubBucket*);
 int insertHashRecord(Hash*, Key, RangeArray*);
-Bucket* createNewBucket(uint32_t, uint32_t);
+Bucket* createNewBucket(uint32_t);
 void addNewKeyToTmpBucket(Bucket *, Key, RangeArray*);
 void cleanBucket(Bucket *);
 void cleanSubBucket(SubBucket *);
@@ -77,8 +77,11 @@ void printBucket(Bucket *);
 
 /*DELETE HASH FUNCTION*/
 int deleteHashRecord(Hash*, Key);
-int deleteSubBucket(Bucket*, Key);
-void destroyBucket(Bucket *bucket,uint32_t b);
+int deleteSubBucket(Hash*, uint64_t, Key);
+void destroyBucket(Bucket*);
+void tryMergeBuckets(Hash*, uint64_t);
+void fixDeletePointers(Hash* , Bucket* , Bucket* , uint64_t);
+unsigned char tryCollapseIndex(Hash*);
 // OK_SUCCESS deleteJournalRecord(Hash*, Key, int transaction_id); 
 int destroyHash(Hash*); 
 /**********************/
