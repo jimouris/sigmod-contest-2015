@@ -13,3 +13,12 @@ Each client has to process a number of requests, provided via standard input, an
 A basic description of the workload is described in the following section. After the examples there is a detailed description of the semantics of each request type.
 
 During the contest we will also hand out larger test datasets, similar to those used during evaluation.
+
+Running:
+  default input:
+    "./execute"
+  path-to-input:
+    "./execute ./path-to-input/file.bin"
+    (e.g. "./execute ./inputs/small.bin")
+
+
