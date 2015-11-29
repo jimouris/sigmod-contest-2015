@@ -61,11 +61,6 @@ List_t *info_init(void) {
 }
 
 void destroy_list(List_t* list){
-	// uint64_t i;
-	// uint64_t initial_size = list->size;
-	// for(i = 0; i < initial_size; i++){
-	// 	remove_end(list);
-	// }
 	while(!isEmpty(list)){
 		remove_end(list);
 	}
@@ -124,29 +119,14 @@ void insertJournalRecord(Journal_t* journal, uint64_t transaction_id, size_t col
 	for(i = 0; i < journal->records[journal->num_of_recs].columns; i++){
 		journal->records[journal->num_of_recs].column_values[i] = column_values[i];
 	}
-	// record.dirty_bit = False;
 	RangeArray* range_array = malloc(sizeof(RangeArray));
 	ALLOCATION_ERROR(range_array);
 	range_array->transaction_id = transaction_id;
 	range_array->rec_offset = journal->num_of_recs;
-	// printf("Relation: %zu, Key: %zu\n",journal->relation_id, column_values[0] );
 	insertHashRecord(journal->index, column_values[0], range_array);
 	free(range_array);
 	journal->num_of_recs++;
 }
-// int insertJournalRecord(Journal_t* journal, JournalRecord_t* record) {
-// 	if(journal->num_of_recs >= journal->journal_capacity) {
-// 		increaseJournal(journal);
-// 	}
-// 	//Insert the record
-// 	journal->records[journal->num_of_recs] = record;
-// 	journal->num_of_recs++;
-// 	// printf("Before insert hash\n");
-// 	insertHashRecord(journal->index, record->column_values[0], NULL, record);
-// 	// printf("After insert hash\n");
-// 	return 0;
-// }
-
 
 /*
 	In Columnt_t* constraint is the information for our constraint
@@ -187,11 +167,9 @@ List_t* getJournalRecords(Journal_t* journal, Column_t* constraint, int range_st
 	if(first_appearance >= journal->num_of_recs){
 		return record_list;
 	}
-	//////////////////
 	while(first_appearance > 0 && journal->records[first_appearance-1].transaction_id == journal->records[first_appearance].transaction_id){
 		first_appearance--;
 	}
-	//////////////////
 	uint64_t i = first_appearance;
 	while(i < journal->num_of_recs && journal->records[i].transaction_id <= range_end ) {
 		JournalRecord_t* record = &journal->records[i];
@@ -243,13 +221,12 @@ JournalRecord_t* copyJournalRecord(JournalRecord_t* old){
 	for(i = 0; i < new_d->columns; i++){
 		new_d->column_values[i] = old->column_values[i];
 	}
-	// new_d->dirty_bit = old->dirty_bit;
+	new_d->dirty_bit = old->dirty_bit;
 	return new_d;
 }
 
 int destroyJournalRecord(JournalRecord_t* record){
 	free(record->column_values);
-	// free(record);
 	return 0;
 }
 
@@ -279,24 +256,3 @@ void printJournal(Journal_t* journal){
 		printJournalRecord(&journal->records[i]);
 	}
 }
-
-JournalRecord_t* createJournalRecord(uint64_t transaction_id, size_t columns, const uint64_t* column_values){
-	uint64_t i;
-	JournalRecord_t* record = malloc(sizeof(JournalRecord_t));
-	ALLOCATION_ERROR(record);
-	record->transaction_id = transaction_id;
-	record->columns = columns;
-	record->column_values = malloc(record->columns * sizeof(uint64_t));
-	ALLOCATION_ERROR(record->column_values);
-	for(i = 0; i < record->columns; i++){
-		record->column_values[i] = column_values[i];
-	}
-	// record->dirty_bit = False;
-	return record;
-}
-
-
-
-// void markDirty(JournalRecord_t* record) {
-// 	record->dirty_bit = True;
-// }

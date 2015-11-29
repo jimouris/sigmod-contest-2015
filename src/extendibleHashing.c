@@ -309,11 +309,10 @@ int destroyHash(Hash* hash) {
 }
 int deleteHashRecord(Hash* hash, Key key) {
 	uint64_t bucket_num = hashFunction(hash->size, key);
-	Bucket *bucket = hash->index[bucket_num];
+	// Bucket *bucket = hash->index[bucket_num];
 	int deletion_found = deleteSubBucket(hash,bucket_num,key);
 	if (!deletion_found)
 		return 0;
-
 	return 1;
 }
 
@@ -380,7 +379,7 @@ void tryMergeBuckets(Hash* hash, uint64_t bucket_num ) {
 		Bucket *buddyBucket = hash->index[buddy_index];
 		uint64_t mergedBucket_entries = bucket->current_subBuckets + buddyBucket->current_subBuckets;
 		if (mergedBucket_entries <= B) { /*we can merge the two subBuckets*/
-			fprintf(stderr,"Bucket(%llu) - Buddy(%llu)\n",bucket_num,buddy_index);
+			fprintf(stderr,"Bucket(%zu) - Buddy(%zu)\n",bucket_num,buddy_index);
 			uint64_t i,j;
 			for (i = bucket->current_subBuckets,j=0; i < mergedBucket_entries ; i++,j++) {
 				copySubbucketTransactions(&bucket->key_buckets[i],&buddyBucket->key_buckets[j]);

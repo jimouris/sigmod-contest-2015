@@ -4,7 +4,6 @@ static uint32_t* schema = NULL;
 
 Journal_t** processDefineSchema(DefineSchema_t *s, int *relation_count) {
 	uint64_t i;
-	// printf("DefineSchema %d |", s->relationCount);
 	if (schema == NULL)
 		free(schema);
 	schema = malloc(sizeof(uint32_t) * s->relationCount);
@@ -13,18 +12,15 @@ Journal_t** processDefineSchema(DefineSchema_t *s, int *relation_count) {
 	Journal_t** journal_array = malloc(s->relationCount * sizeof(Journal_t*));
 	ALLOCATION_ERROR(journal_array);
 	for (i = 0; i < s->relationCount; i++) {
-		// printf(" %d ",s->columnCounts[i]);
 		schema[i] = s->columnCounts[i];
 		journal_array[i] = createJournal(i);
 	}
-	// printf("\n");
 	return journal_array;
 }
 
 void processTransaction(Transaction_t *t, Journal_t** journal_array) {
 	uint64_t i,j;
 	const char* reader = t->operations;
-	// printf("Transaction %lu (%u, %u)\n", t->transactionId, t->deleteCount, t->insertCount);
 	for (i = 0; i < t->deleteCount; i++) {
 		const TransactionOperationDelete_t* o = (TransactionOperationDelete_t*)reader;
 		for (j = 0; j < o->rowCount; j++){
@@ -37,7 +33,6 @@ void processTransaction(Transaction_t *t, Journal_t** journal_array) {
 			} /* else { // the key doesn't exist, skip it } */
 		}
 		reader += sizeof(TransactionOperationDelete_t) + (sizeof(uint64_t) * o->rowCount);
-		// printf("opdel rid %u #rows %u ", o->relationId, o->rowCount);
 	}
 	for (i = 0; i < t->insertCount; i++) {
 		const TransactionOperationInsert_t* o = (TransactionOperationInsert_t*)reader;
@@ -46,12 +41,10 @@ void processTransaction(Transaction_t *t, Journal_t** journal_array) {
 			insertJournalRecord(journal_array[o->relationId], t->transactionId, schema[o->relationId], values, False);			
 		}
 		reader += sizeof(TransactionOperationInsert_t) + (sizeof(uint64_t) * o->rowCount * schema[o->relationId]);
-		// printf("opins rid %u #rows %u |", o->relationId, o->rowCount);
 	}
 }
 
 void processValidationQueries(ValidationQueries_t *v, Journal_t** journal_array, ValidationList_t* validation_list) {
-	// fprintf(stderr, "Valid: %zu\n",v->validationId );
 	ValQuery_t* val_query = malloc(sizeof(ValQuery_t));
 	ALLOCATION_ERROR(val_query);
 	val_query->validationId = v->validationId;
@@ -80,7 +73,7 @@ void processValidationQueries(ValidationQueries_t *v, Journal_t** journal_array,
 			val_query->queries[i]->columns[j]->op = column.op;
 			val_query->queries[i]->columns[j]->value = column.value;
 		}
-		/* sort the column to bring indexed c0 first */
+		/* sort the columns to bring indexed c0 first */
 		qsort(val_query->queries[i]->columns, val_query->queries[i]->columnCount, sizeof(Column_t*), cmp_col);
 
 		reader += sizeof(Query_t) + (sizeof(Column_t) * query->columnCount);
@@ -109,48 +102,11 @@ int cmp_col(const void *p1, const void *p2) {
 
 void processFlush(Flush_t *fl, Journal_t** journal_array, ValidationList_t* validation_list) {
 	static uint64_t current = 0;
-	// printf("\nFlush %lu, Vals: %zu\n", fl->validationId, validation_list->num_of_validations);
 	uint64_t i;
 	for(i = current; i <= fl->validationId; i++){
 		if(i < validation_list->num_of_validations){
 			ValQuery_t* val_query = validation_list->validation_array[i];	
-			// checkValidation(journal_array, val_query);
-			// printf("\tResult for ValID %zu is: %d\n",i,checkValidation(journal_array, val_query));
 			printf("%d", checkValidation(journal_array, val_query));
-			// if(val_query->validationId == 51252){
-				// printValidation(val_query, journal_array);
-			// 	printf("\n");
-				// printf("\n\n");
-				// Column_t* constraint = malloc(sizeof(Column_t));
-				// constraint->column = 5;
-				// constraint->op = Greater;
-				// constraint->value = 8064843;
-				// List_t* record_list = getJournalRecords(journal_array[26], constraint, val_query->from, val_query->to);
-				// if(!isEmpty(record_list)){
-				// 	printf("Not Empty\n");
-				// 	printList(record_list);
-				// } else{
-				// 	printf("Empty\n");
-				// }
-				// destroy_list(record_list);
-				// free(constraint);
-
-			// 	uint64_t range_size;
-			// 	uint64_t i;
-			// 	RangeArray* range_array = getHashRecord(journal_array[26]->index, 1245, &range_size);
-			// 	if(range_array != NULL){
-			// 		printf("Not Empty size = %zu\n",range_size);
-			// 		for(i=0; i<range_size; i++){
-			// 			JournalRecord_t* record = &journal_array[26]->records[range_array[i].rec_offset];
-			// 			// printf("Transaction ID: %zu\n",range_array[i].transaction_id);
-			// 			printJournalRecord(record);
-			// 		}
-			// 	} else{
-			// 		printf("Empty\n");
-			// 	}
-
-				// exit(1);
-			// }
 		}
 	}
 	// current = fl->validationId+1;
@@ -158,6 +114,7 @@ void processFlush(Flush_t *fl, Journal_t** journal_array, ValidationList_t* vali
 }
 
 void processForget(Forget_t *fo, Journal_t** journal_array) {
+	// Unimplemented;
 	// printf("Forget %lu\n", fo->transactionId);
 }
 
@@ -237,14 +194,13 @@ Boolean_t checkSingleQuery(Journal_t** journal_array, SingleQuery_t* query, uint
 					break;
 				}
 			}
-			if(record_result == True){
+			if(record_result == True){ /*Short circuiting*/
 				return True;
 			}
 			result = result || record_result;
 			i++;
 		}
 	} else { /* unfortunately we should search in whole range [from, to]*/
-		/* edw apo from ews to psa3e */
 		List_t* record_list = getJournalRecords(journal, NULL, from, to);
 		List_node* iterator = record_list->list_beg;
 		while(iterator != NULL){
@@ -258,7 +214,7 @@ Boolean_t checkSingleQuery(Journal_t** journal_array, SingleQuery_t* query, uint
 					break;
 				}
 			}
-			if(record_result == True){
+			if(record_result == True){ /*Short circuiting*/
 				destroy_list(record_list);
 				return True;
 			}

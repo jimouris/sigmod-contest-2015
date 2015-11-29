@@ -35,15 +35,6 @@ int main(int argc, char **argv) {
 		// And interpret it
 		switch (head.type) {
 			case Done:
-				// printf("\n");
-				// uint64_t i;
-				// for(i = 0; i< relation_count; i++){
-					// printf("Journal No: %zu\n",i );
-					// printJournal(journal_array[i]);
-					// printHash(journal_array[i]->index);
-				// }
-				// validationListPrint(validation_list, journal_array);
-
 				destroySchema(journal_array, relation_count);
 				validationListDestroy(validation_list);
 				return EXIT_SUCCESS;
