@@ -31,22 +31,36 @@ typedef struct tidHash {
 /* HASH INIT METHOD */
 tidHash* tidCreateHash(); 
 /********************/
+
+/*HASH FUNCTION USED FOR TO GO TO THE RIGHT INDEX*/
 uint64_t tidHashFunction(uint64_t, uint64_t);
-tidBucket* tidCreateNewBucket(uint32_t);
-int tidInsertHashRecord(tidHash* , tidSubBucket*);
-void tidCopyBucketTransactions(tidBucket* , tidBucket*);
-void tidCopySubbucketTransactions(tidSubBucket*, tidSubBucket*);
-void tidDuplicateIndex(tidHash *);
-void tidCleanBucket(tidBucket *);
-void tidCleanSubBucket(tidSubBucket *);
-uint64_t tidGetHashOffset(tidHash *, uint64_t, Boolean_t *);
-uint64_t tidHashFunction(uint64_t, uint64_t);
+/*************************************************/
+
+/*INSERT TO HASH FUNCTION AND OTHER HELPER FUNCTIONS*/
 void tidFixHashPointers(tidBucket **, tidBucket *, uint32_t, uint64_t); 
 void tidFixSplitPointers(tidHash *, tidBucket *, tidBucket *, uint64_t);
-int tidDestroyHash(tidHash *); 
-void tidDestroyBucket(tidBucket *);
+void tidDuplicateIndex(tidHash *);
+void tidCopyBucketTransactions(tidBucket* , tidBucket*);
+void tidCopySubbucketTransactions(tidSubBucket*, tidSubBucket*);
+int tidInsertHashRecord(tidHash* , tidSubBucket*);
+tidBucket* tidCreateNewBucket(uint32_t);
+void tidCleanBucket(tidBucket *);
+void tidCleanSubBucket(tidSubBucket *);
+/****************************************************/
+
+/*SEARCH TO HASH AND OTHER HELPER METHODS*/
+uint64_t tidGetHashOffset(tidHash *, uint64_t, Boolean_t *);
+/****************************************/
+
+/*PRINT HASH-tidBUCKET FUNCTIONS*/
 void tidPrintBucket(tidBucket *);
 void tidPrintHash(tidHash *);
+/****************************/
+
+/*DELETE HASH FUNCTION*/
+int tidDestroyHash(tidHash *); 
+void tidDestroyBucket(tidBucket *);
 /**********************/
+
 
 #endif
