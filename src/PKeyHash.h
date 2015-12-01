@@ -30,7 +30,7 @@ typedef struct pkBucket { /* Has a pointer (key_buckets) to one or more subBucke
 	uint32_t local_depth;
 	uint32_t current_subBuckets;
 	pkSubBucket *key_buckets;
-	unsigned char deletion_started;
+	uint8_t deletion_started;
 	uint64_t pointers_num;
 } pkBucket;
 
@@ -81,7 +81,7 @@ int deleteSubBucket(pkHash*, uint64_t, Key);
 void destroyBucket(pkBucket*);
 void tryMergeBuckets(pkHash*, uint64_t);
 void fixDeletePointers(pkHash* , pkBucket* , pkBucket* , uint64_t);
-unsigned char tryCollapseIndex(pkHash*);
+uint8_t tryCollapseIndex(pkHash*);
 // OK_SUCCESS deleteJournalRecord(pkHash*, Key, int transaction_id); 
 int destroyHash(pkHash*); 
 /**********************/

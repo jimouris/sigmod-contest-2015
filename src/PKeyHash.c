@@ -341,8 +341,8 @@ int deleteSubBucket(pkHash* hash, uint64_t bucket_num, Key key) {
 	return 0;
 }
 
-unsigned char tryCollapseIndex(pkHash* hash) {
-	unsigned char canCollapse = 0;
+uint8_t tryCollapseIndex(pkHash* hash) {
+	uint8_t canCollapse = 0;
 	if (hash->size > 1) {
 		canCollapse = 1;
 		uint64_t i,j;
