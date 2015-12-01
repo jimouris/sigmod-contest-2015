@@ -1,4 +1,4 @@
-#include "extendibleHashing.h"
+#include "PKeyHash.h"
 
 Hash* createHash() {
 	Hash *hash = malloc(sizeof(Hash));
