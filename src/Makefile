@@ -2,9 +2,9 @@
 # In order to execute this "Makefile" just type "make"
 #
 
-OBJS 	= main.o extendibleHashing.o parser.o journal.o
-SOURCE	= main.c extendibleHashing.c parser.c journal.c
-HEADER  = extendibleHashing.h parser.h journal.h
+OBJS 	= main.o PKeyHash.o tidHash.o parser.o journal.o
+SOURCE	= main.c PKeyHash.c tidHash.c parser.c journal.c
+HEADER  = PKeyHash.h tidHash.h parser.h journal.h
 OUT  	= a.out
 CC		= gcc
 FLAGS 	= -c -g -Wall -O2
@@ -18,10 +18,13 @@ all: $(OBJS)
 main.o: main.c
 	$(CC) $(FLAGS) main.c
 
-extendibleHashing.o: extendibleHashing.c extendibleHashing.h 
-	$(CC) $(FLAGS) extendibleHashing.c
+PKeyHash.o: PKeyHash.c PKeyHash.h 
+	$(CC) $(FLAGS) PKeyHash.c
 
-parser.o: parser.c extendibleHashing.h 
+tidHash.o: tidHash.c tidHash.h 
+	$(CC) $(FLAGS) tidHash.c
+
+parser.o: parser.c PKeyHash.h 
 	$(CC) $(FLAGS) parser.c
 
 journal.o: journal.c journal.h 
