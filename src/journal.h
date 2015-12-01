@@ -1,7 +1,7 @@
 #ifndef __JOURNAL__
 #define __JOURNAL__
 #include <inttypes.h>
-#include "extendibleHashing.h"
+#include "PKeyHash.h"
 
 
 typedef struct Hash Hash;

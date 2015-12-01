@@ -6,7 +6,7 @@
 #include <ctype.h>
 #include <inttypes.h>
 #include "journal.h"
-#include "extendibleHashing.h"
+#include "PKeyHash.h"
 
 
 
