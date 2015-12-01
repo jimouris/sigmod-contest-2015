@@ -107,6 +107,10 @@ void processFlush(Flush_t *fl, Journal_t** journal_array, ValidationList_t* vali
 		if(i < validation_list->num_of_validations){
 			ValQuery_t* val_query = validation_list->validation_array[i];	
 			printf("%d", checkValidation(journal_array, val_query));
+			// if(val_query->validationId == 19631 || val_query->validationId == 51252){
+			// if(val_query->validationId == 6673 || val_query->validationId == 13108 || val_query->validationId == 45999){
+				// printValidation(val_query, journal_array);
+			// }
 		}
 	}
 	// current = fl->validationId+1;
@@ -138,8 +142,13 @@ Boolean_t checkSingleQuery(Journal_t** journal_array, SingleQuery_t* query, uint
 	uint64_t i, j, range_size = 0;
 	RangeArray* range_array = NULL;
 	if(query->columnCount == 0){	/* Empty query! */
-		return False;
-		// return True;
+		uint64_t relationId = query->relationId;
+		uint64_t last_rec_offset = journal_array[relationId]->num_of_recs-1;
+		uint64_t max_tid = journal_array[relationId]->records[last_rec_offset].transaction_id;
+		uint64_t min_tid = journal_array[relationId]->records[0].transaction_id;
+		if( max_tid < from || min_tid > to)
+			return False;
+		return True;
 	}
 	/* check the first column of validation */
 	if (query->columns[0]->column == 0 && query->columns[0]->op == Equal){ /* if primary key */
@@ -297,7 +306,7 @@ void printValidation(ValQuery_t* val_query, Journal_t** journal_array){
 	/*For each query*/
 	for (i = 0; i < val_query->queryCount; i++) {
 		SingleQuery_t* query = val_query->queries[i];
-		fprintf(stderr,"Query for relation %" PRIu32 " query columnCount = %d RESULT: %d\n", query->relationId,query->columnCount,checkSingleQuery(journal_array,query,val_query->from,val_query->to));
+		fprintf(stderr,"Query for relation %" PRIu32 " query columnCount = %d RESULT: %d | max_tid: %zu\n", query->relationId,query->columnCount,checkSingleQuery(journal_array,query,val_query->from,val_query->to), journal_array[query->relationId]->records[journal_array[query->relationId]->num_of_recs-1].transaction_id);
 
 		for(j = 0; j<query->columnCount; j++){
 			const Column_t* column = query->columns[j];
