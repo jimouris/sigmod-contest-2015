@@ -31,14 +31,22 @@ typedef struct tidHash {
 /* HASH INIT METHOD */
 tidHash* tidCreateHash(); 
 /********************/
-
 uint64_t tidHashFunction(uint64_t, uint64_t);
-
 tidBucket* tidCreateNewBucket(uint32_t);
-
+int tidInsertHashRecord(tidHash* , tidSubBucket*);
+void tidCopyBucketTransactions(tidBucket* , tidBucket*);
+void tidCopySubbucketTransactions(tidSubBucket*, tidSubBucket*);
 void tidDuplicateIndex(tidHash *);
-
-int tidDestroyHash(tidHash*); 
+void tidCleanBucket(tidBucket *);
+void tidCleanSubBucket(tidSubBucket *);
+uint64_t tidGetHashOffset(tidHash *, uint64_t, Boolean_t *);
+uint64_t tidHashFunction(uint64_t, uint64_t);
+void tidFixHashPointers(tidBucket **, tidBucket *, uint32_t, uint64_t); 
+void tidFixSplitPointers(tidHash *, tidBucket *, tidBucket *, uint64_t);
+int tidDestroyHash(tidHash *); 
+void tidDestroyBucket(tidBucket *);
+void tidPrintBucket(tidBucket *);
+void tidPrintHash(tidHash *);
 /**********************/
 
 #endif
