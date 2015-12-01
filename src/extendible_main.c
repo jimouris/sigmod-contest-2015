@@ -3,7 +3,7 @@
 
 int main(void)
 {
-	Hash* myhash = createHash();
+	pkHash* myhash = createHash();
 	
 	// printf("hash->size: %llu , hash->global_depth: %zu\n",myhash->size,myhash->global_depth);
 	RangeArray *rangeElement = malloc(1 *sizeof(RangeArray));

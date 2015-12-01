@@ -5,7 +5,7 @@ pkHash* createHash() {
 	ALLOCATION_ERROR(hash);
 	hash->global_depth = GLOBAL_DEPTH_INIT;
 	hash->size = 1 << GLOBAL_DEPTH_INIT;
-	hash->index = malloc(hash->size * sizeof(pkBucket *));
+	hash->index = malloc(hash->size * sizeof(Bucket *));
 	ALLOCATION_ERROR(hash->index);
 	uint64_t i;
 	for (i = 0 ; i < hash->size ; i++)
@@ -15,10 +15,10 @@ pkHash* createHash() {
 
 int insertHashRecord(pkHash* hash, Key key, RangeArray* rangeArray) {
 	uint64_t bucket_num = hashFunction(hash->size, key);
-	pkBucket *bucket = hash->index[bucket_num];
+	Bucket *bucket = hash->index[bucket_num];
 	uint32_t i;
 	for (i = 0 ; i < bucket->current_subBuckets; i++) {			/* for all subbuckets */
-		if (bucket->key_buckets[i].key == key) {				/* if there is a pksubBucket with this key */
+		if (bucket->key_buckets[i].key == key) {				/* if there is a subBucket with this key */
 			uint64_t current_entries = bucket->key_buckets[i].current_entries;
 			if (current_entries == bucket->key_buckets[i].limit) { 	/* if there isn't enough free space, realloc */
 				bucket->key_buckets[i].transaction_range = realloc(bucket->key_buckets[i].transaction_range, ((bucket->key_buckets[i].current_entries)+C) * sizeof(RangeArray));
@@ -33,7 +33,7 @@ int insertHashRecord(pkHash* hash, Key key, RangeArray* rangeArray) {
 		}
 	}
 	/* If that was the first appearence of this key */
-	if (bucket->current_subBuckets < B) {	/* If there is space to insert it on that bucket (there is a free pksubbucket) */
+	if (bucket->current_subBuckets < B) {	/* If there is space to insert it on that bucket (there is a free subbucket) */
 		bucket->key_buckets[bucket->current_subBuckets].key = key;
 		bucket->key_buckets[bucket->current_subBuckets].transaction_range[0].transaction_id = rangeArray->transaction_id;
 		bucket->key_buckets[bucket->current_subBuckets].transaction_range[0].rec_offset = rangeArray->rec_offset;
@@ -42,8 +42,8 @@ int insertHashRecord(pkHash* hash, Key key, RangeArray* rangeArray) {
 		return OK_SUCCESS;
 	} else {
 		bucket->local_depth++;
-		pkBucket *new_bucket = createNewBucket(bucket->local_depth);
-		pkBucket *tmp_bucket = createNewBucket(bucket->local_depth);
+		Bucket *new_bucket = createNewBucket(bucket->local_depth);
+		Bucket *tmp_bucket = createNewBucket(bucket->local_depth);
 		copyBucketTransactions(tmp_bucket, bucket);
 		if (bucket->local_depth-1 >= hash->global_depth) { /* duplicate case */
 			duplicateIndex(hash);	/* duplicates and increases global depth */
@@ -55,11 +55,11 @@ int insertHashRecord(pkHash* hash, Key key, RangeArray* rangeArray) {
 		uint32_t i;
 		uint64_t new_hash;
 		for (i = 0 ; i < B ; i++) {	/* for all subBuckets in tmpBucket */
-			pkSubBucket *subbuckets = tmp_bucket->key_buckets;
+			SubBucket *subbuckets = tmp_bucket->key_buckets;
 			Key sub_key = subbuckets[i].key;
 			new_hash = hashFunction(hash->size, sub_key);
 			// fprintf(stderr, "New hash for %zu is %zu\n",key,new_hash );
-			pkBucket* destination = hash->index[new_hash];
+			Bucket* destination = hash->index[new_hash];
 			uint32_t current_subBuckets = destination->current_subBuckets;
 			copySubbucketTransactions(&destination->key_buckets[current_subBuckets], &subbuckets[i]);
 			destination->current_subBuckets++;
@@ -75,16 +75,16 @@ void duplicateIndex(pkHash * hash) {
 	hash->global_depth++;
 	uint64_t old_size = hash->size;
 	hash->size *= 2;
-	hash->index = realloc(hash->index, hash->size * sizeof(pkBucket *));
+	hash->index = realloc(hash->index, hash->size * sizeof(Bucket *));
 	ALLOCATION_ERROR(hash->index);
 	uint64_t i;
 	for (i = old_size; i < hash->size; i++)
 		hash->index[i] = NULL;
 }
 
-void destroyBucket(pkBucket *bucket) {
+void destroyBucket(Bucket *bucket) {
 	uint32_t i;
-	for (i = 0 ; i < B ; i++) { /*for each pksubBucket*/
+	for (i = 0 ; i < B ; i++) { /*for each subBucket*/
 		free(bucket->key_buckets[i].transaction_range);
 	}
 	free(bucket->key_buckets);
@@ -93,7 +93,7 @@ void destroyBucket(pkBucket *bucket) {
 }
 
 /* fix new indexes pointers after index doublicate */
-void fixHashPointers(pkBucket **index, pkBucket *new_bucket, uint32_t global_depth, uint64_t bucket_num) {
+void fixHashPointers(Bucket **index, Bucket *new_bucket, uint32_t global_depth, uint64_t bucket_num) {
 	uint64_t i, j;
 	uint64_t old_size = 1 << (global_depth-1);
 	for (i = 0, j = old_size ; i < old_size ; i++, j++) {
@@ -106,7 +106,7 @@ void fixHashPointers(pkBucket **index, pkBucket *new_bucket, uint32_t global_dep
 }
 
 /* fix new indexes pointers after index splits */
-void fixSplitPointers(pkHash* hash, pkBucket* old_bucket, pkBucket* new_bucket, uint64_t bucket_num){
+void fixSplitPointers(pkHash* hash, Bucket* old_bucket, Bucket* new_bucket, uint64_t bucket_num){
 	uint64_t prev_local_depth = old_bucket->local_depth-1;
 	uint64_t i;
 	uint64_t ld_size = 1 << prev_local_depth;
@@ -117,7 +117,7 @@ void fixSplitPointers(pkHash* hash, pkBucket* old_bucket, pkBucket* new_bucket, 
 	}
 }
 
-void fixDeletePointers(pkHash* hash, pkBucket* bucket, pkBucket* buddyBucket, uint64_t buddy_index) {
+void fixDeletePointers(pkHash* hash, Bucket* bucket, Bucket* buddyBucket, uint64_t buddy_index) {
 	uint64_t i;
 	uint64_t ld_size = 1 << buddyBucket->local_depth;
 	uint32_t first_pointer = buddy_index % ld_size;
@@ -127,8 +127,8 @@ void fixDeletePointers(pkHash* hash, pkBucket* bucket, pkBucket* buddyBucket, ui
 }
 
 
-/* copy transactions from one pkBucket to another one*/
-void copyBucketTransactions(pkBucket* dst, pkBucket* src) {
+/* copy transactions from one Bucket to another one*/
+void copyBucketTransactions(Bucket* dst, Bucket* src) {
 	uint64_t i;
 	dst->local_depth = src->local_depth;
 	dst->current_subBuckets = src->current_subBuckets;
@@ -138,7 +138,7 @@ void copyBucketTransactions(pkBucket* dst, pkBucket* src) {
 	}
 }
 
-void copySubbucketTransactions(pkSubBucket* dst, pkSubBucket* src){
+void copySubbucketTransactions(SubBucket* dst, SubBucket* src){
 	uint64_t j;
 	dst->key = src->key;
 	dst->current_entries = src->current_entries;
@@ -154,14 +154,14 @@ void copySubbucketTransactions(pkSubBucket* dst, pkSubBucket* src){
 	}
 }
 
-/* creates an empty pkBucket*/
-pkBucket* createNewBucket(uint32_t local_depth) {
-	pkBucket *new_bucket = malloc(sizeof(pkBucket));
+/* creates an empty Bucket*/
+Bucket* createNewBucket(uint32_t local_depth) {
+	Bucket *new_bucket = malloc(sizeof(Bucket));
 	ALLOCATION_ERROR(new_bucket);
 	new_bucket->local_depth = local_depth;
 	new_bucket->current_subBuckets = 0;
 	new_bucket->deletion_started = 0;
-	new_bucket->key_buckets = malloc(B * sizeof(pkSubBucket));
+	new_bucket->key_buckets = malloc(B * sizeof(SubBucket));
 	ALLOCATION_ERROR(new_bucket->key_buckets);
 	uint32_t i, j;
 	for (i = 0 ; i < B ; i++) {	/* create subBuckets */
@@ -179,7 +179,7 @@ pkBucket* createNewBucket(uint32_t local_depth) {
 }
 
 /* Adds the Key that caused the conflict as the last element of the temp_bucket transactions array */
-void addNewKeyToTmpBucket(pkBucket *tmp_bucket, Key key, RangeArray* rangeArray) {
+void addNewKeyToTmpBucket(Bucket *tmp_bucket, Key key, RangeArray* rangeArray) {
 	tmp_bucket->key_buckets[B].key = key;
 	tmp_bucket->key_buckets[B].transaction_range[0].transaction_id = rangeArray->transaction_id;
 	tmp_bucket->key_buckets[B].transaction_range[0].rec_offset = rangeArray->rec_offset;
@@ -187,7 +187,7 @@ void addNewKeyToTmpBucket(pkBucket *tmp_bucket, Key key, RangeArray* rangeArray)
 }
 
 /* The conflict bucket is empty of transaction, just hold the local_depth */
-void cleanBucket(pkBucket* conflict_bucket) {
+void cleanBucket(Bucket* conflict_bucket) {
 	uint32_t i;
 	for (i = 0 ; i < conflict_bucket->current_subBuckets ; i++) {	/* for i in all subBuckets */
 		cleanSubBucket(&conflict_bucket->key_buckets[i]);
@@ -195,20 +195,20 @@ void cleanBucket(pkBucket* conflict_bucket) {
 	conflict_bucket->current_subBuckets = 0;
 }
 
-void cleanSubBucket(pkSubBucket* pksubBucket) {
-	uint64_t j,iter = pksubBucket->current_entries; /* reduce iterations */
-	pksubBucket->key = 0;
-	if (pksubBucket->current_entries > C ) { /* we must realloc to the default capacity C */
-		pksubBucket->transaction_range = realloc(pksubBucket->transaction_range,C * sizeof(RangeArray));
-		ALLOCATION_ERROR(pksubBucket->transaction_range);
-		pksubBucket->limit = C;
+void cleanSubBucket(SubBucket* subBucket) {
+	uint64_t j,iter = subBucket->current_entries; /* reduce iterations */
+	subBucket->key = 0;
+	if (subBucket->current_entries > C ) { /* we must realloc to the default capacity C */
+		subBucket->transaction_range = realloc(subBucket->transaction_range,C * sizeof(RangeArray));
+		ALLOCATION_ERROR(subBucket->transaction_range);
+		subBucket->limit = C;
 		iter = C;
 	}
 	for (j = 0 ; j < iter ; j++) {	/* for j in transaction range */
-		pksubBucket->transaction_range[j].transaction_id = 0;
-		pksubBucket->transaction_range[j].rec_offset = 0;
+		subBucket->transaction_range[j].transaction_id = 0;
+		subBucket->transaction_range[j].rec_offset = 0;
 	}
-	pksubBucket->current_entries = 0;
+	subBucket->current_entries = 0;
 }
 
 uint64_t hashFunction(uint64_t size, uint64_t x) {
@@ -220,7 +220,7 @@ uint64_t hashFunction(uint64_t size, uint64_t x) {
 }
 
 /* printsBucket various info */
-void printBucket(pkBucket* bucket){
+void printBucket(Bucket* bucket){
 	fprintf(stderr, "------------------------------------------------------------\n");
 	fprintf(stderr, "local_depth(%"PRIu32"), current_subBuckets(%"PRIu32")\n", bucket->local_depth, bucket->current_subBuckets);
 	uint64_t i;
@@ -243,7 +243,7 @@ void printHash(pkHash* hash){
 	uint64_t i;
 	for (i = 0 ; i < hash->size ; i++) { /*for every index*/
 		if (hash->index[i] != NULL) { /*points somewhere*/
-			fprintf(stderr, "*****Index %zd points to pkBucket address %p*******\n", i, hash->index[i]);
+			fprintf(stderr, "*****Index %zd points to Bucket address %p*******\n", i, hash->index[i]);
 			if (!hash->index[i]->current_subBuckets) {
 				printBucket(hash->index[i]);
 			} else {
@@ -284,7 +284,7 @@ int destroyHash(pkHash* hash) {
 	uint64_t i;
 	for (i = 0 ; i < hash->size ; i++) { /*for every bucket on the hash*/
 		uint32_t j;
-		pkBucket * bucketPtr = hash->index[i];
+		Bucket * bucketPtr = hash->index[i];
 		if (!bucketPtr->deletion_started) { /*it is the first bucket*/
 			bucketPtr->deletion_started = 1;
 			bucketPtr->pointers_num = 1 << (hash->global_depth - bucketPtr->local_depth);
@@ -309,14 +309,14 @@ int destroyHash(pkHash* hash) {
 }
 int deleteHashRecord(pkHash* hash, Key key) {
 	uint64_t bucket_num = hashFunction(hash->size, key);
-	// pkBucket *bucket = hash->index[bucket_num];
+	// Bucket *bucket = hash->index[bucket_num];
 	int deletion_found = deleteSubBucket(hash,bucket_num,key);
 	if (!deletion_found)
 		return 0;
 	return 1;
 }
 
-void moveSubBucketsLeft(pkBucket* bucket, uint32_t index) {
+void moveSubBucketsLeft(Bucket* bucket, uint32_t index) {
 		uint32_t i;
 		for(i = index ; i < bucket->current_subBuckets; i++) {
 			copySubbucketTransactions(&bucket->key_buckets[i-1],&bucket->key_buckets[i]);
@@ -325,10 +325,10 @@ void moveSubBucketsLeft(pkBucket* bucket, uint32_t index) {
 }
 
 int deleteSubBucket(pkHash* hash, uint64_t bucket_num, Key key) {
-	pkBucket *bucket = hash->index[bucket_num];
+	Bucket *bucket = hash->index[bucket_num];
 	uint32_t i;
 	for (i = 0 ; i < bucket->current_subBuckets; i++) {	/* for all subbuckets */
-		if (bucket->key_buckets[i].key == key) {	/* pkSubBucket for deletion found*/
+		if (bucket->key_buckets[i].key == key) {	/* SubBucket for deletion found*/
 			/* physical remove of the SubBukcet that contains the Key */
 			cleanSubBucket(&bucket->key_buckets[i]);
 			moveSubBucketsLeft(bucket,i+1);
@@ -356,14 +356,14 @@ unsigned char tryCollapseIndex(pkHash* hash) {
 	if (canCollapse) {
 		hash->global_depth --;
 		hash->size /= 2;
-		hash->index = realloc(hash->index,hash->size * sizeof(pkBucket *));
+		hash->index = realloc(hash->index,hash->size * sizeof(Bucket *));
 		ALLOCATION_ERROR(hash->index);
 	}
 	return canCollapse;
 }
 
 void tryMergeBuckets(pkHash* hash, uint64_t bucket_num ) {
-	pkBucket *bucket = hash->index[bucket_num];
+	Bucket *bucket = hash->index[bucket_num];
 	uint32_t ld_oldSize = 1 << (bucket->local_depth - 1);
 	uint64_t buddy_index;
 	/*find its buddy bucket and store its index to buddy_index*/
@@ -376,10 +376,10 @@ void tryMergeBuckets(pkHash* hash, uint64_t bucket_num ) {
 	}
 
 	if (bucket != hash->index[buddy_index] && bucket->local_depth == hash->index[buddy_index]->local_depth) { /*we have a buddy and not the the bucket itself*/
-		pkBucket *buddyBucket = hash->index[buddy_index];
+		Bucket *buddyBucket = hash->index[buddy_index];
 		uint64_t mergedBucket_entries = bucket->current_subBuckets + buddyBucket->current_subBuckets;
 		if (mergedBucket_entries <= B) { /*we can merge the two subBuckets*/
-			fprintf(stderr,"pkBucket(%zu) - Buddy(%zu)\n",bucket_num,buddy_index);
+			fprintf(stderr,"Bucket(%zu) - Buddy(%zu)\n",bucket_num,buddy_index);
 			uint64_t i,j;
 			for (i = bucket->current_subBuckets,j=0; i < mergedBucket_entries ; i++,j++) {
 				copySubbucketTransactions(&bucket->key_buckets[i],&buddyBucket->key_buckets[j]);
@@ -398,7 +398,7 @@ void tryMergeBuckets(pkHash* hash, uint64_t bucket_num ) {
 
 //  Binary Search for first appearance 
 // JournalRecord_t* searchIndexByKey(pkHash* hash,uint64_t bucket_num,uint64_t keyToSearch) {
-// 	pkBucket *bucket = hash->index[bucket_num];
+// 	Bucket *bucket = hash->index[bucket_num];
 // 	int i;
 // 	for (i = 0 ; i < bucket->current_entries ; i++) {
 // 		if (bucket->transaction_range[i].rec->column_values[0] == keyToSearch) {

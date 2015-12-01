@@ -4,7 +4,7 @@
 #include "PKeyHash.h"
 
 
-typedef struct Hash Hash;
+typedef struct pkHash pkHash;
 
 typedef struct Column {
   /// The column id
@@ -26,7 +26,7 @@ typedef struct Journal_t {
 	JournalRecord_t* records; 
 	uint64_t num_of_recs;
 	uint64_t journal_capacity;
-	Hash* index;
+	pkHash* index;
 	uint64_t relation_id;
 } Journal_t;
 
