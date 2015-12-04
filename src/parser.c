@@ -61,24 +61,66 @@ void processValidationQueries(ValidationQueries_t *v, Journal_t** journal_array,
 		val_query->queries[i] = malloc(sizeof(SingleQuery_t));
 		ALLOCATION_ERROR(val_query->queries[i]);
 		val_query->queries[i]->relationId = query->relationId;
-		val_query->queries[i]->columnCount = query->columnCount;
-		val_query->queries[i]->columns = malloc(query->columnCount*sizeof(Column_t*));
-		ALLOCATION_ERROR(val_query->queries[i]->columns);
+		// val_query->queries[i]->columnCount = query->columnCount;
+		Column_t** temp_array = malloc(query->columnCount*sizeof(Column_t*));
+		ALLOCATION_ERROR(temp_array);
 
 		for(j = 0; j<query->columnCount; j++){
 			const Column_t column = query->columns[j];
-			val_query->queries[i]->columns[j] = malloc(sizeof(Column_t));
-			ALLOCATION_ERROR(val_query->queries[i]->columns[j]);
-			val_query->queries[i]->columns[j]->column = column.column;
-			val_query->queries[i]->columns[j]->op = column.op;
-			val_query->queries[i]->columns[j]->value = column.value;
+			temp_array[j] = malloc(sizeof(Column_t));
+			ALLOCATION_ERROR(temp_array[j]);
+			temp_array[j]->column = column.column;
+			temp_array[j]->op = column.op;
+			temp_array[j]->value = column.value;
 		}
 		/* sort the columns to bring indexed c0 first */
-		qsort(val_query->queries[i]->columns, val_query->queries[i]->columnCount, sizeof(Column_t*), cmp_col);
+		qsort(temp_array, query->columnCount, sizeof(Column_t*), cmp_col);
+		uint64_t new_columnCount = 0;
+		val_query->queries[i]->columns = removeDuplicates(temp_array, query->columnCount, &new_columnCount);
+		val_query->queries[i]->columnCount = new_columnCount;
 
+		for(j = 0; j<query->columnCount; j++){
+			free(temp_array[j]);
+		}
+		free(temp_array);
 		reader += sizeof(Query_t) + (sizeof(Column_t) * query->columnCount);
 	}
+	// printValidation(val_query, journal_array);
 	validationListInsert(validation_list, val_query);
+}
+
+Column_t** removeDuplicates(Column_t** old, uint64_t old_size, uint64_t* new_size){
+	uint64_t i,j;
+	uint64_t count = 0;
+	Column_t** new_arr = malloc(old_size*sizeof(Column_t*));
+	ALLOCATION_ERROR(new_arr);
+	for(j = 0; j<old_size; j++){
+		new_arr[j] = malloc(sizeof(Column_t));
+		ALLOCATION_ERROR(new_arr[j]);
+	}
+	for (i = 0; i < old_size; ++i) {
+		if(i == 0 || equal_col(&old[i], &old[i-1]) == False) {
+			new_arr[count]->column = old[i]->column;
+			new_arr[count]->op = old[i]->op;
+			new_arr[count]->value = old[i]->value;
+			count++;
+		}
+	}
+	new_arr = realloc(new_arr, count*sizeof(Column_t*));
+	*new_size = count;
+	return new_arr;
+}
+
+Boolean_t equal_col(const void *p1, const void *p2) {
+	const Column_t *f1 = *(Column_t**) p1;
+	const Column_t *f2 = *(Column_t**) p2;
+	if (f1->column == f2->column && f1->op == f2->op && f1->value == f2->value){
+		return True;
+	} else if(f1->column == f2->column && f1->op == Equal && (f2->op == GreaterOrEqual || f2->op == LessOrEqual) && f1->value == f2->value){
+		return True;
+	} else {
+		return False;
+	}
 }
 
 int cmp_col(const void *p1, const void *p2) {
@@ -105,6 +147,7 @@ void processFlush(Flush_t *fl, Journal_t** journal_array, ValidationList_t* vali
 	while(iter != NULL && iter->data->validationId < fl->validationId){
 		ValQuery_t* val_query = iter->data;
 		printf("%d", checkValidation(journal_array, val_query));
+		// printValidation(val_query, journal_array);
 		iter = iter->next;
 		validation_remove_start(validation_list->list);
 	}

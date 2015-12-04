@@ -20,7 +20,12 @@ if [ $# -eq 0 ] ; then
 else
 	echo "running with $1"
 	input="${1}"
-	./a.out < $input > myout.test
+	if [ $# -eq 2 ] && ( [ "${2}" == "--tid" ] || [ "${2}" == "-tid" ] || [ "${2}" == "tid" ] ); then
+		echo "running with tidHash"
+		./a.out --tid < $input > myout.test
+	else
+		./a.out < $input > myout.test
+	fi
 	echo "done :)\n"
 	./perlineprinter < myout.test > myoutperline.test
 	rm myout.test

@@ -138,6 +138,7 @@ typedef struct ValidationList {
 
 Boolean_t validation_isEmpty(Val_list_t*);
 
+Column_t** removeDuplicates(Column_t** old, uint64_t old_size, uint64_t* new_size);
 
 void destroy_validation_list(Val_list_t*);
 
@@ -193,6 +194,8 @@ void destroySchema(Journal_t**, int);
 void printValidation(ValQuery_t*, Journal_t**);
 
 int cmp_col(const void *, const void *);
+
+Boolean_t equal_col(const void *p1, const void *p2);
 
 // void copyValidation(ValidationQueries_t*, ValidationQueries_t*);
 
