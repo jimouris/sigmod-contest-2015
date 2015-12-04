@@ -83,7 +83,7 @@ void printList(List_t* list){
 
 /* Journal_t functions */
 
-Journal_t* createJournal(uint64_t relation_id) {
+Journal_t* createJournal(uint64_t relation_id, Boolean_t tid_mode) {
 	Journal_t* journal = malloc(sizeof(Journal_t));
 	ALLOCATION_ERROR(journal);
 	journal->journal_capacity = JOURNAL_CAPACITY_INIT;
@@ -92,6 +92,8 @@ Journal_t* createJournal(uint64_t relation_id) {
 	journal->num_of_recs = 0;
 	journal->relation_id = relation_id;
 	journal->index = createHash();
+	if(tid_mode == True)
+		journal->tid_index = tidCreateHash();
 	return journal;
 }
 
@@ -125,6 +127,14 @@ void insertJournalRecord(Journal_t* journal, uint64_t transaction_id, size_t col
 	range_array->rec_offset = journal->num_of_recs;
 	insertHashRecord(journal->index, column_values[0], range_array);
 	free(range_array);
+
+	tidSubBucket* tid_sub_bucket = malloc(sizeof(tidSubBucket));
+	ALLOCATION_ERROR(tid_sub_bucket);
+	tid_sub_bucket->transaction_id = transaction_id;
+	tid_sub_bucket->rec_offset = journal->num_of_recs;
+	tidInsertHashRecord(journal->tid_index, tid_sub_bucket);
+	free(tid_sub_bucket);
+
 	journal->num_of_recs++;
 }
 
@@ -232,10 +242,11 @@ int destroyJournalRecord(JournalRecord_t* record){
 
 int destroyJournal(Journal_t* journal) {
 	int i;
-	destroyHash(journal->index);
 	for(i=0; i<journal->num_of_recs; i++){
 		destroyJournalRecord(&journal->records[i]);
 	}
+	destroyHash(journal->index);
+	tidDestroyHash(journal->tid_index);
 	free(journal->records);
 	free(journal);
 	return 0;

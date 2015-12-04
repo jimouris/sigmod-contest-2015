@@ -168,7 +168,7 @@ void destroyValQuery(ValQuery_t*);
 
 void destroySingleQuery(SingleQuery_t*);
 
-Journal_t** processDefineSchema(DefineSchema_t *, int*);
+Journal_t** processDefineSchema(DefineSchema_t *, int*, Boolean_t);
 
 void processTransaction(Transaction_t *, Journal_t**);
 

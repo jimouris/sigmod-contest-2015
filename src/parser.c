@@ -2,7 +2,7 @@
 
 static uint32_t* schema = NULL;
 
-Journal_t** processDefineSchema(DefineSchema_t *s, int *relation_count) {
+Journal_t** processDefineSchema(DefineSchema_t *s, int *relation_count, Boolean_t tid_mode) {
 	uint64_t i;
 	if (schema == NULL)
 		free(schema);
@@ -13,7 +13,7 @@ Journal_t** processDefineSchema(DefineSchema_t *s, int *relation_count) {
 	ALLOCATION_ERROR(journal_array);
 	for (i = 0; i < s->relationCount; i++) {
 		schema[i] = s->columnCounts[i];
-		journal_array[i] = createJournal(i);
+		journal_array[i] = createJournal(i, tid_mode);
 	}
 	return journal_array;
 }

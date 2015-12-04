@@ -2,6 +2,7 @@
 #define __JOURNAL__
 #include <inttypes.h>
 #include "PKeyHash.h"
+#include "tidHash.h"
 
 
 typedef struct pkHash pkHash;
@@ -27,6 +28,7 @@ typedef struct Journal_t {
 	uint64_t num_of_recs;
 	uint64_t journal_capacity;
 	pkHash* index;
+	tidHash* tid_index;
 	uint64_t relation_id;
 } Journal_t;
 
@@ -60,7 +62,7 @@ List_t* info_init();
 
 void print_list(List_t *l_info);
 
-Journal_t* createJournal(uint64_t);
+Journal_t* createJournal(uint64_t, Boolean_t);
 
 void insertJournalRecord(Journal_t*, uint64_t, size_t, const uint64_t*, Boolean_t);
 
