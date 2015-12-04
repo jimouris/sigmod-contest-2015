@@ -6,8 +6,20 @@
 #include "parser.h"
 #include "journal.h"
 
+Boolean_t usage(int argc, char **argv) {
+	if (argc > 1) {
+		if (!strcmp(argv[1], "-tid") || !strcmp(argv[1], "tid") || !strcmp(argv[1], "--tid")) {
+			// fprintf(stderr, "Running with tid Hash for all relations\n");
+			return True;
+		} else {
+			fprintf(stderr, "Wrong Input! Run like:\n%s\nor\n%s --tid\n", argv[0], argv[0]);
+		}
+	}
+	return False;
+}
 
 int main(int argc, char **argv) {
+	Boolean_t tid_mode = usage(argc, argv);
 	MessageHead_t head;
 	void *body = NULL;
 	uint32_t len;
@@ -39,7 +51,7 @@ int main(int argc, char **argv) {
 				validationListDestroy(validation_list);
 				return EXIT_SUCCESS;
 			case DefineSchema:
-				journal_array = processDefineSchema(body, &relation_count);
+				journal_array = processDefineSchema(body, &relation_count, tid_mode);
 				break;
 			case Transaction:
 				processTransaction(body,journal_array);
