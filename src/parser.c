@@ -101,20 +101,14 @@ int cmp_col(const void *p1, const void *p2) {
 }
 
 void processFlush(Flush_t *fl, Journal_t** journal_array, ValidationList_t* validation_list) {
-	static uint64_t current = 0;
-	uint64_t i;
-	for(i = current; i <= fl->validationId; i++){
-		if(i < validation_list->num_of_validations){
-			ValQuery_t* val_query = validation_list->validation_array[i];	
-			printf("%d", checkValidation(journal_array, val_query));
-			// if(val_query->validationId == 19631 || val_query->validationId == 51252){
-			// if(val_query->validationId == 6673 || val_query->validationId == 13108 || val_query->validationId == 45999){
-				// printValidation(val_query, journal_array);
-			// }
-		}
+	Val_list_node* iter = validation_list->list->list_beg;
+	while(iter != NULL && iter->data->validationId < fl->validationId){
+		ValQuery_t* val_query = iter->data;
+		printf("%d", checkValidation(journal_array, val_query));
+		validation_remove_start(validation_list->list);
+		iter = iter->next;
+
 	}
-	// current = fl->validationId+1;
-	current = fl->validationId;
 }
 
 void processForget(Forget_t *fo, Journal_t** journal_array) {
@@ -141,20 +135,13 @@ Boolean_t checkSingleQuery(Journal_t** journal_array, SingleQuery_t* query, uint
 	Journal_t* journal = journal_array[query->relationId];
 	uint64_t i, j, range_size = 0;
 	RangeArray* range_array = NULL;
-	if(query->columnCount == 0){	/* Empty query! */
-		uint64_t relationId = query->relationId;
-		uint64_t last_rec_offset = journal_array[relationId]->num_of_recs-1;
-		uint64_t max_tid = journal_array[relationId]->records[last_rec_offset].transaction_id;
-		uint64_t min_tid = journal_array[relationId]->records[0].transaction_id;
-		if( max_tid < from || min_tid > to)
-			return False;
-		return True;
-	}
+	if(query->columnCount > 0){
 	/* check the first column of validation */
-	if (query->columns[0]->column == 0 && query->columns[0]->op == Equal){ /* if primary key */
-		range_array = getHashRecord(journal->index, query->columns[0]->value, &range_size);
-		if(range_array == NULL || range_size == 0){
-			return False;
+		if (query->columns[0]->column == 0 && query->columns[0]->op == Equal){ /* if primary key */
+			range_array = getHashRecord(journal->index, query->columns[0]->value, &range_size);
+			if(range_array == NULL || range_size == 0){
+				return False;
+			}
 		}
 	}
 	if (range_array != NULL) { 		/* we can now search range array */
@@ -247,19 +234,21 @@ void destroySchema(Journal_t** journal_array, int relation_count){
 ValidationList_t* validationListCreate(){
 	ValidationList_t* validation_list = malloc(sizeof(ValidationList_t));
 	ALLOCATION_ERROR(validation_list);
-	validation_list->validation_array = malloc(VALIDATION_COUNT_INIT*sizeof(ValQuery_t*));
-	ALLOCATION_ERROR(validation_list->validation_array);
-	validation_list->num_of_validations = 0;
-	validation_list->capacity = VALIDATION_COUNT_INIT;
+	// validation_list->validation_array = malloc(VALIDATION_COUNT_INIT*sizeof(ValQuery_t*));
+	// ALLOCATION_ERROR(validation_list->validation_array);
+	// validation_list->num_of_validations = 0;
+	// validation_list->capacity = VALIDATION_COUNT_INIT;
+	validation_list->list = validation_list_create();
 	return validation_list;
 }
 
 void validationListDestroy(ValidationList_t* validation_list){
-	uint64_t i;
-	for(i = 0; i < validation_list->num_of_validations; i++){
-		destroyValQuery(validation_list->validation_array[i]);
-	}
-	free(validation_list->validation_array);
+	// uint64_t i;
+	// for(i = 0; i < validation_list->num_of_validations; i++){
+	// 	destroyValQuery(validation_list->validation_array[i]);
+	// }
+	// free(validation_list->validation_array);
+	destroy_validation_list(validation_list->list);
 	free(validation_list);
 }
 
@@ -282,21 +271,23 @@ void destroySingleQuery(SingleQuery_t* query){
 }
 
 int validationListInsert(ValidationList_t* validation_list, ValQuery_t* val_query){
-	if(validation_list->num_of_validations >= validation_list->capacity){
-		validation_list->capacity *= 2;
-		validation_list->validation_array = realloc(validation_list->validation_array, validation_list->capacity * sizeof(ValidationQueries_t));
-		ALLOCATION_ERROR(validation_list->validation_array);
-	}
-	validation_list->validation_array[validation_list->num_of_validations] = val_query;
+	// if(validation_list->num_of_validations >= validation_list->capacity){
+	// 	validation_list->capacity *= 2;
+	// 	validation_list->validation_array = realloc(validation_list->validation_array, validation_list->capacity * sizeof(ValidationQueries_t));
+	// 	ALLOCATION_ERROR(validation_list->validation_array);
+	// }
+	// validation_list->validation_array[validation_list->num_of_validations] = val_query;
+	validation_insert_end(validation_list->list, val_query);
 	validation_list->num_of_validations++;
 	return 0;
 }
 
 void validationListPrint(ValidationList_t* validation_list, Journal_t ** journal_array){
-	uint64_t i;
-	for(i = 0; i < validation_list->num_of_validations; i++ ){
-		printValidation(validation_list->validation_array[i], journal_array);
-	}
+	// uint64_t i;
+	// for(i = 0; i < validation_list->num_of_validations; i++ ){
+	// 	printValidation(validation_list->validation_array[i], journal_array);
+	// }
+	validation_print_list(validation_list->list, journal_array);
 }
 
 void printValidation(ValQuery_t* val_query, Journal_t** journal_array){
@@ -335,4 +326,84 @@ void printValidation(ValQuery_t* val_query, Journal_t** journal_array){
 			}			
 		}
 	}
+}
+
+
+void validation_insert_end(Val_list_t *list, ValQuery_t* val_query) {
+	Val_list_node *n = malloc(sizeof(Val_list_node));
+	ALLOCATION_ERROR(n);
+	n->data = val_query;
+	n->next = NULL;
+	
+	if (list->size == 0){
+		list->list_beg = n;
+		list->list_end = n;
+	} else {
+		list->list_end->next = n;
+		list->list_end = n;
+	}
+
+	list->size++;
+}
+
+// void validation_remove_end(Val_list_t *list) {
+// 	Val_list_node *n = list->list_end;
+// 	destroyValQuery(n->data);
+// 	if (n->prev == NULL)
+// 		list->list_beg = n->next;
+// 	else
+// 		n->prev->next = n->next;
+// 	if (n->next == NULL)
+// 		list->list_end = n->prev;
+// 	else
+// 		n->next->prev = n->prev;
+// 	list->size--;
+// 	free(n);
+// }
+
+void validation_remove_start(Val_list_t *list) {
+	Val_list_node *n = list->list_beg;
+	if(n == NULL)
+		return;
+	list->list_beg = n->next;
+	// if(list->list_beg != NULL)
+	// 	list->list_beg->prev = NULL;
+	destroyValQuery(n->data);
+	free(n);
+	list->size--;
+	if(list->size == 0){
+		list->list_beg = NULL;
+		list->list_end = NULL;
+	}
+}
+
+
+Val_list_t *validation_list_create(void) {
+	Val_list_t *list = malloc(sizeof(Val_list_t));
+	ALLOCATION_ERROR(list);
+	list->list_beg = NULL;
+	list->list_end = NULL;
+	list->size = 0;
+	return list;
+}
+
+void destroy_validation_list(Val_list_t* list){
+	while(!validation_isEmpty(list)){
+		// validation_remove_end(list);
+		validation_remove_start(list);
+	}
+	free(list);
+}
+
+Boolean_t validation_isEmpty(Val_list_t* list){
+	return (list->size == 0);
+}
+
+void validation_print_list(Val_list_t* list, Journal_t ** journal_array){
+	Val_list_node* n = list->list_beg;
+	while(n != NULL){
+		printValidation(n->data, journal_array);
+		n = n->next;
+	}
+	printf("\n");
 }

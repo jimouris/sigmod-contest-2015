@@ -115,13 +115,43 @@ typedef struct ValQuery {
 } ValQuery_t;
 
 
+typedef struct Val_list_node {
+   ValQuery_t* data;
+   struct Val_list_node *next;
+   // struct Val_list_node *prev;
+} Val_list_node;
+
+typedef struct Val_list_t {
+   Val_list_node *list_beg;
+   Val_list_node *list_end;
+   uint64_t size;
+} Val_list_t;
+
 
 typedef struct ValidationList {
-	ValQuery_t** validation_array;
+	// ValQuery_t** validation_array;
+   Val_list_t* list;
 	uint64_t num_of_validations;
 	uint64_t capacity;
 } ValidationList_t;
 
+
+Boolean_t validation_isEmpty(Val_list_t*);
+
+
+void destroy_validation_list(Val_list_t*);
+
+List_node* validation_insert_start(Val_list_t* l_info, ValQuery_t* d);
+
+void validation_insert_end(Val_list_t* l_info, ValQuery_t* d);
+
+void validation_remove_end(Val_list_t* l_info);
+
+void validation_remove_start(Val_list_t *list);
+
+Val_list_t* validation_list_create();
+
+void validation_print_list(Val_list_t *l_info, Journal_t ** journal_array);
 
 
 // void skipWhiteSpaces(char**);
