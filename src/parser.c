@@ -105,9 +105,8 @@ void processFlush(Flush_t *fl, Journal_t** journal_array, ValidationList_t* vali
 	while(iter != NULL && iter->data->validationId < fl->validationId){
 		ValQuery_t* val_query = iter->data;
 		printf("%d", checkValidation(journal_array, val_query));
-		validation_remove_start(validation_list->list);
 		iter = iter->next;
-
+		validation_remove_start(validation_list->list);
 	}
 }
 
