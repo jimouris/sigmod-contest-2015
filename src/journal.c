@@ -92,8 +92,12 @@ Journal_t* createJournal(uint64_t relation_id, Boolean_t tid_mode) {
 	journal->num_of_recs = 0;
 	journal->relation_id = relation_id;
 	journal->index = createHash();
-	if(tid_mode == True)
+	if(tid_mode == True){
 		journal->tid_index = tidCreateHash();
+	}
+	else{
+		journal->tid_index = NULL;
+	}
 	return journal;
 }
 
@@ -128,13 +132,14 @@ void insertJournalRecord(Journal_t* journal, uint64_t transaction_id, size_t col
 	insertHashRecord(journal->index, column_values[0], range_array);
 	free(range_array);
 
-	tidSubBucket* tid_sub_bucket = malloc(sizeof(tidSubBucket));
-	ALLOCATION_ERROR(tid_sub_bucket);
-	tid_sub_bucket->transaction_id = transaction_id;
-	tid_sub_bucket->rec_offset = journal->num_of_recs;
-	tidInsertHashRecord(journal->tid_index, tid_sub_bucket);
-	free(tid_sub_bucket);
-
+	if(journal->tid_index != NULL){
+		tidSubBucket* tid_sub_bucket = malloc(sizeof(tidSubBucket));
+		ALLOCATION_ERROR(tid_sub_bucket);
+		tid_sub_bucket->transaction_id = transaction_id;
+		tid_sub_bucket->rec_offset = journal->num_of_recs;
+		tidInsertHashRecord(journal->tid_index, tid_sub_bucket);
+		free(tid_sub_bucket);
+	}
 	journal->num_of_recs++;
 }
 
@@ -142,43 +147,60 @@ void insertJournalRecord(Journal_t* journal, uint64_t transaction_id, size_t col
 	In Columnt_t* constraint is the information for our constraint
 	call it with NULL if you want all the records in the range.
 */
-List_t* getJournalRecords(Journal_t* journal, Column_t* constraint, int range_start, int range_end) {
-	/*Binary Search for first appearance*/
-	uint64_t first = 0;
-	uint64_t last = journal->num_of_recs - 1;
-	uint64_t middle = (first+last)/2;
-	uint64_t first_appearance;
-	Boolean_t not_found = False;
+List_t* getJournalRecords(Journal_t* journal, Column_t* constraint, uint64_t range_start, uint64_t range_end) {
+	uint64_t first_appearance = 0;
+	List_t* record_list = info_init();
 
-	while (first <= last && not_found == False) {
-		if (journal->records[middle].transaction_id < range_start){
-			first = middle + 1;    
-		}
-		else if (journal->records[middle].transaction_id == range_start) {
-			first_appearance = middle;
-			break;
-		}
-		else{
-			if(middle == 0){
-				not_found = True;
+	if(journal->tid_index != NULL) {
+		Boolean_t found = False;
+		uint64_t transaction_id = range_start;
+		while(found == False && transaction_id <= range_end){
+			first_appearance = tidGetHashOffset(journal->tid_index, transaction_id, &found);
+			if(found == False){
+				transaction_id++;
+			} else{
 				break;
 			}
-			last = middle - 1;
 		}
-		middle = (first + last)/2;
-	}
-	if (first > last || not_found == True){	//Not found
-		first_appearance = (last <= first) ? last : first;
-		while(first_appearance < journal->num_of_recs && journal->records[first_appearance].transaction_id < range_start){
-			first_appearance++;
+		if(found == False){
+			return record_list;
 		}
-	}
-	List_t* record_list = info_init();
-	if(first_appearance >= journal->num_of_recs){
-		return record_list;
-	}
-	while(first_appearance > 0 && journal->records[first_appearance-1].transaction_id == journal->records[first_appearance].transaction_id){
-		first_appearance--;
+	} else {
+		/*Binary Search for first appearance*/
+		uint64_t first = 0;
+		uint64_t last = journal->num_of_recs - 1;
+		uint64_t middle = (first+last)/2;
+		Boolean_t not_found = False;
+
+		while (first <= last && not_found == False) {
+			if (journal->records[middle].transaction_id < range_start){
+				first = middle + 1;    
+			}
+			else if (journal->records[middle].transaction_id == range_start) {
+				first_appearance = middle;
+				break;
+			}
+			else{
+				if(middle == 0){
+					not_found = True;
+					break;
+				}
+				last = middle - 1;
+			}
+			middle = (first + last)/2;
+		}
+		if (first > last || not_found == True){	//Not found
+			first_appearance = (last <= first) ? last : first;
+			while(first_appearance < journal->num_of_recs && journal->records[first_appearance].transaction_id < range_start){
+				first_appearance++;
+			}
+		}
+		if(first_appearance >= journal->num_of_recs){
+			return record_list;
+		}
+		while(first_appearance > 0 && journal->records[first_appearance-1].transaction_id == journal->records[first_appearance].transaction_id){
+			first_appearance--;
+		}
 	}
 	uint64_t i = first_appearance;
 	while(i < journal->num_of_recs && journal->records[i].transaction_id <= range_end ) {
@@ -246,7 +268,8 @@ int destroyJournal(Journal_t* journal) {
 		destroyJournalRecord(&journal->records[i]);
 	}
 	destroyHash(journal->index);
-	tidDestroyHash(journal->tid_index);
+	if(journal->tid_index != NULL)
+		tidDestroyHash(journal->tid_index);
 	free(journal->records);
 	free(journal);
 	return 0;
