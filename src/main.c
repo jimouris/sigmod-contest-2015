@@ -34,8 +34,8 @@ int main(int argc, char **argv) {
 		// printf("HEAD LEN %u \t| HEAD TYPE %u \t| DESC ", head.messageLen, head.type);
 
 		/* Retrieve the message body */
-		if (body != NULL)
-			free(body);
+		// if (body != NULL)
+		// 	free(body);
 		if (head.messageLen > 0 ) {
 			body = malloc(head.messageLen * sizeof(char));
 			if (read(0, body, head.messageLen) <= 0) { 
@@ -47,23 +47,32 @@ int main(int argc, char **argv) {
 		// And interpret it
 		switch (head.type) {
 			case Done:
+				// validationListPrint(validation_list);
 				destroySchema(journal_array, relation_count);
 				validationListDestroy(validation_list);
 				return EXIT_SUCCESS;
 			case DefineSchema:
 				journal_array = processDefineSchema(body, &relation_count, tid_mode);
+				if (body != NULL)
+					free(body);
 				break;
 			case Transaction:
 				processTransaction(body,journal_array);
+				if (body != NULL)
+					free(body);
 				break;
 			case ValidationQueries:
 				processValidationQueries(body,journal_array,validation_list);
 				break;
 			case Flush:
 				processFlush(body,journal_array,validation_list);
+				if (body != NULL)
+					free(body);
 				break;
 			case Forget:
 				processForget(body,journal_array);
+				if (body != NULL)
+					free(body);
 				break;
 			default: 
 				exit(EXIT_FAILURE);	// crude error handling, should never happen
