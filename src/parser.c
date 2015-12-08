@@ -65,27 +65,27 @@ void processValidationQueries(ValidationQueries_t *v, Journal_t** journal_array,
 }
 
 
-Column_t** removeDuplicates(Column_t** old, uint64_t old_size, uint64_t* new_size){
-	uint64_t i,j;
-	uint64_t count = 0;
-	Column_t** new_arr = malloc(old_size*sizeof(Column_t*));
-	ALLOCATION_ERROR(new_arr);
-	for(j = 0; j<old_size; j++){
-		new_arr[j] = malloc(sizeof(Column_t));
-		ALLOCATION_ERROR(new_arr[j]);
-	}
-	for (i = 0; i < old_size; ++i) {
-		if(i == 0 || equal_col(&old[i], &old[i-1]) == False) {
-			new_arr[count]->column = old[i]->column;
-			new_arr[count]->op = old[i]->op;
-			new_arr[count]->value = old[i]->value;
-			count++;
-		}
-	}
-	new_arr = realloc(new_arr, count*sizeof(Column_t*));
-	*new_size = count;
-	return new_arr;
-}
+// Column_t** removeDuplicates(Column_t** old, uint64_t old_size, uint64_t* new_size){
+// 	uint64_t i,j;
+// 	uint64_t count = 0;
+// 	Column_t** new_arr = malloc(old_size*sizeof(Column_t*));
+// 	ALLOCATION_ERROR(new_arr);
+// 	for(j = 0; j<old_size; j++){
+// 		new_arr[j] = malloc(sizeof(Column_t));
+// 		ALLOCATION_ERROR(new_arr[j]);
+// 	}
+// 	for (i = 0; i < old_size; ++i) {
+// 		if(i == 0 || equal_col(&old[i], &old[i-1]) == False) {
+// 			new_arr[count]->column = old[i]->column;
+// 			new_arr[count]->op = old[i]->op;
+// 			new_arr[count]->value = old[i]->value;
+// 			count++;
+// 		}
+// 	}
+// 	new_arr = realloc(new_arr, count*sizeof(Column_t*));
+// 	*new_size = count;
+// 	return new_arr;
+// }
 
 // Boolean_t equal_col(const void *p1, const void *p2) {
 // 	const Column_t *f1 = *(Column_t**) p1;
