@@ -7,7 +7,8 @@
 List_node *insert_start(List_t *l_info, JournalRecord_t* d) {
 	List_node *n = malloc(sizeof(List_node));
 	ALLOCATION_ERROR(n);
-	JournalRecord_t* new_d = copyJournalRecord(d);
+	// JournalRecord_t* new_d = copyJournalRecord(d);
+	JournalRecord_t* new_d = d;
 	n->data = new_d;
 	n->next = l_info->list_beg;
 	n->prev = NULL;
@@ -23,7 +24,7 @@ List_node *insert_start(List_t *l_info, JournalRecord_t* d) {
 void insert_end(List_t *l_info, JournalRecord_t* d) {
 	List_node *n = malloc(sizeof(List_node));
 	ALLOCATION_ERROR(n);
-	JournalRecord_t* new_d = copyJournalRecord(d);
+	JournalRecord_t* new_d = d;
 	n->data = new_d;
 	n->next = NULL;
 	n->prev = l_info->list_end;
@@ -37,8 +38,6 @@ void insert_end(List_t *l_info, JournalRecord_t* d) {
 
 void remove_end(List_t *l_info) {
 	List_node *n = l_info->list_end;
-	destroyJournalRecord(n->data);
-	free(n->data);
 	if (n->prev == NULL)
 		l_info->list_beg = n->next;
 	else
