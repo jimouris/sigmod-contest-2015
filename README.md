@@ -20,5 +20,5 @@ During the contest we will also hand out larger test datasets, similar to those 
 2. path-to-input:
   "./execute ./path-to-input/file.bin [--tid]"
   (e.g. "./execute ./inputs/small.bin [--tid]")
-[--tid is optional, enables hash to every transacrion-id]
 
+[--tid is optional, enables hash to every transacrion-id]
