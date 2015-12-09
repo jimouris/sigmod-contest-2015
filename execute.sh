@@ -18,10 +18,11 @@ if [ $# -eq 0 ] ; then
 	diff myoutperline.test $DEFAULTOUTPUT.perline.test
 	echo "\n\n"
 else
-	echo "running with $1"
+	echo "reads from $1"
 	input="${1}"
-	if [ $# -eq 2 ] && ( [ "${2}" == "--tid" ] || [ "${2}" == "-tid" ] || [ "${2}" == "tid" ] ); then
-		echo "running with tidHash"
+	if [ $# -eq 2 ] && [ "${2}" = "-tid" -o "${2}" = "--tid" -o "${2}" = "tid" ]
+		then
+		echo "tidHash is on"
 		./a.out --tid < $input > myout.test
 	else
 		./a.out < $input > myout.test
