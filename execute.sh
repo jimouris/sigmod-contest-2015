@@ -10,7 +10,7 @@ gcc -o perlineprinter src/printperline.c
 echo "\n\nNow running!"
 if [ $# -eq 0 ] ; then
     echo "No arguments supplied, running with $DEFAULTINPUT"
-	./a.out < $DEFAULTINPUT > myout.test
+	time -f "\t%E Elapsed Real Time \n\t%S CPU-seconds" ./a.out < $DEFAULTINPUT > myout.test
 	echo "done :)\n"
 	./perlineprinter < myout.test > myoutperline.test
 	rm myout.test
@@ -41,4 +41,3 @@ else
 fi
 
 rm myoutperline.test $DEFAULTOUTPUT.perline.test perlineprinter
-make clean
