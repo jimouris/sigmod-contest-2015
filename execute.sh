@@ -23,11 +23,11 @@ else
 	if [ $# -eq 2 ] && [ "${2}" = "-tid" -o "${2}" = "--tid" -o "${2}" = "tid" ]
 		then
 		echo "tidHash is on"
-		./a.out --tid < $input > myout.test
+		time -f "\t%e Elapsed Real Time (secs)\n\t%S CPU-seconds" ./a.out --tid < $input > myout.test
 	else
-		./a.out < $input > myout.test
+		T="$(date +%s)"
+		time -f "\t%e Elapsed Real Time (secs)\n\t%S CPU-seconds" ./a.out < $input > myout.test
 	fi
-	echo "done :)\n"
 	./perlineprinter < myout.test > myoutperline.test
 	rm myout.test
 	output="./outputs/"${input#*/}
