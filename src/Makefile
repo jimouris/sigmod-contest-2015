@@ -2,9 +2,9 @@
 # In order to execute this "Makefile" just type "make"
 #
 
-OBJS 	= main.o PKeyHash.o tidHash.o parser.o journal.o
-SOURCE	= main.c PKeyHash.c tidHash.c parser.c journal.c
-HEADER  = PKeyHash.h tidHash.h parser.h journal.h
+OBJS 	= main.o PKeyHash.o tidHash.o predicateHash.o parser.o journal.o
+SOURCE	= main.c PKeyHash.c tidHash.c predicateHash.c parser.c journal.c
+HEADER  = PKeyHash.h tidHash.h predicateHash.h parser.h journal.h
 OUT  	= a.out
 CC		= gcc
 FLAGS 	= -c -g -Wall -O2
@@ -23,6 +23,9 @@ PKeyHash.o: PKeyHash.c PKeyHash.h
 
 tidHash.o: tidHash.c tidHash.h 
 	$(CC) $(FLAGS) tidHash.c
+
+predicateHash.o: predicateHash.c predicateHash.h 
+	$(CC) $(FLAGS) predicateHash.c
 
 parser.o: parser.c PKeyHash.h 
 	$(CC) $(FLAGS) parser.c
