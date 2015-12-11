@@ -185,20 +185,20 @@ void predicateCleanSubBucket(predicateSubBucket* pred_subBucket) {
 	pred_subBucket->conflict = False;
 }
 
-// uint64_t predicateHashFunction(uint64_t size, predicateSubBucket* predicate) {
-//     char str[50];
-//     char* str1 = str;
-//     sprintf(str,"%" PRIu32 "%d%zu%zu%zu", predicate->condition->column,
-// 		     predicate->condition->op, predicate->condition->value, 
-// 		     predicate->range_start, predicate->range_end);
-//     uint64_t hash = 5381;
-//     // printf("string: %s\n",str);
-//     int c;
-//     while ((c = *str1++) != '\0')
-//         hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+uint64_t predicateHashFunction(uint64_t size, predicateSubBucket* predicate) {
+    char str[50];
+    char* str1 = str;
+    sprintf(str,"%" PRIu32 "%d%zu%zu%zu", predicate->condition->column,
+		     predicate->condition->op, predicate->condition->value, 
+		     predicate->range_start, predicate->range_end);
+    uint64_t hash = 5381;
+    // printf("string: %s\n",str);
+    int c;
+    while ((c = *str1++) != '\0')
+        hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
 
-//     return hash % size;
-// }
+    return hash % size;
+}
 
 // /* printsBucket various info */
 void predicatePrintBucket(tidBucket* bucket){
@@ -231,18 +231,18 @@ void predicatePrintHash(tidHash* hash){
 	}
 }
 
-uint64_t predicateGetHashOffset(tidHash* hash, uint64_t transaction_id, Boolean_t *found) {
-	uint64_t bucket_num = predicateHashFunction(hash->size, transaction_id);
-	uint32_t i;
-	for (i = 0 ; i < hash->index[bucket_num]->current_subBuckets ; i++) { /* for i in subBuckets */
-		if (hash->index[bucket_num]->key_buckets[i].transaction_id == transaction_id) {
-			*found = True;
-			return hash->index[bucket_num]->key_buckets[i].rec_offset;
-		}
-	}
-	*found = False;
-	return 0;
-} 
+// uint64_t predicateGetHashOffset(tidHash* hash, uint64_t transaction_id, Boolean_t *found) {
+// 	uint64_t bucket_num = predicateHashFunction(hash->size, transaction_id);
+// 	uint32_t i;
+// 	for (i = 0 ; i < hash->index[bucket_num]->current_subBuckets ; i++) { /* for i in subBuckets */
+// 		if (hash->index[bucket_num]->key_buckets[i].transaction_id == transaction_id) {
+// 			*found = True;
+// 			return hash->index[bucket_num]->key_buckets[i].rec_offset;
+// 		}
+// 	}
+// 	*found = False;
+// 	return 0;
+// } 
 
 // int predicateDestroyHash(predicateHash* hash) {
 // 	uint64_t i;
