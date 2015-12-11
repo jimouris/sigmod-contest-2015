@@ -159,11 +159,7 @@ void tidCleanSubBucket(tidSubBucket* tidSubBucket) {
 
 uint64_t tidHashFunction(uint64_t size, uint64_t x) {
     return (x % size);
-//     // x = ((x >> 16) ^ x) * 0x45d9f3b;
-// 	//    x = ((x >> 16) ^ x) * 0x45d9f3b;
-// 	//    x = ((x >> 16) ^ x);
-// 	// return ((x*2654435761+1223) % size);
- }
+}
 
 // /* printsBucket various info */
 void tidPrintBucket(tidBucket* bucket){

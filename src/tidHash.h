@@ -14,11 +14,11 @@ typedef struct tidSubBucket {
 } tidSubBucket;
 
 typedef struct tidBucket { /* Has a pointer (key_buckets) to one or more subBuckets */
+	uint8_t deletion_started;
 	uint32_t local_depth;
 	uint32_t current_subBuckets;
-	tidSubBucket *key_buckets;
-	uint8_t deletion_started;
 	uint64_t pointers_num;
+	tidSubBucket *key_buckets;
 } tidBucket;
 
 typedef struct tidHash {
