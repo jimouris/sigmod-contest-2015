@@ -9,12 +9,11 @@
 #include "journal.h"
 #include "constants.h"
 
-
 typedef struct predicateSubBucket {
 	uint64_t range_start;
 	uint64_t range_end;
 	Column_t *condition;
-	Boolean_t conflict;
+	enum conflictState{NotEvaluated=-1,NoConflict,WithConflict} conflict;
 } predicateSubBucket;
 
 typedef struct predicateBucket {

@@ -162,7 +162,7 @@ predicateBucket* predicateCreateNewBucket(uint32_t local_depth) {
 		new_bucket->key_buckets[i].condition->column = 0;
 		new_bucket->key_buckets[i].condition->op = 0;
 		new_bucket->key_buckets[i].condition->value = 0;
-		new_bucket->key_buckets[i].conflict = False;	
+		new_bucket->key_buckets[i].conflict = NotEvaluated;	
 	}
 	return new_bucket;
 }
@@ -182,7 +182,7 @@ void predicateCleanSubBucket(predicateSubBucket* pred_subBucket) {
 	pred_subBucket->condition->column = 0;
 	pred_subBucket->condition->op = 0;
 	pred_subBucket->condition->value = 0;
-	pred_subBucket->conflict = False;
+	pred_subBucket->conflict = NotEvaluated;
 }
 
 uint64_t predicateHashFunction(uint64_t size, predicateSubBucket* predicate) {
@@ -201,28 +201,29 @@ uint64_t predicateHashFunction(uint64_t size, predicateSubBucket* predicate) {
 }
 
 // /* printsBucket various info */
-void predicatePrintBucket(tidBucket* bucket){
+void predicatePrintBucket(predicateBucket* bucket){
 	fprintf(stderr, "------------------------------------------------------------\n");
 	fprintf(stderr, "local_depth(%"PRIu32"), current_subBuckets(%"PRIu32")\n", bucket->local_depth, bucket->current_subBuckets);
 	uint64_t i;
 	for (i = 0 ; i < bucket->current_subBuckets ; i++) { 
-		uint64_t transaction_id = bucket->key_buckets[i].transaction_id;
-		uint64_t rec_offset = bucket->key_buckets[i].rec_offset;
-		fprintf(stderr, "\tSubBucket(%zd): transaction_id: %zd , rec_offset : %zd\n", i, transaction_id,rec_offset);
+		uint64_t range_start = bucket->key_buckets[i].range_start;
+		uint64_t range_end = bucket->key_buckets[i].range_end;
+		Column_t* condition = bucket->key_buckets[i].condition;
+		fprintf(stderr, "\tSubBucket(%zd): range_start: %zd , range_end : %zd column %zd op %d value %zd\n", i, range_start,range_end,condition->column,condition->op,condition->value);
 	}
 	fprintf(stderr, "------------------------------------------------------------\n");
 }
 
 // /* Prints index, the bucket pointing to and the content of the bucket */
-void predicatePrintHash(tidHash* hash){
+void predicatePrintHash(predicateHash* hash){
 	uint64_t i;
 	for (i = 0 ; i < hash->size ; i++) { /*for every index*/
 		if (hash->index[i] != NULL) { /*points somewhere*/
-			fprintf(stderr, "*****Index %zd points to tidBucket address %p*******\n", i, hash->index[i]);
+			fprintf(stderr, "*****Index %zd points to predicateBucket address %p*******\n", i, hash->index[i]);
 			if (!hash->index[i]->current_subBuckets) {
-				tidPrintBucket(hash->index[i]);
+				predicatePrintBucket(hash->index[i]);
 			} else {
-				tidPrintBucket(hash->index[i]);
+				predicatePrintBucket(hash->index[i]);
 			}
 			fprintf(stderr,"***********************************************************\n\n");
 		} else {
@@ -244,30 +245,30 @@ void predicatePrintHash(tidHash* hash){
 // 	return 0;
 // } 
 
-// int predicateDestroyHash(predicateHash* hash) {
-// 	uint64_t i;
-// 	for (i = 0 ; i < hash->size ; i++) { /*for every bucket on the hash*/
-// 		tidBucket * bucketPtr = hash->index[i];
-// 		if (!bucketPtr->deletion_started) { /*it is the first bucket*/
-// 			bucketPtr->deletion_started = 1;
-// 			bucketPtr->pointers_num = 1 << (hash->global_depth - bucketPtr->local_depth);
-// 		}
+int predicateDestroyHash(predicateHash* hash) {
+	uint64_t i;
+	for (i = 0 ; i < hash->size ; i++) { /*for every bucket on the hash*/
+		predicateBucket * bucketPtr = hash->index[i];
+		if (!bucketPtr->deletion_started) { /*it is the first bucket*/
+			bucketPtr->deletion_started = 1;
+			bucketPtr->pointers_num = 1 << (hash->global_depth - bucketPtr->local_depth);
+		}
 
-// 		if (bucketPtr->pointers_num == 1 ) { /*if it is the last remaining pointer that points to the bucket*/
-// 			free(bucketPtr->key_buckets.condition);
-// 			free(bucketPtr->key_buckets);
-// 			free(bucketPtr);
-// 		}else{
-// 			bucketPtr->pointers_num--;
-// 		}
-// 		hash->index[i] = NULL;
-// 		bucketPtr = NULL;
-// 	}
-// 	free(hash->index);
-// 	free(hash);
-// 	hash = NULL;
-// 	return OK_SUCCESS;
-// }
+		if (bucketPtr->pointers_num == 1 ) { /*if it is the last remaining pointer that points to the bucket*/
+			free(bucketPtr->key_buckets->condition);
+			free(bucketPtr->key_buckets);
+			free(bucketPtr);
+		}else{
+			bucketPtr->pointers_num--;
+		}
+		hash->index[i] = NULL;
+		bucketPtr = NULL;
+	}
+	free(hash->index);
+	free(hash);
+	hash = NULL;
+	return OK_SUCCESS;
+}
 
 // int deleteHashRecord(tidHash* hash, Key key) {
 // 	uint64_t bucket_num = hashFunction(hash->size, key);
