@@ -13,7 +13,7 @@
 typedef struct predicateSubBucket {
 	uint64_t range_start;
 	uint64_t range_end;
-	Column_t condition;
+	Column_t *condition;
 	Boolean_t conflict;
 } predicateSubBucket;
 
@@ -30,6 +30,34 @@ typedef struct predicateHash {
 	uint32_t global_depth;
 	predicateBucket **index;
 } predicateHash;
+
+/* HASH INIT METHOD */
+predicateHash* predicateCreateHash(); 
+/********************/
+
+/*HASH FUNCTION USED FOR TO GO TO THE RIGHT INDEX*/
+uint64_t predicateHashFunction(uint64_t, predicateSubBucket*);
+/*************************************************/
+
+/*INSERT TO HASH FUNCTION AND OTHER HELPER FUNCTIONS*/
+void predicateFixHashPointers(predicateBucket **, predicateBucket *, uint32_t, uint64_t); 
+void predicateFixSplitPointers(predicateHash*, predicateBucket*, predicateBucket*, uint64_t );
+void predicateDuplicateIndex(predicateHash*);
+void predicateCopyBucketTransactions(predicateBucket*, predicateBucket*);
+void predicateCopySubbucketTransactions(predicateSubBucket*, predicateSubBucket*);
+int predicateInsertHashRecord(predicateHash*, predicateSubBucket*);
+predicateBucket* predicateCreateNewBucket(uint32_t);
+void preidcateCleanBucket(predicateBucket *);
+void predicateCleanSubBucket(predicateSubBucket *);
+Boolean_t predicateRecordsEqual(predicateSubBucket*, predicateSubBucket*);
+/*****************************************************/
+
+/*DELETE HASH FUNCTION*/
+int predicateDestroyHash(predicateHash *); 
+void predicateDestroyBucket(predicateBucket *);
+void predicateCleanBucket(predicateBucket*);
+/**********************/
+
 
 
 #endif

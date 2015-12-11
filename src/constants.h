@@ -1,11 +1,13 @@
 #ifndef __CONSTANTS__
 #define __CONSTANTS__ 
 
-#define GLOBAL_DEPTH_INIT 1			/* Hash init depth */
-#define TID_GLOBAL_DEPTH_INIT 1
-#define B 1							/* Number of keys for each bucket */
-#define TID_B 1						/* Number of keys for each bucket */
-#define C 4							/* Initial capacity for transactions in bucket */
+#define GLOBAL_DEPTH_INIT 1				/* PKHash init depth */
+#define TID_GLOBAL_DEPTH_INIT 1			/* tidHash init depth */
+#define PREDICATE_GLOBAL_DEPTH_INIT 1	/* predicateHash init depth */
+#define B 1								/* Number of keys for each PKBucket */
+#define TID_B 1							/* Number of keys for each tidBucket */
+#define PREDICATE_B 1 					/* Number of keys for each predicateBucket*/
+#define C 4								/* Initial capacity for transactions in bucket */
 #define JOURNAL_CAPACITY_INIT 64	
 #define VALIDATION_COUNT_INIT 64	
 #define OK_SUCCESS 0
