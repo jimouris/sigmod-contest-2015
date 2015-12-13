@@ -1,6 +1,6 @@
 #include "tidHash.h"
 
-tidHash* tidCreateHash() {
+tidHash* tidCreateHash(void) {
 	tidHash *hash = malloc(sizeof(tidHash));
 	ALLOCATION_ERROR(hash);
 	hash->global_depth = TID_GLOBAL_DEPTH_INIT;

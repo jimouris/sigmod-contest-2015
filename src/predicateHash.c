@@ -1,6 +1,6 @@
 #include "predicateHash.h"
 
-predicateHash* predicateCreateHash() {
+predicateHash* predicateCreateHash(void) {
 	predicateHash *hash = malloc(sizeof(predicateHash));
 	ALLOCATION_ERROR(hash);
 	hash->global_depth = PREDICATE_GLOBAL_DEPTH_INIT;

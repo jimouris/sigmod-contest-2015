@@ -1,6 +1,6 @@
 #include "PKeyHash.h"
 
-pkHash* createHash() {
+pkHash* createHash(void) {
 	pkHash *hash = malloc(sizeof(pkHash));
 	ALLOCATION_ERROR(hash);
 	hash->global_depth = GLOBAL_DEPTH_INIT;

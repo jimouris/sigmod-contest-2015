@@ -38,7 +38,7 @@ typedef struct predicateHash {
 
 
 /* HASH INIT METHOD */
-predicateHash* predicateCreateHash(); 
+predicateHash* predicateCreateHash(void); 
 /********************/
 
 /*HASH FUNCTION USED FOR TO GO TO THE RIGHT INDEX*/

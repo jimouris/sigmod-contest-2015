@@ -42,7 +42,7 @@ typedef struct pkHash {
 /****************************/
 
 /* HASH INIT METHOD */
-pkHash* createHash(); 
+pkHash* createHash(void); 
 /********************/
 
 /*HASH FUNCTION USED FOR TO GO TO THE RIGHT INDEX*/

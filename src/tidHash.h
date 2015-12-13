@@ -29,7 +29,7 @@ typedef struct tidHash {
 /****************************/
 
 /* HASH INIT METHOD */
-tidHash* tidCreateHash(); 
+tidHash* tidCreateHash(void); 
 /********************/
 
 /*HASH FUNCTION USED FOR TO GO TO THE RIGHT INDEX*/
