@@ -139,7 +139,7 @@ ValidationList_t* validationListCreate();
 
 void validationListDestroy(ValidationList_t*);
 
-Journal_t** processDefineSchema(DefineSchema_t *, int*, Boolean_t);
+Journal_t** processDefineSchema(DefineSchema_t *, int*, Boolean_t*);
 
 void processTransaction(Transaction_t *, Journal_t**);
 

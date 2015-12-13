@@ -140,6 +140,7 @@ void predicateCopySubbucketTransactions(predicateSubBucket* dst, predicateSubBuc
 	dst->range_end = src->range_end;
 	dst->bit_set_size = src->bit_set_size;
 	copyBitSet(dst->bit_set, src->bit_set, dst->bit_set_size);
+	dst->open_requests = src->open_requests;
 	dst->condition->column = src->condition->column; 
 	dst->condition->op = src->condition->op;
 	dst->condition->value = src->condition->value;
@@ -165,6 +166,7 @@ predicateBucket* predicateCreateNewBucket(uint32_t local_depth) {
 		new_bucket->key_buckets[i].condition->value = 0;
 		new_bucket->key_buckets[i].bit_set = NULL;	
 		new_bucket->key_buckets[i].bit_set_size = 0;	
+		new_bucket->key_buckets[i].open_requests = 0;	
 	}
 	return new_bucket;
 }
@@ -187,6 +189,7 @@ void predicateCleanSubBucket(predicateSubBucket* pred_subBucket) {
 	pred_subBucket->bit_set_size = 0;
 	free(pred_subBucket->bit_set);
 	pred_subBucket->bit_set = NULL;
+	pred_subBucket->open_requests = 0;
 }
 
 uint64_t predicateHashFunction(uint64_t size, predicateSubBucket* predicate) {

@@ -16,6 +16,7 @@ typedef struct predicateSubBucket {
 	Column_t *condition;
 	uint8_t* bit_set;
 	uint64_t bit_set_size;
+	uint64_t open_requests;
 } predicateSubBucket;
 
 typedef struct predicateBucket {
