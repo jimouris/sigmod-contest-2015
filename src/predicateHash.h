@@ -7,13 +7,15 @@
 #include <errno.h>
 #include <string.h>
 #include "journal.h"
+#include "bitSet.h"
 #include "constants.h"
 
 typedef struct predicateSubBucket {
 	uint64_t range_start;
 	uint64_t range_end;
 	Column_t *condition;
-	enum conflictState{NotEvaluated=-1,NoConflict,WithConflict} conflict;
+	uint8_t* bit_set;
+	uint64_t bit_set_size;
 } predicateSubBucket;
 
 typedef struct predicateBucket {

@@ -15,6 +15,8 @@ Boolean_t isBitSetEmpty(uint8_t*, uint64_t);
 uint8_t* createBitSet(uint64_t);
 uint8_t* intersect(uint8_t*, uint8_t*, uint64_t);
 
+void copyBitSet(uint8_t*, uint8_t*, uint64_t);
+
 void setBit(int,  uint8_t*);
 int checkBit(int , uint8_t*);
 void printBitSet(uint8_t*, int);

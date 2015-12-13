@@ -46,12 +46,16 @@ Boolean_t isBitSetEmpty(uint8_t* bit_set, uint64_t bit_size){
  * Creates a bitSet of 'bit_size' bits.
  */
 uint8_t* createBitSet(uint64_t bit_size){
-	uint64_t i;
 	uint64_t byte_size = BITS2BYTES(bit_size);
 	printf("bytes: %zu\n",byte_size );
 	uint8_t* bit_set = malloc(byte_size*sizeof(uint8_t));  // "byte_size" bytes
 	memset(bit_set, 0, byte_size);
 	return bit_set;	
+}
+
+void copyBitSet(uint8_t* bit_set1, uint8_t* bit_set2, uint64_t bit_size){
+	uint64_t byte_size = BITS2BYTES(bit_size);
+	memcpy(bit_set1, bit_set2, byte_size);
 }
 
 
@@ -93,46 +97,46 @@ int checkBit(int n, uint8_t* bit_set){
 
 
 
-void printBitSet(uint8_t* bit_set, int bit_size){
-	uint64_t byte_size = BITS2BYTES(bit_size);
-	int i,j,num;
-	uint8_t* bin_rev;
-	printf("| ");
-	for(i=0; i<byte_size; i++){
-		bin_rev = malloc(CHAR_BIT+1 * sizeof(uint8_t));
-		strcpy(bin_rev,"");	
-		num = bit_set[i];
-		for(j=0; j<CHAR_BIT; j++){
-			if(num & 1){
-				strcat(bin_rev,"1");
-			}else{
-				strcat(bin_rev,"0");
-			}
-			num >>= 1;
-		}
-		printf("%s", my_strrev(bin_rev));
+// void printBitSet(uint8_t* bit_set, int bit_size){
+// 	uint64_t byte_size = BITS2BYTES(bit_size);
+// 	int i,j,num;
+// 	uint8_t* bin_rev;
+// 	printf("| ");
+// 	for(i=0; i<byte_size; i++){
+// 		bin_rev = malloc(CHAR_BIT+1 * sizeof(uint8_t));
+// 		strcpy(bin_rev,"");	
+// 		num = bit_set[i];
+// 		for(j=0; j<CHAR_BIT; j++){
+// 			if(num & 1){
+// 				strcat(bin_rev,"1");
+// 			}else{
+// 				strcat(bin_rev,"0");
+// 			}
+// 			num >>= 1;
+// 		}
+// 		printf("%s", my_strrev(bin_rev));
 
 
-		printf(" | ");
-		free(bin_rev);
-	}
-	printf("\n");
-}
+// 		printf(" | ");
+// 		free(bin_rev);
+// 	}
+// 	printf("\n");
+// }
 
-uint8_t *my_strrev(uint8_t *str)
-{
-      uint8_t *p1, *p2;
+// uint8_t *my_strrev(uint8_t *str)
+// {
+//       uint8_t *p1, *p2;
 
-      if (! str || ! *str)
-            return str;
-      for (p1 = str, p2 = str + strlen(str) - 1; p2 > p1; ++p1, --p2)
-      {
-            *p1 ^= *p2;
-            *p2 ^= *p1;
-            *p1 ^= *p2;
-      }
-      return str;
-}
+//       if (! str || ! *str)
+//             return str;
+//       for (p1 = str, p2 = str + strlen(str) - 1; p2 > p1; ++p1, --p2)
+//       {
+//             *p1 ^= *p2;
+//             *p2 ^= *p1;
+//             *p1 ^= *p2;
+//       }
+//       return str;
+// }
 
 // void printBinary(uint64_t n){
 // 	if(!n)
