@@ -14,3 +14,7 @@ claen:
 	cd ./src; make clean
 	rm ./*.out
 
+celan:
+	cd ./src; make clean
+	rm ./*.out
+
