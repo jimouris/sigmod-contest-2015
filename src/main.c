@@ -6,20 +6,24 @@
 #include "parser.h"
 #include "journal.h"
 
-Boolean_t usage(int argc, char **argv) {
-	if (argc > 1) {
-		if (!strcmp(argv[1], "-tid") || !strcmp(argv[1], "tid") || !strcmp(argv[1], "--tid")) {
-			// fprintf(stderr, "Running with tid Hash for all relations\n");
-			return True;
+Boolean_t* usage(int argc, char **argv) {
+	int i;
+	Boolean_t* modes = calloc(2, sizeof(Boolean_t));
+	for (i = 1 ; i < argc ; i++) {
+		if (!strcmp(argv[i], "-tid") || !strcmp(argv[i], "tid") || !strcmp(argv[i], "--tid")) {
+			modes[0] = True;
+		} else if (!strcmp(argv[i], "-predicate") || !strcmp(argv[i], "predicate") || !strcmp(argv[i], "--predicate")) {
+			modes[1] = True;
 		} else {
-			fprintf(stderr, "Wrong Input! Run like:\n%s\nor\n%s --tid\n", argv[0], argv[0]);
+			fprintf(stderr, "Wrong Input! Run like:\n%s\nor\n%s --tid\nor\n%s --tid --predicate\n", argv[0], argv[0], argv[0]);
+			exit(EXIT_FAILURE);
 		}
 	}
-	return False;
+	return modes;
 }
 
 int main(int argc, char **argv) {
-	Boolean_t tid_mode = usage(argc, argv);
+	Boolean_t* modes = usage(argc, argv); /* modes[0]: tid on/off, modes[1]: predicate on/off*/
 	MessageHead_t head;
 	void *body = NULL;
 	uint32_t len;
@@ -52,7 +56,7 @@ int main(int argc, char **argv) {
 				validationListDestroy(validation_list);
 				return EXIT_SUCCESS;
 			case DefineSchema:
-				journal_array = processDefineSchema(body, &relation_count, tid_mode);
+				journal_array = processDefineSchema(body, &relation_count, modes);
 				if (body != NULL)
 					free(body);
 				break;
