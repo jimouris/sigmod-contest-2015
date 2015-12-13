@@ -85,7 +85,6 @@ void predicateDuplicateIndex(predicateHash * hash) {
 
 void predicateDestroyBucket(predicateBucket *bucket) {
 	free(bucket->key_buckets);
-	free(bucket->key_buckets);
 	free(bucket);
 	bucket = NULL;
 }
@@ -138,6 +137,10 @@ void predicateCopyBucketTransactions(predicateBucket* dst, predicateBucket* src)
 void predicateCopySubbucketTransactions(predicateSubBucket* dst, predicateSubBucket* src){
 	dst->range_start = src->range_start;
 	dst->range_end = src->range_end;
+	if (dst->bit_set != NULL) {
+		destroyBitSet(dst->bit_set);
+		dst->bit_set = createBitSet(src->bit_set->bit_size);
+	}
 	copyBitSet(dst->bit_set, src->bit_set);
 	dst->open_requests = src->open_requests;
 	dst->condition->column = src->condition->column; 
