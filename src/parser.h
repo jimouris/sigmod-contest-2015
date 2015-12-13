@@ -150,6 +150,7 @@ void processFlush(Flush_t *, Journal_t**, ValidationList_t*);
 Boolean_t checkValidation(Journal_t**, ValidationQueries_t*);
 
 Boolean_t checkSingleQuery(Journal_t**, Query_t*, uint64_t, uint64_t);
+Boolean_t checkQueryHash(Journal_t **, Query_t *, uint64_t, uint64_t);
 
 void processForget(Forget_t *, Journal_t**);
 

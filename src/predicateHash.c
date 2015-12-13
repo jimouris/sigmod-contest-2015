@@ -13,7 +13,7 @@ predicateHash* predicateCreateHash(void) {
 	return hash;
 }
 
-Boolean_t predicateRecordsEqual(predicateSubBucket* record1,predicateSubBucket* record2) {
+Boolean_t predicateRecordsEqual(predicateSubBucket* record1, predicateSubBucket* record2) {
 	if ( record1->range_start == record2->range_start &&
 		 record1->range_end == record2->range_end &&
 		 record1->condition->column == record2->condition->column &&
@@ -138,8 +138,7 @@ void predicateCopyBucketTransactions(predicateBucket* dst, predicateBucket* src)
 void predicateCopySubbucketTransactions(predicateSubBucket* dst, predicateSubBucket* src){
 	dst->range_start = src->range_start;
 	dst->range_end = src->range_end;
-	dst->bit_set_size = src->bit_set_size;
-	copyBitSet(dst->bit_set, src->bit_set, dst->bit_set_size);
+	copyBitSet(dst->bit_set, src->bit_set);
 	dst->open_requests = src->open_requests;
 	dst->condition->column = src->condition->column; 
 	dst->condition->op = src->condition->op;
@@ -164,8 +163,7 @@ predicateBucket* predicateCreateNewBucket(uint32_t local_depth) {
 		new_bucket->key_buckets[i].condition->column = 0;
 		new_bucket->key_buckets[i].condition->op = 0;
 		new_bucket->key_buckets[i].condition->value = 0;
-		new_bucket->key_buckets[i].bit_set = NULL;	
-		new_bucket->key_buckets[i].bit_set_size = 0;	
+		new_bucket->key_buckets[i].bit_set = NULL;
 		new_bucket->key_buckets[i].open_requests = 0;	
 	}
 	return new_bucket;
@@ -186,8 +184,7 @@ void predicateCleanSubBucket(predicateSubBucket* pred_subBucket) {
 	pred_subBucket->condition->column = 0;
 	pred_subBucket->condition->op = 0;
 	pred_subBucket->condition->value = 0;
-	pred_subBucket->bit_set_size = 0;
-	free(pred_subBucket->bit_set);
+	destroyBitSet(pred_subBucket->bit_set);
 	pred_subBucket->bit_set = NULL;
 	pred_subBucket->open_requests = 0;
 }
@@ -227,7 +224,7 @@ void predicatePrintHash(predicateHash* hash){
 	uint64_t i;
 	for (i = 0 ; i < hash->size ; i++) { /*for every index*/
 		if (hash->index[i] != NULL) { /*points somewhere*/
-			fprintf(stderr, "*****Index %zd points to predicateBucket address %p*******\n", i, hash->index[i]);
+			fprintf(stderr, "*****Index %zu points to predicateBucket address %p*******\n", i, hash->index[i]);
 			if (!hash->index[i]->current_subBuckets) {
 				predicatePrintBucket(hash->index[i]);
 			} else {
@@ -235,23 +232,23 @@ void predicatePrintHash(predicateHash* hash){
 			}
 			fprintf(stderr,"***********************************************************\n\n");
 		} else {
-			fprintf(stderr,"~~~~~Index (%zd) points to no bucket~~~~~\n", i);
+			fprintf(stderr,"~~~~~Index (%zu) points to no bucket~~~~~\n", i);
 		}
 	}
 }
 
-// uint64_t predicateGetHashOffset(tidHash* hash, uint64_t transaction_id, Boolean_t *found) {
-// 	uint64_t bucket_num = predicateHashFunction(hash->size, transaction_id);
-// 	uint32_t i;
-// 	for (i = 0 ; i < hash->index[bucket_num]->current_subBuckets ; i++) { /* for i in subBuckets */
-// 		if (hash->index[bucket_num]->key_buckets[i].transaction_id == transaction_id) {
-// 			*found = True;
-// 			return hash->index[bucket_num]->key_buckets[i].rec_offset;
-// 		}
-// 	}
-// 	*found = False;
-// 	return 0;
-// } 
+BitSet_t* predicateGetBitSet(predicateHash* hash, predicateSubBucket* predicate, Boolean_t *found) {
+	uint32_t i;
+	uint64_t bucket_num = predicateHashFunction(hash->size, predicate);
+	for (i = 0 ; i < hash->index[bucket_num]->current_subBuckets ; i++) { /* for i in subBuckets */
+		if (predicateRecordsEqual(&(hash->index[bucket_num]->key_buckets[i]), predicate)) {
+			*found = True;
+			return hash->index[bucket_num]->key_buckets[i].bit_set;
+		}
+	}
+	*found = False;
+	return NULL;
+} 
 
 int predicateDestroyHash(predicateHash* hash) {
 	uint64_t i;
@@ -312,7 +309,7 @@ int predicateDestroyHash(predicateHash* hash) {
 // 	return 0;
 // }
 
-// unsigned char tryCollapseIndex(tidHash* hash) {
+// uint8_t tryCollapseIndex(tidHash* hash) {
 // 	unsigned char canCollapse = 0;
 // 	if (hash->size > 1) {
 // 		canCollapse = 1;

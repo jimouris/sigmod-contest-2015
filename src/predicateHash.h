@@ -16,8 +16,7 @@ typedef struct predicateSubBucket {
 	uint64_t range_start;
 	uint64_t range_end;
 	Column_t *condition;
-	uint8_t* bit_set;
-	uint64_t bit_set_size;
+	BitSet_t* bit_set;
 	uint64_t open_requests;
 } predicateSubBucket;
 
@@ -56,6 +55,9 @@ predicateBucket* predicateCreateNewBucket(uint32_t);
 void preidcateCleanBucket(predicateBucket *);
 void predicateCleanSubBucket(predicateSubBucket *);
 Boolean_t predicateRecordsEqual(predicateSubBucket*, predicateSubBucket*);
+BitSet_t* predicateGetBitSet(predicateHash *, predicateSubBucket *, Boolean_t *);
+void predicatePrintHash(predicateHash *);
+void predicatePrintBucket(predicateBucket *);
 /*****************************************************/
 
 /*DELETE HASH FUNCTION*/
