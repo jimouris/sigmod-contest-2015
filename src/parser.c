@@ -157,11 +157,38 @@ Boolean_t checkValidation(Journal_t** journal_array, ValidationQueries_t* val_qu
 
 
 Boolean_t checkQueryHash(Journal_t** journal_array, Query_t* query, uint64_t from, uint64_t to){
-	uint64_t i;
+	uint64_t i,j;
+	Journal_t* journal = journal_array[query->relationId];
+	BitSet_t* intersection;
 	for(i = 0; i < query->columnCount; i++) {
-		Column_t predicate = query->columns[i];
+		Column_t* predicate = &query->columns[i];
+		Boolean_t exists;
+		predicateSubBucket* predicateSubBucket = createPredicateSubBucket(from, to, predicate->column, predicate->op, predicate->value);
+		BitSet_t* predicate_bit_set = predicateGetBitSet(journal->predicate_index, predicateSubBucket, &exists);
+		if(exists == False){
+			uint64_t first_offset, offset;
+			uint64_t num_of_recs = getRecordCount(journal, from, to, &first_offset);
+			predicateSubBucket->bit_set = createBitSet(num_of_recs);
+			for(j = 0, offset = first_offset; j < num_of_recs; j++, offset++){
+				JournalRecord_t* record = &journal->records[offset];
+				if(checkConstraint(record, predicate)){
+					setBit(j,predicateSubBucket->bit_set);
+				}
+			}
+			predicate_bit_set = predicateSubBucket->bit_set;
+			predicateInsertHashRecord(journal->predicate_index,predicateSubBucket);
+		} 
+		if(i == 0)
+			intersection = predicate_bit_set;
+		else
+			intersection = intersect(predicate_bit_set, intersection);
+
+		if(isBitSetEmpty(intersection))
+			return False;
 	}
+	return True;
 }
+
 
 Boolean_t checkSingleQuery(Journal_t** journal_array, Query_t* query, uint64_t from, uint64_t to){
 	Boolean_t result = False; 

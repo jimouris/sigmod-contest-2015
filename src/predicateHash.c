@@ -237,6 +237,22 @@ void predicatePrintHash(predicateHash* hash){
 	}
 }
 
+predicateSubBucket* createPredicateSubBucket(uint64_t from, uint64_t to, uint32_t column, Op_t op, uint64_t value){
+	predicateSubBucket* subBukcet = malloc(sizeof(predicateSubBucket));
+	ALLOCATION_ERROR(subBukcet);
+	subBukcet->range_start = from;	
+	subBukcet->range_end = to;
+	subBukcet->condition = malloc(sizeof(Column_t));
+	ALLOCATION_ERROR(subBukcet->condition);
+	subBukcet->condition->column = column;
+	subBukcet->condition->op = op;
+	subBukcet->condition->value = value;
+	subBukcet->bit_set = NULL;
+	subBukcet->open_requests = 0;
+	return subBukcet;
+}
+
+
 BitSet_t* predicateGetBitSet(predicateHash* hash, predicateSubBucket* predicate, Boolean_t *found) {
 	uint32_t i;
 	uint64_t bucket_num = predicateHashFunction(hash->size, predicate);

@@ -58,6 +58,7 @@ Boolean_t predicateRecordsEqual(predicateSubBucket*, predicateSubBucket*);
 BitSet_t* predicateGetBitSet(predicateHash *, predicateSubBucket *, Boolean_t *);
 void predicatePrintHash(predicateHash *);
 void predicatePrintBucket(predicateBucket *);
+predicateSubBucket* createPredicateSubBucket(uint64_t, uint64_t, uint32_t, Op_t, uint64_t);
 /*****************************************************/
 
 /*DELETE HASH FUNCTION*/
