@@ -11,17 +11,25 @@
 
 #define BITS2BYTES(nb) ((nb + CHAR_BIT - 1) / CHAR_BIT)
 
-Boolean_t isBitSetEmpty(uint8_t*, uint64_t);
-uint8_t* createBitSet(uint64_t);
-uint8_t* intersect(uint8_t*, uint8_t*, uint64_t);
 
-void copyBitSet(uint8_t*, uint8_t*, uint64_t);
+typedef struct BitSet_t {
+	uint8_t* array;
+	uint64_t bit_size;
+} BitSet_t;
 
-void setBit(int,  uint8_t*);
-int checkBit(int , uint8_t*);
-void printBitSet(uint8_t*, int);
+Boolean_t isBitSetEmpty(BitSet_t*);
+BitSet_t* createBitSet(uint64_t);
+BitSet_t* intersect(BitSet_t*, BitSet_t*);
 
-uint8_t *my_strrev(uint8_t *str);
+void copyBitSet(BitSet_t*, BitSet_t*);
+
+void setBit(int,  BitSet_t*);
+int checkBit(int , BitSet_t*);
+void printBitSet(BitSet_t*);
+
+BitSet_t *my_strrev(BitSet_t *str);
+
+void destroyBitSet(BitSet_t*);
 
 // void printBinary(uint64_t);
 

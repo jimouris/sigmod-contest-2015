@@ -3,39 +3,39 @@
 
 // int main(){
 // 	uint64_t transactions = 15;
-// 	uint8_t* bit_set1 = createBitSet(transactions);
-// 	uint8_t* bit_set2 = createBitSet(transactions);
+// 	BitSet_t* bit_set1 = createBitSet(transactions);
+// 	BitSet_t* bit_set2 = createBitSet(transactions);
 // 	setBit(1, bit_set1);
 // 	setBit(12, bit_set1);
 // 	setBit(14, bit_set1);
 	
-// 	printBitSet(bit_set1,transactions);
+// 	// printBitSet(bit_set1);
 
 // 	setBit(14, bit_set2);
 // 	setBit(5, bit_set2);
 // 	setBit(0, bit_set2);
-// 	printBitSet(bit_set2,transactions);
+// 	// printBitSet(bit_set2);
 
 
-// 	uint8_t* intersection = intersect(bit_set1, bit_set2, transactions);
+// 	BitSet_t* intersection = intersect(bit_set1, bit_set2);
 
 
-// 	printBitSet(intersection,transactions);
+// 	// printBitSet(intersection);
 
-// 	isBitSetEmpty(intersection, transactions) ? printf("True\n") : printf("False\n");
+// 	isBitSetEmpty(intersection) ? printf("True\n") : printf("False\n");
 
-// 	free(intersection);
-// 	free(bit_set1);
-// 	free(bit_set2);
+// 	destroyBitSet(intersection);
+// 	destroyBitSet(bit_set1);
+// 	destroyBitSet(bit_set2);
 // 	return 0;
 // }
 
 
-Boolean_t isBitSetEmpty(uint8_t* bit_set, uint64_t bit_size){
-	uint64_t byte_size = BITS2BYTES(bit_size);
+Boolean_t isBitSetEmpty(BitSet_t* bit_set){
+	uint64_t byte_size = BITS2BYTES(bit_set->bit_size);
 	uint64_t i = 0;
 	for(i=0; i< byte_size; i++){
-		if(bit_set[i] | 0){
+		if(bit_set->array[i] | 0){
 			return False;
 		}
 	}
@@ -45,29 +45,37 @@ Boolean_t isBitSetEmpty(uint8_t* bit_set, uint64_t bit_size){
 /*
  * Creates a bitSet of 'bit_size' bits.
  */
-uint8_t* createBitSet(uint64_t bit_size){
+BitSet_t* createBitSet(uint64_t bit_size){
 	uint64_t byte_size = BITS2BYTES(bit_size);
-	printf("bytes: %zu\n",byte_size );
-	uint8_t* bit_set = malloc(byte_size*sizeof(uint8_t));  // "byte_size" bytes
-	memset(bit_set, 0, byte_size);
+	// printf("bytes: %zu\n",byte_size );
+	BitSet_t* bit_set = malloc(sizeof(BitSet_t));
+	bit_set->bit_size = bit_size;
+
+	bit_set->array = malloc(byte_size*sizeof(uint8_t));  // "byte_size" bytes
+	memset(bit_set->array, 0, byte_size);
 	return bit_set;	
 }
 
-void copyBitSet(uint8_t* bit_set1, uint8_t* bit_set2, uint64_t bit_size){
-	uint64_t byte_size = BITS2BYTES(bit_size);
-	memcpy(bit_set1, bit_set2, byte_size);
+void copyBitSet(BitSet_t* bit_set1, BitSet_t* bit_set2){
+	bit_set1->bit_size = bit_set2->bit_size;
+	uint64_t byte_size = BITS2BYTES(bit_set1->bit_size);
+	memcpy(bit_set1->array, bit_set2->array, byte_size);
 }
 
 
 /*
  * Returns the intersection of 2 bitSets. (bis_set1 AND bit_set2)
  */
-uint8_t* intersect(uint8_t* bit_set1, uint8_t* bit_set2, uint64_t bit_size){
-	uint64_t byte_size = BITS2BYTES(bit_size);
+BitSet_t* intersect(BitSet_t* bit_set1, BitSet_t* bit_set2){
+	uint64_t byte_size = BITS2BYTES(bit_set1->bit_size);
 	uint64_t i;
-	uint8_t* bit_set = malloc(byte_size * sizeof(uint8_t));
+
+	BitSet_t* bit_set = malloc(sizeof(BitSet_t));
+	bit_set->array = malloc(byte_size * sizeof(uint8_t));
+	bit_set->bit_size = bit_set1->bit_size;
+
 	for(i=0; i< byte_size; i++){
-		bit_set[i] = bit_set1[i] & bit_set2[i];
+		bit_set->array[i] = bit_set1->array[i] & bit_set2->array[i];
 	}
 	return bit_set;
 }
@@ -76,49 +84,69 @@ uint8_t* intersect(uint8_t* bit_set1, uint8_t* bit_set2, uint64_t bit_size){
 /*
  * set nth bit to 1. (counting starts from 0)
  */
-void setBit(int n,  uint8_t* bit_set){
+void setBit(int n,  BitSet_t* bit_set){
 	int pos = (n / CHAR_BIT);
 	int bit = n % CHAR_BIT; 
 	int num = 1 << (CHAR_BIT-1-bit);
 	// printf("num = %d\n", num);
-	bit_set[pos] |= num;
+	bit_set->array[pos] |= num;
 }
 
 /*
  * get nth bit's value. (counting starts from 0)
  */
-int checkBit(int n, uint8_t* bit_set){
+int checkBit(int n, BitSet_t* bit_set){
 	int pos = (n / CHAR_BIT);
 	int bit = n % CHAR_BIT; 
-	int num = bit_set[pos] >> (CHAR_BIT-1-bit);
+	int num = bit_set->array[pos] >> (CHAR_BIT-1-bit);
 	// printf("num = %d, result = %d\n", num, num & 1);
 	return (num & 1);
 }
 
+void destroyBitSet(BitSet_t* bit_set){
+	free(bit_set->array);
+	free(bit_set);
+}
+
+// void printBitSet(BitSet_t* bit_set){
+// 	// uint64_t byte_size = BITS2BYTES(bit_size);
+// 	// int i,j,num;
+// 	// uint8_t* bin_rev;
+// 	// printf("| ");
+// 	// for(i=0; i<byte_size; i++){
+// 	// 	bin_rev = malloc(CHAR_BIT+1 * sizeof(uint8_t));
+// 	// 	strcpy(bin_rev,"");	
+// 	// 	num = bit_set[i];
+// 	// 	for(j=0; j<CHAR_BIT; j++){
+// 	// 		if(num & 1){
+// 	// 			strcat(bin_rev,"1");
+// 	// 		}else{
+// 	// 			strcat(bin_rev,"0");
+// 	// 		}
+// 	// 		num >>= 1;
+// 	// 	}
+// 	// 	printf("%s", my_strrev(bin_rev));
+// 	// 	// for()
 
 
-// void printBitSet(uint8_t* bit_set, int bit_size){
-// 	uint64_t byte_size = BITS2BYTES(bit_size);
-// 	int i,j,num;
-// 	uint8_t* bin_rev;
+// 	// 	printf(" | ");
+// 	// 	free(bin_rev);
+// 	// }
+// 	// printf("\n");
+// 	uint64_t byte_size = BITS2BYTES(bit_set->bit_size);
+// 	uint64_t i,j;
 // 	printf("| ");
-// 	for(i=0; i<byte_size; i++){
-// 		bin_rev = malloc(CHAR_BIT+1 * sizeof(uint8_t));
-// 		strcpy(bin_rev,"");	
-// 		num = bit_set[i];
+// 	for(i = byte_size; i>0; i--){
+// 		uint8_t num = bit_set->array[i-1];
 // 		for(j=0; j<CHAR_BIT; j++){
 // 			if(num & 1){
-// 				strcat(bin_rev,"1");
+// 				printf("1");
 // 			}else{
-// 				strcat(bin_rev,"0");
+// 				printf("0");
 // 			}
 // 			num >>= 1;
 // 		}
-// 		printf("%s", my_strrev(bin_rev));
-
-
 // 		printf(" | ");
-// 		free(bin_rev);
 // 	}
 // 	printf("\n");
 // }

@@ -140,8 +140,12 @@ Boolean_t checkValidation(Journal_t** journal_array, ValidationQueries_t* val_qu
 	const char* reader = val_query->queries;
 	for(i = 0; i < val_query->queryCount; i++){
 		Query_t* query = (Query_t*)reader;
-		// Query_t* query = val_query->queries[i];
-		Boolean_t partial_result = checkSingleQuery(journal_array, query, val_query->from, val_query->to);
+		Journal_t* journal = journal_array[query->relationId];
+		Boolean_t partial_result;
+		if(journal->predicate_index != NULL)
+			partial_result = checkQueryHash(journal_array, query, val_query->from, val_query->to);
+		else
+			partial_result = checkSingleQuery(journal_array, query, val_query->from, val_query->to);
 		if(partial_result == True){	/*Short circuiting*/
 			return True;
 		}
@@ -149,6 +153,14 @@ Boolean_t checkValidation(Journal_t** journal_array, ValidationQueries_t* val_qu
 		reader += sizeof(Query_t) + (sizeof(Column_t) * query->columnCount);
 	}
 	return result;
+}
+
+
+Boolean_t checkQueryHash(Journal_t** journal_array, Query_t* query, uint64_t from, uint64_t to){
+	uint64_t i;
+	for(i = 0; i < query->columnCount; i++) {
+		Column_t predicate = query->columns[i];
+	}
 }
 
 Boolean_t checkSingleQuery(Journal_t** journal_array, Query_t* query, uint64_t from, uint64_t to){
