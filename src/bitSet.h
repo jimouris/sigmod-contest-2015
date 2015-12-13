@@ -11,15 +11,15 @@
 
 #define BITS2BYTES(nb) ((nb + CHAR_BIT - 1) / CHAR_BIT)
 
-Boolean_t isBitSetEmpty(char*, uint64_t);
-char* createBitSet(uint64_t, uint64_t*);
-char* intersect(char*, char*, uint64_t);
+Boolean_t isBitSetEmpty(uint8_t*, uint64_t);
+uint8_t* createBitSet(uint64_t);
+uint8_t* intersect(uint8_t*, uint8_t*, uint64_t);
 
-void setBit(int,  char*);
-int checkBit(int , char*);
-void printBitSet(char*, int);
+void setBit(int,  uint8_t*);
+int checkBit(int , uint8_t*);
+void printBitSet(uint8_t*, int);
 
-char *my_strrev(char *str);
+uint8_t *my_strrev(uint8_t *str);
 
 // void printBinary(uint64_t);
 
