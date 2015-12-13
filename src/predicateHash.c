@@ -140,8 +140,14 @@ void predicateCopySubbucketTransactions(predicateSubBucket* dst, predicateSubBuc
 	if (dst->bit_set != NULL) {
 		destroyBitSet(dst->bit_set);
 		dst->bit_set = createBitSet(src->bit_set->bit_size);
+	} else {
+		fprintf(stderr, "DST NULL MAN\n");
 	}
-	copyBitSet(dst->bit_set, src->bit_set);
+
+	if (src->bit_set != NULL && dst->bit_set != NULL)
+		copyBitSet(dst->bit_set, src->bit_set);
+	else
+		fprintf(stderr, "SRC NULL MAN\n");
 	dst->open_requests = src->open_requests;
 	dst->condition->column = src->condition->column; 
 	dst->condition->op = src->condition->op;
@@ -187,7 +193,9 @@ void predicateCleanSubBucket(predicateSubBucket* pred_subBucket) {
 	pred_subBucket->condition->column = 0;
 	pred_subBucket->condition->op = 0;
 	pred_subBucket->condition->value = 0;
-	destroyBitSet(pred_subBucket->bit_set);
+	if (pred_subBucket->bit_set != NULL) {
+		destroyBitSet(pred_subBucket->bit_set);
+	}
 	pred_subBucket->bit_set = NULL;
 	pred_subBucket->open_requests = 0;
 }
