@@ -1,34 +1,34 @@
 #include "bitSet.h"
 
 
-int main(){
-	uint64_t transactions = 15;
-	uint8_t* bit_set1 = createBitSet(transactions);
-	uint8_t* bit_set2 = createBitSet(transactions);
-	setBit(1, bit_set1);
-	setBit(12, bit_set1);
-	setBit(14, bit_set1);
+// int main(){
+// 	uint64_t transactions = 15;
+// 	uint8_t* bit_set1 = createBitSet(transactions);
+// 	uint8_t* bit_set2 = createBitSet(transactions);
+// 	setBit(1, bit_set1);
+// 	setBit(12, bit_set1);
+// 	setBit(14, bit_set1);
 	
-	printBitSet(bit_set1,transactions);
+// 	printBitSet(bit_set1,transactions);
 
-	setBit(14, bit_set2);
-	setBit(5, bit_set2);
-	setBit(0, bit_set2);
-	printBitSet(bit_set2,transactions);
-
-
-	uint8_t* intersection = intersect(bit_set1, bit_set2, transactions);
+// 	setBit(14, bit_set2);
+// 	setBit(5, bit_set2);
+// 	setBit(0, bit_set2);
+// 	printBitSet(bit_set2,transactions);
 
 
-	printBitSet(intersection,transactions);
+// 	uint8_t* intersection = intersect(bit_set1, bit_set2, transactions);
 
-	isBitSetEmpty(intersection, transactions) ? printf("True\n") : printf("False\n");
 
-	free(intersection);
-	free(bit_set1);
-	free(bit_set2);
-	return 0;
-}
+// 	printBitSet(intersection,transactions);
+
+// 	isBitSetEmpty(intersection, transactions) ? printf("True\n") : printf("False\n");
+
+// 	free(intersection);
+// 	free(bit_set1);
+// 	free(bit_set2);
+// 	return 0;
+// }
 
 
 Boolean_t isBitSetEmpty(uint8_t* bit_set, uint64_t bit_size){
