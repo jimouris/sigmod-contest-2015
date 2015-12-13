@@ -10,6 +10,8 @@
 #include "bitSet.h"
 #include "constants.h"
 
+typedef struct Column Column_t;
+
 typedef struct predicateSubBucket {
 	uint64_t range_start;
 	uint64_t range_end;
@@ -32,6 +34,8 @@ typedef struct predicateHash {
 	uint32_t global_depth;
 	predicateBucket **index;
 } predicateHash;
+
+
 
 /* HASH INIT METHOD */
 predicateHash* predicateCreateHash(); 

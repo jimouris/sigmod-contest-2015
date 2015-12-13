@@ -3,9 +3,12 @@
 #include <inttypes.h>
 #include "PKeyHash.h"
 #include "tidHash.h"
+#include "predicateHash.h"
 
 
 typedef struct pkHash pkHash;
+
+typedef struct predicateHash predicateHash;
 
 typedef struct Column {
   /// The column id
