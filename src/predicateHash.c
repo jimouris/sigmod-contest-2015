@@ -209,7 +209,8 @@ void predicatePrintBucket(predicateBucket* bucket){
 		uint64_t range_start = bucket->key_buckets[i].range_start;
 		uint64_t range_end = bucket->key_buckets[i].range_end;
 		Column_t* condition = bucket->key_buckets[i].condition;
-		fprintf(stderr, "\tSubBucket(%zd): range_start: %zd , range_end : %zd column %zd op %d value %zd\n", i, range_start,range_end,condition->column,condition->op,condition->value);
+		fprintf(stderr, "\tSubBucket(%zu): range_start: %zu , range_end : %zu column %"PRIu32" op %d value %zu \n",
+				i, range_start, range_end, condition->column, condition->op, condition->value);
 	}
 	fprintf(stderr, "------------------------------------------------------------\n");
 }
