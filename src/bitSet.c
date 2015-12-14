@@ -49,16 +49,22 @@ BitSet_t* createBitSet(uint64_t bit_size){
 	uint64_t byte_size = BITS2BYTES(bit_size);
 	// printf("bytes: %zu\n",byte_size );
 	BitSet_t* bit_set = malloc(sizeof(BitSet_t));
+	ALLOCATION_ERROR(bit_set);
 	bit_set->bit_size = bit_size;
 
 	bit_set->array = malloc(byte_size*sizeof(uint8_t));  // "byte_size" bytes
+	ALLOCATION_ERROR(bit_set->array);
 	memset(bit_set->array, 0, byte_size);
 	return bit_set;	
 }
 
 void copyBitSet(BitSet_t* bit_set1, BitSet_t* bit_set2){
-	bit_set1->bit_size = bit_set2->bit_size;
-	uint64_t byte_size = BITS2BYTES(bit_set1->bit_size);
+	if(bit_set1 == NULL){
+		bit_set1 = createBitSet(bit_set2->bit_size);
+	} else {
+		bit_set1->bit_size = bit_set2->bit_size;
+	}
+	uint64_t byte_size = BITS2BYTES(bit_set2->bit_size);
 	memcpy(bit_set1->array, bit_set2->array, byte_size);
 }
 
@@ -71,7 +77,9 @@ BitSet_t* intersect(BitSet_t* bit_set1, BitSet_t* bit_set2){
 	uint64_t i;
 
 	BitSet_t* bit_set = malloc(sizeof(BitSet_t));
+	ALLOCATION_ERROR(bit_set);
 	bit_set->array = malloc(byte_size * sizeof(uint8_t));
+	ALLOCATION_ERROR(bit_set->array);
 	bit_set->bit_size = bit_set1->bit_size;
 
 	for(i=0; i< byte_size; i++){
@@ -108,48 +116,48 @@ void destroyBitSet(BitSet_t* bit_set){
 	free(bit_set);
 }
 
-// void printBitSet(BitSet_t* bit_set){
-// 	// uint64_t byte_size = BITS2BYTES(bit_size);
-// 	// int i,j,num;
-// 	// uint8_t* bin_rev;
-// 	// printf("| ");
-// 	// for(i=0; i<byte_size; i++){
-// 	// 	bin_rev = malloc(CHAR_BIT+1 * sizeof(uint8_t));
-// 	// 	strcpy(bin_rev,"");	
-// 	// 	num = bit_set[i];
-// 	// 	for(j=0; j<CHAR_BIT; j++){
-// 	// 		if(num & 1){
-// 	// 			strcat(bin_rev,"1");
-// 	// 		}else{
-// 	// 			strcat(bin_rev,"0");
-// 	// 		}
-// 	// 		num >>= 1;
-// 	// 	}
-// 	// 	printf("%s", my_strrev(bin_rev));
-// 	// 	// for()
+void printBitSet(BitSet_t* bit_set){
+	// uint64_t byte_size = BITS2BYTES(bit_size);
+	// int i,j,num;
+	// uint8_t* bin_rev;
+	// printf("| ");
+	// for(i=0; i<byte_size; i++){
+	// 	bin_rev = malloc(CHAR_BIT+1 * sizeof(uint8_t));
+	// 	strcpy(bin_rev,"");	
+	// 	num = bit_set[i];
+	// 	for(j=0; j<CHAR_BIT; j++){
+	// 		if(num & 1){
+	// 			strcat(bin_rev,"1");
+	// 		}else{
+	// 			strcat(bin_rev,"0");
+	// 		}
+	// 		num >>= 1;
+	// 	}
+	// 	printf("%s", my_strrev(bin_rev));
+	// 	// for()
 
 
-// 	// 	printf(" | ");
-// 	// 	free(bin_rev);
-// 	// }
-// 	// printf("\n");
-// 	uint64_t byte_size = BITS2BYTES(bit_set->bit_size);
-// 	uint64_t i,j;
-// 	printf("| ");
-// 	for(i = byte_size; i>0; i--){
-// 		uint8_t num = bit_set->array[i-1];
-// 		for(j=0; j<CHAR_BIT; j++){
-// 			if(num & 1){
-// 				printf("1");
-// 			}else{
-// 				printf("0");
-// 			}
-// 			num >>= 1;
-// 		}
-// 		printf(" | ");
-// 	}
-// 	printf("\n");
-// }
+	// 	printf(" | ");
+	// 	free(bin_rev);
+	// }
+	// printf("\n");
+	uint64_t byte_size = BITS2BYTES(bit_set->bit_size);
+	uint64_t i,j;
+	printf("| ");
+	for(i = byte_size; i>0; i--){
+		uint8_t num = bit_set->array[i-1];
+		for(j=0; j<CHAR_BIT; j++){
+			if(num & 1){
+				printf("1");
+			}else{
+				printf("0");
+			}
+			num >>= 1;
+		}
+		printf(" | ");
+	}
+	printf("\n");
+}
 
 // uint8_t *my_strrev(uint8_t *str)
 // {

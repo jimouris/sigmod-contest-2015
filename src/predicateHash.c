@@ -40,6 +40,10 @@ int predicateInsertHashRecord(predicateHash* hash, predicateSubBucket* predicate
 		bucket->key_buckets[bucket->current_subBuckets].condition->column = predicate_record->condition->column; 
 		bucket->key_buckets[bucket->current_subBuckets].condition->op = predicate_record->condition->op;
 		bucket->key_buckets[bucket->current_subBuckets].condition->value = predicate_record->condition->value;
+		bucket->key_buckets[bucket->current_subBuckets].open_requests = predicate_record->open_requests;
+		if(bucket->key_buckets[bucket->current_subBuckets].bit_set == NULL)
+			bucket->key_buckets[bucket->current_subBuckets].bit_set = createBitSet(predicate_record->bit_set->bit_size);
+		copyBitSet(bucket->key_buckets[bucket->current_subBuckets].bit_set, predicate_record->bit_set);
 		(bucket->current_subBuckets)++;
 		return OK_SUCCESS;
 	} else {
@@ -137,17 +141,10 @@ void predicateCopyBucketTransactions(predicateBucket* dst, predicateBucket* src)
 void predicateCopySubbucketTransactions(predicateSubBucket* dst, predicateSubBucket* src){
 	dst->range_start = src->range_start;
 	dst->range_end = src->range_end;
-	if (dst->bit_set != NULL) {
-		destroyBitSet(dst->bit_set);
+	if (dst->bit_set == NULL) {
 		dst->bit_set = createBitSet(src->bit_set->bit_size);
-	} else {
-		fprintf(stderr, "DST NULL MAN\n");
 	}
-
-	if (src->bit_set != NULL && dst->bit_set != NULL)
-		copyBitSet(dst->bit_set, src->bit_set);
-	else
-		fprintf(stderr, "SRC NULL MAN\n");
+	copyBitSet(dst->bit_set, src->bit_set);
 	dst->open_requests = src->open_requests;
 	dst->condition->column = src->condition->column; 
 	dst->condition->op = src->condition->op;
