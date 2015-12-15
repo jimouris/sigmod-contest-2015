@@ -45,7 +45,6 @@ else
 	output=${output%.*}".out."$ending
 	# echo "$output"
 	./perlineprinter < $output > $output.perline.test
-	# diff myoutperline.test $output.perline.test
 
 	DIFF=$(diff myoutperline.test $output.perline.test)
 	if [ "$DIFF" != "" ] ; then
