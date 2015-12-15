@@ -88,9 +88,22 @@ void predicateDuplicateIndex(predicateHash * hash) {
 }
 
 void predicateDestroyBucket(predicateBucket *bucket) {
+	uint32_t i;
+	for (i = 0 ; i < bucket->current_subBuckets ; i++) {
+		predicateDestroySubBucket(&bucket->key_buckets[i]);
+	}
 	free(bucket->key_buckets);
+	bucket->key_buckets = NULL;
 	free(bucket);
 	bucket = NULL;
+}
+
+void predicateDestroySubBucket(predicateSubBucket *sub_bucket) {
+	if (sub_bucket->bit_set != NULL) {	
+		destroyBitSet(sub_bucket->bit_set);
+	}
+	free(sub_bucket->condition);
+	sub_bucket->condition = NULL;
 }
 
 /* fix new indexes pointers after index doublicate */
@@ -133,6 +146,8 @@ void predicateCopyBucketTransactions(predicateBucket* dst, predicateBucket* src)
 	uint64_t i;
 	dst->local_depth = src->local_depth;
 	dst->current_subBuckets = src->current_subBuckets;
+	dst->deletion_started = src->deletion_started;
+	dst->pointers_num = src->pointers_num;
 	for (i = 0 ; i < src->current_subBuckets ; i++) {	/* for i in subBuckets */
 		predicateCopySubbucketTransactions(&dst->key_buckets[i], &src->key_buckets[i]);
 	}
@@ -267,7 +282,9 @@ BitSet_t* predicateGetBitSet(predicateHash* hash, predicateSubBucket* predicate,
 	for (i = 0 ; i < hash->index[bucket_num]->current_subBuckets ; i++) { /* for i in subBuckets */
 		if (predicateRecordsEqual(&(hash->index[bucket_num]->key_buckets[i]), predicate)) {
 			*found = True;
-			return hash->index[bucket_num]->key_buckets[i].bit_set;
+			BitSet_t* bit_set = createBitSet(hash->index[bucket_num]->key_buckets[i].bit_set->bit_size);
+			copyBitSet(bit_set, hash->index[bucket_num]->key_buckets[i].bit_set);
+			return bit_set;
 		}
 	}
 	*found = False;

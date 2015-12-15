@@ -62,7 +62,8 @@ predicateSubBucket* createPredicateSubBucket(uint64_t, uint64_t, uint32_t, Op_t,
 /*****************************************************/
 
 /*DELETE HASH FUNCTION*/
-int predicateDestroyHash(predicateHash *); 
+int predicateDestroyHash(predicateHash *);
+void predicateDestroySubBucket(predicateSubBucket *);
 void predicateDestroyBucket(predicateBucket *);
 void predicateCleanBucket(predicateBucket*);
 /**********************/
