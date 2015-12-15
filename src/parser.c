@@ -162,7 +162,7 @@ Boolean_t checkQueryHash(Journal_t** journal_array, Query_t* query, uint64_t fro
 	BitSet_t* intersection = NULL;
 	for(i = 0; i < query->columnCount; i++) {
 		Column_t* predicate = &query->columns[i];
-		Boolean_t exists;
+		Boolean_t exists = False;
 		predicateSubBucket* predicateSubBucket = createPredicateSubBucket(from, to, predicate->column, predicate->op, predicate->value);
 		BitSet_t* predicate_bit_set = predicateGetBitSet(journal->predicate_index, predicateSubBucket, &exists);
 		if(exists == False){
@@ -177,15 +177,19 @@ Boolean_t checkQueryHash(Journal_t** journal_array, Query_t* query, uint64_t fro
 			}
 			predicate_bit_set = createBitSet(num_of_recs);
 			copyBitSet(predicate_bit_set, predicateSubBucket->bit_set);
+
 			predicateInsertHashRecord(journal->predicate_index,predicateSubBucket);
 		}
 		predicateDestroySubBucket(predicateSubBucket);
+		free(predicateSubBucket);
 		if(i == 0) {
 			intersection = predicate_bit_set;
 		} else {
 			BitSet_t* previous_intersection = intersection;
 			intersection = intersect(predicate_bit_set, previous_intersection);
+			destroyBitSet(predicate_bit_set);
 			destroyBitSet(previous_intersection);
+			previous_intersection = NULL;
 		}
 		if(isBitSetEmpty(intersection)){
 			destroyBitSet(intersection);
