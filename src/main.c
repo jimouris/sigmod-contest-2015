@@ -54,6 +54,7 @@ int main(int argc, char **argv) {
 				// validationListPrint(validation_list);
 				destroySchema(journal_array, relation_count);
 				validationListDestroy(validation_list);
+				free(modes);
 				return EXIT_SUCCESS;
 			case DefineSchema:
 				journal_array = processDefineSchema(body, &relation_count, modes);

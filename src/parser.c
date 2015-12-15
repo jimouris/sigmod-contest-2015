@@ -159,7 +159,7 @@ Boolean_t checkValidation(Journal_t** journal_array, ValidationQueries_t* val_qu
 Boolean_t checkQueryHash(Journal_t** journal_array, Query_t* query, uint64_t from, uint64_t to){
 	uint64_t i,j;
 	Journal_t* journal = journal_array[query->relationId];
-	BitSet_t* intersection;
+	BitSet_t* intersection = NULL;
 	for(i = 0; i < query->columnCount; i++) {
 		Column_t* predicate = &query->columns[i];
 		Boolean_t exists;
@@ -175,16 +175,25 @@ Boolean_t checkQueryHash(Journal_t** journal_array, Query_t* query, uint64_t fro
 					setBit(j,predicateSubBucket->bit_set);
 				}
 			}
-			predicate_bit_set = predicateSubBucket->bit_set;
+			predicate_bit_set = createBitSet(num_of_recs);
+			copyBitSet(predicate_bit_set, predicateSubBucket->bit_set);
 			predicateInsertHashRecord(journal->predicate_index,predicateSubBucket);
-		} 
-		if(i == 0)
+		}
+		predicateDestroySubBucket(predicateSubBucket);
+		if(i == 0) {
 			intersection = predicate_bit_set;
-		else
-			intersection = intersect(predicate_bit_set, intersection);
-
-		if(isBitSetEmpty(intersection))
+		} else {
+			BitSet_t* previous_intersection = intersection;
+			intersection = intersect(predicate_bit_set, previous_intersection);
+			destroyBitSet(previous_intersection);
+		}
+		if(isBitSetEmpty(intersection)){
+			destroyBitSet(intersection);
 			return False;
+		}
+	}
+	if(intersection != NULL){
+		destroyBitSet(intersection);
 	}
 	return True;
 }

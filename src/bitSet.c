@@ -59,11 +59,7 @@ BitSet_t* createBitSet(uint64_t bit_size){
 }
 
 void copyBitSet(BitSet_t* bit_set1, BitSet_t* bit_set2){
-	if(bit_set1 == NULL){
-		bit_set1 = createBitSet(bit_set2->bit_size);
-	} else {
-		bit_set1->bit_size = bit_set2->bit_size;
-	}
+	bit_set1->bit_size = bit_set2->bit_size;
 	uint64_t byte_size = BITS2BYTES(bit_set2->bit_size);
 	memcpy(bit_set1->array, bit_set2->array, byte_size);
 }
@@ -81,6 +77,8 @@ BitSet_t* intersect(BitSet_t* bit_set1, BitSet_t* bit_set2){
 	bit_set->array = malloc(byte_size * sizeof(uint8_t));
 	ALLOCATION_ERROR(bit_set->array);
 	bit_set->bit_size = bit_set1->bit_size;
+	// fprintf(stderr, "size1: %zu \n",bit_set1->bit_size );
+	// fprintf(stderr, "size2: %zu \n",bit_set2->bit_size );
 
 	for(i=0; i< byte_size; i++){
 		bit_set->array[i] = bit_set1->array[i] & bit_set2->array[i];
