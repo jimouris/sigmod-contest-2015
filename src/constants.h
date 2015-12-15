@@ -3,10 +3,10 @@
 
 #define GLOBAL_DEPTH_INIT 1				/* PKHash init depth */
 #define TID_GLOBAL_DEPTH_INIT 1			/* tidHash init depth */
-#define PREDICATE_GLOBAL_DEPTH_INIT 1	/* predicateHash init depth */
+#define PREDICATE_GLOBAL_DEPTH_INIT 15	/* predicateHash init depth */
 #define B 1								/* Number of keys for each PKBucket */
 #define TID_B 1							/* Number of keys for each tidBucket */
-#define PREDICATE_B 1 					/* Number of keys for each predicateBucket*/
+#define PREDICATE_B 20 					/* Number of keys for each predicateBucket*/
 #define C 4								/* Initial capacity for transactions in bucket */
 #define JOURNAL_CAPACITY_INIT 64	
 #define VALIDATION_COUNT_INIT 64	

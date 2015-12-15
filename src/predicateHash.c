@@ -77,7 +77,15 @@ int predicateInsertHashRecord(predicateHash* hash, predicateSubBucket* predicate
 
 /*Does whatever it says*/
 void predicateDuplicateIndex(predicateHash * hash) {
+	
+
+	if (hash->global_depth == 25) {
+		exit(10);
+	}
+	
+
 	hash->global_depth++;
+	// fprintf(stderr, "\n\ndepth: %" PRIu32 "\n\n",hash->global_depth);
 	uint64_t old_size = hash->size;
 	hash->size *= 2;
 	hash->index = realloc(hash->index, hash->size * sizeof(predicateBucket *));
@@ -212,18 +220,35 @@ void predicateCleanSubBucket(predicateSubBucket* pred_subBucket) {
 }
 
 uint64_t predicateHashFunction(uint64_t size, predicateSubBucket* predicate) {
+   // uint64_t hash = predicate->condition->column;
+   // hash *= 37;
+   // hash += predicate->condition->op;
+   // hash *= 37;
+   // hash += predicate->condition->value;
+   // hash *= 37;
+   // hash += predicate->range_start;
+   // hash *= 37;
+   // hash += predicate->range_end;
+   // return hash % size;
     char str[50];
     char* str1 = str;
     sprintf(str,"%" PRIu32 "%d%zu%zu%zu", predicate->condition->column,
 		     predicate->condition->op, predicate->condition->value, 
 		     predicate->range_start, predicate->range_end);
-    uint64_t hash = 5381;
+    uint64_t hash = 0;
+    uint64_t base = 1;
     // printf("string: %s\n",str);
     int c;
-    while ((c = *str1++) != '\0')
-        hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
-
+    while ((c = *str1++) != '\0'){
+         hash += base*(c - '0');
+         base *= 666; 
+    }
     return hash % size;
+
+	/*beris super hash function*/
+
+	// return ( ( 193 * predicate->condition->op + 47*predicate->condition->column + 5351*predicate->condition->value + 
+	// 		   6803*predicate->range_start + 1289*predicate->range_end + 31531) % size);
 }
 
 // /* printsBucket various info */
