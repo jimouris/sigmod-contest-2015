@@ -89,7 +89,7 @@ void predicateDuplicateIndex(predicateHash * hash) {
 
 void predicateDestroyBucket(predicateBucket *bucket) {
 	uint32_t i;
-	for (i = 0 ; i < bucket->current_subBuckets ; i++) {
+	for (i = 0 ; i < PREDICATE_B ; i++) {
 		predicateDestroySubBucket(&bucket->key_buckets[i]);
 	}
 	free(bucket->key_buckets);
@@ -147,7 +147,6 @@ void predicateCopyBucketTransactions(predicateBucket* dst, predicateBucket* src)
 	dst->local_depth = src->local_depth;
 	dst->current_subBuckets = src->current_subBuckets;
 	dst->deletion_started = src->deletion_started;
-	dst->pointers_num = src->pointers_num;
 	for (i = 0 ; i < src->current_subBuckets ; i++) {	/* for i in subBuckets */
 		predicateCopySubbucketTransactions(&dst->key_buckets[i], &src->key_buckets[i]);
 	}
@@ -301,9 +300,7 @@ int predicateDestroyHash(predicateHash* hash) {
 		}
 
 		if (bucketPtr->pointers_num == 1 ) { /*if it is the last remaining pointer that points to the bucket*/
-			free(bucketPtr->key_buckets->condition);
-			free(bucketPtr->key_buckets);
-			free(bucketPtr);
+			predicateDestroyBucket(bucketPtr);
 		}else{
 			bucketPtr->pointers_num--;
 		}
