@@ -34,5 +34,5 @@
 # Big input files
 *.test
 
-
-
+# Valgrind output
+callgrind.out.*
