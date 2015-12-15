@@ -79,9 +79,9 @@ int predicateInsertHashRecord(predicateHash* hash, predicateSubBucket* predicate
 void predicateDuplicateIndex(predicateHash * hash) {
 	
 
-	if (hash->global_depth == 25) {
-		exit(10);
-	}
+	// if (hash->global_depth == 25) {
+	// 	exit(10);
+	// }
 	
 
 	hash->global_depth++;
