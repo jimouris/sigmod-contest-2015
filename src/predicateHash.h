@@ -66,6 +66,7 @@ int predicateDestroyHash(predicateHash *);
 void predicateDestroySubBucket(predicateSubBucket *);
 void predicateDestroyBucket(predicateBucket *);
 void predicateCleanBucket(predicateBucket*);
+void predicateFixDeletePointers(predicateHash*, predicateBucket*, predicateBucket* , uint64_t);
 /**********************/
 
 
