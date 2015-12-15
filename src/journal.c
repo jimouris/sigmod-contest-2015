@@ -233,13 +233,16 @@ uint64_t getRecordCount(Journal_t* journal, uint64_t range_start, uint64_t range
 		}
 		if (first > last || not_found == True){	//Not found
 			first_appearance_end = (last > first) ? last : first;
+			if(first_appearance_end >= journal->num_of_recs){
+				first_appearance_end = journal->num_of_recs-1;
+			}
 			while(first_appearance_end >= first_appearance_start && journal->records[first_appearance_end].transaction_id > range_end){
 				first_appearance_end--;
 			}
 		}
 	}
 	uint64_t last = first_appearance_end;
-	while(last < journal->num_of_recs && journal->records[last].transaction_id <= range_end ) {
+	while(last+1 < journal->num_of_recs && journal->records[last].transaction_id <= range_end ) {
 		last++;
 	}
 	*first_offset = first_appearance_start;
@@ -393,6 +396,7 @@ void printJournalRecord(JournalRecord_t* rec) {
 void printJournal(Journal_t* journal){
 	uint64_t i;
 	for(i = 0; i < journal->num_of_recs; i++){
+		printf("%zu: ",i );
 		printJournalRecord(&journal->records[i]);
 	}
 }
