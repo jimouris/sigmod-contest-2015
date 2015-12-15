@@ -158,15 +158,22 @@ Boolean_t checkValidation(Journal_t** journal_array, ValidationQueries_t* val_qu
 
 Boolean_t checkQueryHash(Journal_t** journal_array, Query_t* query, uint64_t from, uint64_t to){
 	uint64_t i,j;
+	uint64_t first_offset, offset;
 	Journal_t* journal = journal_array[query->relationId];
 	BitSet_t* intersection = NULL;
+	if(query->columnCount == 0){
+		if (getRecordCount(journal, from, to, &first_offset) > 0){
+			return True;
+		} else {
+			return False;
+		}
+	}
 	for(i = 0; i < query->columnCount; i++) {
 		Column_t* predicate = &query->columns[i];
 		Boolean_t exists = False;
 		predicateSubBucket* predicateSubBucket = createPredicateSubBucket(from, to, predicate->column, predicate->op, predicate->value);
 		BitSet_t* predicate_bit_set = predicateGetBitSet(journal->predicate_index, predicateSubBucket, &exists);
 		if(exists == False){
-			uint64_t first_offset, offset;
 			uint64_t num_of_recs = getRecordCount(journal, from, to, &first_offset);
 			predicateSubBucket->bit_set = createBitSet(num_of_recs);
 			for(j = 0, offset = first_offset; j < num_of_recs; j++, offset++){

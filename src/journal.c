@@ -242,7 +242,7 @@ uint64_t getRecordCount(Journal_t* journal, uint64_t range_start, uint64_t range
 		}
 	}
 	uint64_t last = first_appearance_end;
-	while(last+1 < journal->num_of_recs && journal->records[last].transaction_id <= range_end ) {
+	while(last+1 < journal->num_of_recs && journal->records[last+1].transaction_id <= range_end ) {
 		last++;
 	}
 	*first_offset = first_appearance_start;
