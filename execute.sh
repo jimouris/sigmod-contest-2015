@@ -28,10 +28,10 @@ else
 		time -f "\t%E Elapsed Real Time \n\t%S CPU-seconds" ./a.out --predicate < $input > myout.test
 	elif [ $# -eq 3 ] ; then
 		if [ "${2}" = "-tid" -o "${2}" = "--tid" -o "${2}" = "tid" ] && [ "${3}" = "-predicate" -o "${3}" = "--predicate" -o "${3}" = "predicate" ] ; then
-			echo "Both predicateHash and tidHash is enabled"
+			echo "Both predicateHash and tidHash are enabled"
 			time -f "\t%E Elapsed Real Time \n\t%S CPU-seconds" ./a.out --tid --predicate < $input > myout.test
 		elif  [ "${3}" = "-tid" -o "${3}" = "--tid" -o "${3}" = "tid" ] && [ "${2}" = "-predicate" -o "${2}" = "--predicate" -o "${2}" = "predicate" ] ; then
-			echo "Both predicateHash and tidHash is enabled"
+			echo "Both predicateHash and tidHash are enabled"
 			time -f "\t%E Elapsed Real Time \n\t%S CPU-seconds" ./a.out --tid --predicate < $input > myout.test
 		fi
 	else

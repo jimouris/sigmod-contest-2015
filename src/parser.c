@@ -168,21 +168,26 @@ Boolean_t checkQueryHash(Journal_t** journal_array, Query_t* query, uint64_t fro
 			return False;
 		}
 	}
+	Boolean_t records_unknown = True;
+	uint64_t record_count = 0;
 	for(i = 0; i < query->columnCount; i++) {
 		Column_t* predicate = &query->columns[i];
 		Boolean_t exists = False;
 		predicateSubBucket* predicateSubBucket = createPredicateSubBucket(from, to, predicate->column, predicate->op, predicate->value);
 		BitSet_t* predicate_bit_set = predicateGetBitSet(journal->predicate_index, predicateSubBucket, &exists);
 		if(exists == False){
-			uint64_t num_of_recs = getRecordCount(journal, from, to, &first_offset);
-			predicateSubBucket->bit_set = createBitSet(num_of_recs);
-			for(j = 0, offset = first_offset; j < num_of_recs; j++, offset++){
+			if(records_unknown == True){
+				 record_count = getRecordCount(journal, from, to, &first_offset);
+				 records_unknown = False;
+			}
+			predicateSubBucket->bit_set = createBitSet(record_count);
+			for(j = 0, offset = first_offset; j < record_count; j++, offset++){
 				JournalRecord_t* record = &journal->records[offset];
 				if(checkConstraint(record, predicate)){
 					setBit(j,predicateSubBucket->bit_set);
 				}
 			}
-			predicate_bit_set = createBitSet(num_of_recs);
+			predicate_bit_set = createBitSet(record_count);
 			copyBitSet(predicate_bit_set, predicateSubBucket->bit_set);
 
 			predicateInsertHashRecord(journal->predicate_index,predicateSubBucket);

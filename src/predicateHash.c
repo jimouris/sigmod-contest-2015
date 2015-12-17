@@ -241,7 +241,7 @@ uint64_t predicateHashFunction(uint64_t size, predicateSubBucket* predicate) {
     int c;
     while ((c = *str1++) != '\0'){
          hash += base*(c - '0');
-         base *= 666; 
+         base *= 10; 
     }
     return hash % size;
 
