@@ -1,3 +1,4 @@
+#include "murmurhash.h"
 #include "predicateHash.h"
 
 predicateHash* predicateCreateHash(void) {
@@ -230,21 +231,37 @@ uint64_t predicateHashFunction(uint64_t size, predicateSubBucket* predicate) {
    // hash *= 37;
    // hash += predicate->range_end;
    // return hash % size;
+
+/*giannopoulos*/
+    // char str[50];
+    // char* str1 = str;
+    // sprintf(str,"%" PRIu32 "%d%zu%zu%zu", predicate->condition->column,
+		  //    predicate->condition->op, predicate->condition->value, 
+		  //    predicate->range_start, predicate->range_end);
+    // uint64_t hash = 0;
+    // uint64_t base = 1;
+    // // printf("string: %s\n",str);
+    // int c;
+    // while ((c = *str1++) != '\0'){
+    //      hash += base*(c - '0');
+    //      base *= 10; 
+    // }
+    // return hash % size;
+
+/*giannopoulos*/
+	/*murmurhash*/
     char str[50];
     char* str1 = str;
     sprintf(str,"%" PRIu32 "%d%zu%zu%zu", predicate->condition->column,
 		     predicate->condition->op, predicate->condition->value, 
 		     predicate->range_start, predicate->range_end);
-    uint64_t hash = 0;
-    uint64_t base = 1;
-    // printf("string: %s\n",str);
-    int c;
-    while ((c = *str1++) != '\0'){
-         hash += base*(c - '0');
-         base *= 10; 
-    }
-    return hash % size;
+    uint64_t i=0,c = 0;
 
+    while ((c = *str1++) != '\0'){
+        i++;
+    }
+    return (murmurhash(str1,i,0) % size);
+	/*murmar has end*/
 	/*beris super hash function*/
 
 	// return ( ( 193 * predicate->condition->op + 47*predicate->condition->column + 5351*predicate->condition->value + 
