@@ -21,8 +21,8 @@ extern "C" {
  * using the MurmurHash3 algorithm
  */
 
-uint64_t
-murmurhash (const char *, uint64_t, uint64_t);
+uint32_t
+murmurhash (const char *, uint32_t, uint32_t);
 
 #ifdef __cplusplus
 }

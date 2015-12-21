@@ -250,17 +250,15 @@ uint64_t predicateHashFunction(uint64_t size, predicateSubBucket* predicate) {
 
 /*giannopoulos*/
 	/*murmurhash*/
-    char str[50];
-    char* str1 = str;
+    // char str[50];
+    // char* str1 = str;
+	char* str = malloc(50*sizeof(char));
     sprintf(str,"%" PRIu32 "%d%zu%zu%zu", predicate->condition->column,
 		     predicate->condition->op, predicate->condition->value, 
 		     predicate->range_start, predicate->range_end);
-    uint64_t i=0,c = 0;
-
-    while ((c = *str1++) != '\0'){
-        i++;
-    }
-    return (murmurhash(str1,i,0) % size);
+    uint64_t hash =  murmurhash(str,strlen(str),0) % size;
+    free(str);
+    return hash;
 	/*murmar has end*/
 	/*beris super hash function*/
 

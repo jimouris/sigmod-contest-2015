@@ -1,26 +1,34 @@
+
+/**
+ * `murmurhash.h' - murmurhash
+ *
+ * copyright (c) 2014 joseph werle <joseph.werle@gmail.com>
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
 #include "murmurhash.h"
 
-uint64_t murmurhash (const char *key, uint64_t len, uint64_t seed) {
-  uint64_t c1 = 0xcc9e2d51;
-  uint64_t c2 = 0x1b873593;
-  uint64_t r1 = 15;
-  uint64_t r2 = 13;
-  uint64_t m = 5;
-  uint64_t n = 0xe6546b64;
-  uint64_t h = 0;
-  uint64_t k = 0;
+uint32_t
+murmurhash (const char *key, uint32_t len, uint32_t seed) {
+  uint32_t c1 = 0xcc9e2d51;
+  uint32_t c2 = 0x1b873593;
+  uint32_t r1 = 15;
+  uint32_t r2 = 13;
+  uint32_t m = 5;
+  uint32_t n = 0xe6546b64;
+  uint32_t h = 0;
+  uint32_t k = 0;
   uint8_t *d = (uint8_t *) key; // 32 bit extract from `key'
-  const uint64_t *chunks = NULL;
+  const uint32_t *chunks = NULL;
   const uint8_t *tail = NULL; // tail - last 8 bytes
   int i = 0;
   int l = len / 4; // chunk length
 
   h = seed;
 
-  chunks = (const uint64_t *) (d + l * 4); // body
+  chunks = (const uint32_t *) (d + l * 4); // body
   tail = (const uint8_t *) (d + l * 4); // last 8 byte chunk of `key'
 
   // for each 4 byte chunk of `key'
