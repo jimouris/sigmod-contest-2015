@@ -59,6 +59,7 @@ int insertHashRecord(pkHash* hash, Key key, RangeArray* rangeArray) {
 			dest_bucket->key_buckets[current_subBuckets] = tmp_bucket->key_buckets[i];
 			dest_bucket->current_subBuckets++;
 		}
+		free(tmp_bucket->key_buckets);
 		free(tmp_bucket); /* not destroy tmpbucket, we want the pointers */
 		insertHashRecord(hash, key, rangeArray);
 	}
@@ -132,6 +133,7 @@ void copyBucketPtrs(pkBucket* dst, pkBucket* src) {
 
 pkSubBucket* createNewSubBucket(Key key, RangeArray *rangeArray) {
 	pkSubBucket *new_sub_bucket = malloc(sizeof(pkSubBucket));
+	ALLOCATION_ERROR(new_sub_bucket);
 	new_sub_bucket->key = key;
 	new_sub_bucket->current_entries = 1;
 	new_sub_bucket->limit = C;
@@ -172,28 +174,8 @@ void cleanBucket(pkBucket* bucket) {
 	bucket->current_subBuckets = 0;
 }
 
-// void cleanSubBucket(pkSubBucket* pksubBucket) {
-// 	uint64_t j,iter = pksubBucket->current_entries; /* reduce iterations */
-// 	pksubBucket->key = 0;
-// 	if (pksubBucket->current_entries > C ) { /* we must realloc to the default capacity C */
-// 		pksubBucket->transaction_range = realloc(pksubBucket->transaction_range,C * sizeof(RangeArray));
-// 		ALLOCATION_ERROR(pksubBucket->transaction_range);
-// 		pksubBucket->limit = C;
-// 		iter = C;
-// 	}
-// 	for (j = 0 ; j < iter ; j++) {	/* for j in transaction range */
-// 		pksubBucket->transaction_range[j].transaction_id = 0;
-// 		pksubBucket->transaction_range[j].rec_offset = 0;
-// 	}
-// 	pksubBucket->current_entries = 0;
-// }
-
-uint64_t hashFunction(uint64_t size, uint64_t x) {
+inline uint64_t hashFunction(uint64_t size, uint64_t x) {
     return (x % size);
-    // x = ((x >> 16) ^ x) * 0x45d9f3b;
-	//    x = ((x >> 16) ^ x) * 0x45d9f3b;
-	//    x = ((x >> 16) ^ x);
-	// return ((x*2654435761+1223) % size);
 }
 
 /* printsBucket various info */
@@ -251,7 +233,7 @@ JournalRecord_t* getLastRecord(Journal_t* journal, Key key) {
 	pkHash* hash = journal->index;
 	uint64_t current_entries;
 	RangeArray* range = getHashRecord(hash, key, &current_entries);
-	if(range == NULL){
+	if (range == NULL){
 		return NULL;
 	}
 	return &journal->records[range[current_entries-1].rec_offset];
@@ -269,6 +251,7 @@ int destroyHash(pkHash* hash) {
 		if (bucketPtr->pointers_num == 1 ) { /*if it is the last remaining pointer that points to the bucket*/
 			for (j = 0 ; j < bucketPtr->current_subBuckets ; j++) {
 				free(bucketPtr->key_buckets[j]->transaction_range);
+				free(bucketPtr->key_buckets[j]);
 			}
 			free(bucketPtr->key_buckets);
 			free(bucketPtr);
@@ -283,7 +266,7 @@ int destroyHash(pkHash* hash) {
 	hash = NULL;
 	return OK_SUCCESS;
 }
-// 
+
 // int deleteHashRecord(pkHash* hash, Key key) {
 // 	uint64_t bucket_num = hashFunction(hash->size, key);
 // 	// pkBucket *bucket = hash->index[bucket_num];
