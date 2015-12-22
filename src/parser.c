@@ -161,7 +161,7 @@ Boolean_t checkQueryHash(Journal_t** journal_array, Query_t* query, uint64_t fro
 	uint64_t first_offset, offset;
 	Journal_t* journal = journal_array[query->relationId];
 	BitSet_t* intersection = NULL;
-	if(query->columnCount == 0){
+	if(query->columnCount == 0){		/*Empty query*/
 		if (getRecordCount(journal, from, to, &first_offset) > 0){
 			return True;
 		} else {
@@ -169,36 +169,52 @@ Boolean_t checkQueryHash(Journal_t** journal_array, Query_t* query, uint64_t fro
 		}
 	}
 	Boolean_t records_unknown = True;
+	RangeArray* range_array = NULL;
 	uint64_t record_count = 0;
+	uint64_t range_size = 0;
 	for(i = 0; i < query->columnCount; i++) {
 		Column_t* predicate = &query->columns[i];
-		// Boolean_t exists = False;
 		predicateSubBucket* predicateSubBucket = createPredicateSubBucket(from, to, predicate->column, predicate->op, predicate->value);
+		//If bit_set for this predicate has allready been computed, get it from the hash table.
 		BitSet_t* predicate_bit_set = predicateGetBitSet(journal->predicate_index, predicateSubBucket);
 		if(predicate_bit_set == NULL){
+			//Else compute it now.
 			if(records_unknown == True){
 				 record_count = getRecordCount(journal, from, to, &first_offset);
 				 records_unknown = False;
 			}
 			predicateSubBucket->bit_set = createBitSet(record_count);
-			for(j = 0, offset = first_offset; j < record_count; j++, offset++){
-				JournalRecord_t* record = &journal->records[offset];
-				if(checkConstraint(record, predicate)){
-					setBit(j,predicateSubBucket->bit_set);
+			if(predicate->column == 0 && predicate->op == Equal){	/*If the predicate is like "C0 == ..."*/
+				range_array = getHashRecord(journal->index, predicate->value, &range_size); /*Get records from hash table*/
+				for(j = 0; j < range_size; j++){
+					if(range_array[j].transaction_id > to)
+						break;
+					if(range_array[j].transaction_id >= from){
+						uint64_t bit = range_array[j].rec_offset - first_offset;
+						setBit(bit, predicateSubBucket->bit_set);
+					}
+				}
+			} else { /*Else check all the records in the range [from,to]*/
+				for(j = 0, offset = first_offset; j < record_count; j++, offset++){
+					JournalRecord_t* record = &journal->records[offset];
+					if(checkConstraint(record, predicate)){
+						setBit(j,predicateSubBucket->bit_set);
+					}
 				}
 			}
+
 			predicate_bit_set = createBitSet(record_count);
 			copyBitSet(predicate_bit_set, predicateSubBucket->bit_set);
-
+			//Insert predicate in the hash table.
 			predicateInsertHashRecord(journal->predicate_index,predicateSubBucket);
 		}
 		predicateDestroySubBucket(predicateSubBucket);
 		free(predicateSubBucket);
 		if(i == 0) {
-			intersection = predicate_bit_set;
+			intersection = predicate_bit_set;	/*Bit set of the whole query*/
 		} else {
 			BitSet_t* previous_intersection = intersection;
-			intersection = intersect(predicate_bit_set, previous_intersection);
+			intersection = intersect(predicate_bit_set, previous_intersection);	/*interset with previous bit set*/
 			destroyBitSet(predicate_bit_set);
 			destroyBitSet(previous_intersection);
 			previous_intersection = NULL;
