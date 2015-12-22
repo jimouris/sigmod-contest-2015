@@ -70,7 +70,7 @@ Journal_t* createJournal(uint64_t, Boolean_t*);
 
 void insertJournalRecord(Journal_t*, uint64_t, size_t, const uint64_t*, Boolean_t);
 
-List_t* getJournalRecords(Journal_t*, Column_t*, uint64_t range_start, uint64_t range_end);
+uint64_t getJournalRecords(Journal_t*, uint64_t range_start, uint64_t range_end);
 
 int destroyJournal(Journal_t*);
 

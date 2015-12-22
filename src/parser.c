@@ -262,10 +262,10 @@ Boolean_t checkSingleQuery(Journal_t** journal_array, Query_t* query, uint64_t f
 			i++;
 		}
 	} else { /* unfortunately we should search in whole range [from, to]*/
-		List_t* record_list = getJournalRecords(journal, NULL, from, to);
-		List_node* iterator = record_list->list_beg;
-		while(iterator != NULL){
-			JournalRecord_t* record = iterator->data;
+		uint64_t first_appearance = getJournalRecords(journal, from, to);
+		i = first_appearance;
+		while(i < journal->num_of_recs && journal->records[i].transaction_id <= to ) {
+			JournalRecord_t* record = &journal->records[i];
 			Boolean_t record_result = True;
 			for(j = 0; j < query->columnCount; j++){
 				Column_t* constraint = &query->columns[j];
@@ -276,13 +276,11 @@ Boolean_t checkSingleQuery(Journal_t** journal_array, Query_t* query, uint64_t f
 				}
 			}
 			if(record_result == True){ /*Short circuiting*/
-				destroy_list(record_list);
 				return True;
 			}
 			result = result || record_result;
-			iterator = iterator->next;
+			i++;
 		}
-		destroy_list(record_list);
 	}
 	return result;
 }

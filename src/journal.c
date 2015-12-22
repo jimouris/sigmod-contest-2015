@@ -251,12 +251,13 @@ uint64_t getRecordCount(Journal_t* journal, uint64_t range_start, uint64_t range
 
 
 /*
+	Returns the offset of the first record.
+
 	In Columnt_t* constraint is the information for our constraint
 	call it with NULL if you want all the records in the range.
 */
-List_t* getJournalRecords(Journal_t* journal, Column_t* constraint, uint64_t range_start, uint64_t range_end) {
+uint64_t getJournalRecords(Journal_t* journal, uint64_t range_start, uint64_t range_end) {
 	uint64_t first_appearance = 0;
-	List_t* record_list = info_init();
 
 	if(journal->tid_index != NULL) {
 		Boolean_t found = False;
@@ -270,7 +271,7 @@ List_t* getJournalRecords(Journal_t* journal, Column_t* constraint, uint64_t ran
 			}
 		}
 		if(found == False){
-			return record_list;
+			return journal->num_of_recs;
 		}
 	} else {
 		/*Binary Search for first appearance*/
@@ -303,21 +304,13 @@ List_t* getJournalRecords(Journal_t* journal, Column_t* constraint, uint64_t ran
 			}
 		}
 		if(first_appearance >= journal->num_of_recs){
-			return record_list;
+			return journal->num_of_recs;
 		}
 		while(first_appearance > 0 && journal->records[first_appearance-1].transaction_id == journal->records[first_appearance].transaction_id){
 			first_appearance--;
 		}
 	}
-	uint64_t i = first_appearance;
-	while(i < journal->num_of_recs && journal->records[i].transaction_id <= range_end ) {
-		JournalRecord_t* record = &journal->records[i];
-		if(constraint == NULL || checkConstraint(record, constraint)){
-			insert_end(record_list, record);
-		}
-		i++;
-	}
-	return record_list;
+	return first_appearance;
 }
 
 Boolean_t checkConstraint(JournalRecord_t* record, Column_t* constraint){
