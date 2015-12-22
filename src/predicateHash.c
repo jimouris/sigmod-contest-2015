@@ -315,18 +315,16 @@ predicateSubBucket* createPredicateSubBucket(uint64_t from, uint64_t to, uint32_
 }
 
 
-BitSet_t* predicateGetBitSet(predicateHash* hash, predicateSubBucket* predicate, Boolean_t *found) {
+BitSet_t* predicateGetBitSet(predicateHash* hash, predicateSubBucket* predicate) {
 	uint32_t i;
 	uint64_t bucket_num = predicateHashFunction(hash->size, predicate);
 	for (i = 0 ; i < hash->index[bucket_num]->current_subBuckets ; i++) { /* for i in subBuckets */
 		if (predicateRecordsEqual(&(hash->index[bucket_num]->key_buckets[i]), predicate)) {
-			*found = True;
 			BitSet_t* bit_set = createBitSet(hash->index[bucket_num]->key_buckets[i].bit_set->bit_size);
 			copyBitSet(bit_set, hash->index[bucket_num]->key_buckets[i].bit_set);
 			return bit_set;
 		}
 	}
-	*found = False;
 	return NULL;
 } 
 

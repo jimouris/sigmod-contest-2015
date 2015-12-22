@@ -55,7 +55,7 @@ predicateBucket* predicateCreateNewBucket(uint32_t);
 void preidcateCleanBucket(predicateBucket *);
 void predicateCleanSubBucket(predicateSubBucket *);
 Boolean_t predicateRecordsEqual(predicateSubBucket*, predicateSubBucket*);
-BitSet_t* predicateGetBitSet(predicateHash *, predicateSubBucket *, Boolean_t *);
+BitSet_t* predicateGetBitSet(predicateHash *, predicateSubBucket *);
 void predicatePrintHash(predicateHash *);
 void predicatePrintBucket(predicateBucket *);
 predicateSubBucket* createPredicateSubBucket(uint64_t, uint64_t, uint32_t, Op_t, uint64_t);

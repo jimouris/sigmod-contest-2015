@@ -172,10 +172,10 @@ Boolean_t checkQueryHash(Journal_t** journal_array, Query_t* query, uint64_t fro
 	uint64_t record_count = 0;
 	for(i = 0; i < query->columnCount; i++) {
 		Column_t* predicate = &query->columns[i];
-		Boolean_t exists = False;
+		// Boolean_t exists = False;
 		predicateSubBucket* predicateSubBucket = createPredicateSubBucket(from, to, predicate->column, predicate->op, predicate->value);
-		BitSet_t* predicate_bit_set = predicateGetBitSet(journal->predicate_index, predicateSubBucket, &exists);
-		if(exists == False){
+		BitSet_t* predicate_bit_set = predicateGetBitSet(journal->predicate_index, predicateSubBucket);
+		if(predicate_bit_set == NULL){
 			if(records_unknown == True){
 				 record_count = getRecordCount(journal, from, to, &first_offset);
 				 records_unknown = False;
