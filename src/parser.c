@@ -47,76 +47,40 @@ void processTransaction(Transaction_t *t, Journal_t** journal_array) {
 
 void processValidationQueries(ValidationQueries_t *v, Journal_t** journal_array, ValidationList_t* validation_list) {
 	ValidationQueries_t* val_query = v;
-	const char* reader = v->queries;
-	uint32_t i,j;
+	char* reader = v->queries;
+	uint32_t i;
 	for (i = 0; i < v->queryCount; i++) {
 		Query_t* query = (Query_t*)reader;
-		for(j = 0; j<query->columnCount; j++){
-			if(query->columns[j].column == 0 && query->columns[j].op == Equal){
-				Column_t temp = query->columns[j];
-				query->columns[j] = query->columns[0];
-				query->columns[0] = temp;
-				break;
-			}
-		}
+		// uint32_t j;
+		// for(j = 0; j<query->columnCount; j++){
+		// 	if(query->columns[j].column == 0 && query->columns[j].op == Equal){
+		// 		Column_t temp = query->columns[j];
+		// 		query->columns[j] = query->columns[0];
+		// 		query->columns[0] = temp;
+		// 		break;
+		// 	}
+		// }
+		qsort(query->columns, query->columnCount, sizeof(Column_t), cmp_col);
 		reader += sizeof(Query_t) + (sizeof(Column_t) * query->columnCount);
 	}
+	// printValidation(val_query);
 	validationListInsert(validation_list, val_query);
 }
 
 
-// Column_t** removeDuplicates(Column_t** old, uint64_t old_size, uint64_t* new_size){
-// 	uint64_t i,j;
-// 	uint64_t count = 0;
-// 	Column_t** new_arr = malloc(old_size*sizeof(Column_t*));
-// 	ALLOCATION_ERROR(new_arr);
-// 	for(j = 0; j<old_size; j++){
-// 		new_arr[j] = malloc(sizeof(Column_t));
-// 		ALLOCATION_ERROR(new_arr[j]);
-// 	}
-// 	for (i = 0; i < old_size; ++i) {
-// 		if(i == 0 || equal_col(&old[i], &old[i-1]) == False) {
-// 			new_arr[count]->column = old[i]->column;
-// 			new_arr[count]->op = old[i]->op;
-// 			new_arr[count]->value = old[i]->value;
-// 			count++;
-// 		}
-// 	}
-// 	new_arr = realloc(new_arr, count*sizeof(Column_t*));
-// 	*new_size = count;
-// 	return new_arr;
-// }
-
-// Boolean_t equal_col(const void *p1, const void *p2) {
-// 	const Column_t *f1 = *(Column_t**) p1;
-// 	const Column_t *f2 = *(Column_t**) p2;
-// 	if (f1->column == f2->column && f1->op == f2->op && f1->value == f2->value){
-// 		return True;
-// 	} else if(f1->column == f2->column && f1->op == Equal && (f2->op == GreaterOrEqual || f2->op == LessOrEqual) && f1->value == f2->value){
-// 		return True;
-// 	} else {
-// 		return False;
-// 	}
-// }
-
-// int cmp_col(const void *p1, const void *p2) {
-// 	const Column_t *f1 = *(Column_t**) p1;
-// 	const Column_t *f2 = *(Column_t**) p2;
-// 	if (f1->column == f2->column) {
-// 		if (f1->op == Equal) {
-// 			return -1;
-// 		} else if (f2->op == Equal) {
-// 			return 1;
-// 		} else
-// 			return 0;
-// 	} else {
-// 		if(f1->column < f2->column){
-// 			return -1;
-// 		} else {
-// 			return 1;
-// 		}
-// 	}	
-// }
+int cmp_col(const void *p1, const void *p2) {
+	const Column_t *f1 = (Column_t*) p1;
+	const Column_t *f2 = (Column_t*) p2;
+	if(f1->op == Equal){
+		if(f2->op == Equal && f2->column == 0){
+			return 1;
+		}
+		return -1;
+	} else if(f2->op == Equal) {
+		return 1;
+	}
+	return 0;
+}
 
 void processFlush(Flush_t *fl, Journal_t** journal_array, ValidationList_t* validation_list) {
 	Val_list_node* iter = validation_list->list->list_beg;
@@ -365,33 +329,38 @@ void printValidation(ValidationQueries_t* val_query){
 		// fprintf(stderr,"Query for relation %" PRIu32 " query columnCount = %d RESULT: %d | max_tid: %zu\n", query->relationId,query->columnCount,checkSingleQuery(journal_array,query,val_query->from,val_query->to), journal_array[query->relationId]->records[journal_array[query->relationId]->num_of_recs-1].transaction_id);
 		for(j = 0; j<query->columnCount; j++){
 			const Column_t column = query->columns[j];
-			switch(column.op){
-				case Equal:
-					fprintf(stderr,"\tC%" PRIu32 " == %zu\n",column.column, column.value);
-					break;
-				case NotEqual:
-					fprintf(stderr,"\tC%" PRIu32 " != %zu\n",column.column, column.value);
-					break;
-				case Less:
-					fprintf(stderr,"\tC%" PRIu32 " < %zu\n",column.column, column.value);
-					break;
-				case LessOrEqual:
-					fprintf(stderr,"\tC%" PRIu32 " <= %zu\n",column.column, column.value);
-					break;
-				case Greater:
-					fprintf(stderr,"\tC%" PRIu32 " > %zu\n",column.column, column.value);
-					break;
-				case GreaterOrEqual:
-					fprintf(stderr,"\tC%" PRIu32 " >= %zu\n",column.column, column.value);
-					break;
-				default:
-					fprintf(stderr,"Wrong operator\n");
-					exit(1);
-			}			
+			printColumn(column);
 		}
 		reader += sizeof(Query_t) + (sizeof(Column_t) * query->columnCount);
 	}
 }
+
+void printColumn(Column_t column){
+	switch(column.op){
+		case Equal:
+			fprintf(stderr,"\tC%" PRIu32 " == %zu\n",column.column, column.value);
+			break;
+		case NotEqual:
+			fprintf(stderr,"\tC%" PRIu32 " != %zu\n",column.column, column.value);
+			break;
+		case Less:
+			fprintf(stderr,"\tC%" PRIu32 " < %zu\n",column.column, column.value);
+			break;
+		case LessOrEqual:
+			fprintf(stderr,"\tC%" PRIu32 " <= %zu\n",column.column, column.value);
+			break;
+		case Greater:
+			fprintf(stderr,"\tC%" PRIu32 " > %zu\n",column.column, column.value);
+			break;
+		case GreaterOrEqual:
+			fprintf(stderr,"\tC%" PRIu32 " >= %zu\n",column.column, column.value);
+			break;
+		default:
+			fprintf(stderr,"Wrong operator\n");
+			exit(1);
+	}			
+}
+
 
 Val_list_t *validation_list_create(void) {
 	Val_list_t *list = malloc(sizeof(Val_list_t));
