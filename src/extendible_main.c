@@ -1,4 +1,4 @@
-#include "extendibleHashing.h"
+#include "PKeyHash.h"
 #include <time.h>
 
 int main(void)
@@ -13,13 +13,11 @@ int main(void)
 	insertHashRecord(myhash,6,rangeElement);
 	insertHashRecord(myhash,7,rangeElement);
 	insertHashRecord(myhash,8,rangeElement);
-	// insertHashRecord(myhash,10,rangeElement);
+	insertHashRecord(myhash,10,rangeElement);
 	insertHashRecord(myhash,12,rangeElement);
 	insertHashRecord(myhash,15,rangeElement);
-	deleteHashRecord(myhash,8);
-	deleteHashRecord(myhash,3);
-	// insertHashRecord(myhash,3,rangeElement);
-	// insertHashRecord(myhash,8,rangeElement);
+	insertHashRecord(myhash,3,rangeElement);
+	insertHashRecord(myhash,8,rangeElement);
 
 	printHash(myhash);
 	// printf("It is %d \n",deleteHashRecord(myhash,61));

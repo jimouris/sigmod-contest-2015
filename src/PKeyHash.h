@@ -29,7 +29,7 @@ typedef struct pkSubBucket {
 typedef struct pkBucket { /* Has a pointer (key_buckets) to one or more subBuckets */
 	uint32_t local_depth;
 	uint32_t current_subBuckets;
-	pkSubBucket *key_buckets;
+	pkSubBucket **key_buckets;
 	uint8_t deletion_started;
 	uint64_t pointers_num;
 } pkBucket;
@@ -54,10 +54,10 @@ void fixHashPointers(pkBucket **, pkBucket *, uint32_t, uint64_t);
 void fixSplitPointers(pkHash *, pkBucket *, pkBucket *, uint64_t);
 void duplicateIndex(pkHash *);
 void addNewKeyToTempBucket(pkBucket *,JournalRecord_t*);
-void copyBucketTransactions(pkBucket*, pkBucket*);
-void copySubbucketTransactions(pkSubBucket*, pkSubBucket*);
+void copyBucketPtrs(pkBucket*, pkBucket*);
 int insertHashRecord(pkHash*, Key, RangeArray*);
 pkBucket* createNewBucket(uint32_t);
+pkSubBucket* createNewSubBucket(Key, RangeArray *);
 void addNewKeyToTmpBucket(pkBucket *, Key, RangeArray*);
 void cleanBucket(pkBucket *);
 void cleanSubBucket(pkSubBucket *);
@@ -67,7 +67,6 @@ void cleanSubBucket(pkSubBucket *);
 RangeArray* getHashRecord(pkHash *, Key, uint64_t *);
 JournalRecord_t* getLastRecord(Journal_t*, Key);
 void moveSubBucketsLeft(pkBucket*,uint32_t);
-// List<Record> getHashRecords(pkHash*, Key, int range_start, int range_end);
 /****************************************/
 
 /*PRINT HASH-pkBUCKET FUNCTIONS*/
