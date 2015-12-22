@@ -158,9 +158,12 @@ void destroySchema(Journal_t**, int);
 
 void printValidation(ValidationQueries_t*);
 
-// int cmp_col(const void *, const void *);
+void printColumn(Column_t);
 
-// Boolean_t equal_col(const void *p1, const void *p2);
+
+int cmp_col(const void *, const void *);
+
+Boolean_t equal_col(const void *p1, const void *p2);
 
 
 #endif
