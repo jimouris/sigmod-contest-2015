@@ -18,26 +18,23 @@ int insertHashRecord(pkHash* hash, Key key, RangeArray* rangeArray) {
 	pkBucket *bucket = hash->index[bucket_num];
 	uint32_t i;
 	for (i = 0 ; i < bucket->current_subBuckets; i++) {			/* for all subbuckets */
-		if (bucket->key_buckets[i].key == key) {				/* if there is a pksubBucket with this key */
-			uint64_t current_entries = bucket->key_buckets[i].current_entries;
-			if (current_entries == bucket->key_buckets[i].limit) { 	/* if there isn't enough free space, realloc */
-				bucket->key_buckets[i].transaction_range = realloc(bucket->key_buckets[i].transaction_range, ((bucket->key_buckets[i].current_entries)+C) * sizeof(RangeArray));
-				ALLOCATION_ERROR(bucket->key_buckets[i].transaction_range);
-				bucket->key_buckets[i].limit += C;
+		if (bucket->key_buckets[i]->key == key) {				/* if there is a pksubBucket with this key */
+			uint64_t current_entries = bucket->key_buckets[i]->current_entries;
+			if (current_entries == bucket->key_buckets[i]->limit) { 	/* if there isn't enough free space, realloc */
+				bucket->key_buckets[i]->transaction_range = realloc(bucket->key_buckets[i]->transaction_range, ((bucket->key_buckets[i]->current_entries)+C) * sizeof(RangeArray));
+				ALLOCATION_ERROR(bucket->key_buckets[i]->transaction_range);
+				bucket->key_buckets[i]->limit += C;
 			}
 			/* Insert entry */
-			bucket->key_buckets[i].transaction_range[current_entries].transaction_id = rangeArray->transaction_id;
-			bucket->key_buckets[i].transaction_range[current_entries].rec_offset = rangeArray->rec_offset;
-			(bucket->key_buckets[i].current_entries)++;
+			bucket->key_buckets[i]->transaction_range[current_entries].transaction_id = rangeArray->transaction_id;
+			bucket->key_buckets[i]->transaction_range[current_entries].rec_offset = rangeArray->rec_offset;
+			(bucket->key_buckets[i]->current_entries)++;
 			return OK_SUCCESS;
 		}
 	}
 	/* If that was the first appearence of this key */
 	if (bucket->current_subBuckets < B) {	/* If there is space to insert it on that bucket (there is a free pksubbucket) */
-		bucket->key_buckets[bucket->current_subBuckets].key = key;
-		bucket->key_buckets[bucket->current_subBuckets].transaction_range[0].transaction_id = rangeArray->transaction_id;
-		bucket->key_buckets[bucket->current_subBuckets].transaction_range[0].rec_offset = rangeArray->rec_offset;
-		bucket->key_buckets[bucket->current_subBuckets].current_entries += 1;
+		bucket->key_buckets[bucket->current_subBuckets] = createNewSubBucket(key, rangeArray);
 		(bucket->current_subBuckets)++;
 		return OK_SUCCESS;
 	} else {
@@ -154,6 +151,22 @@ void copySubbucketTransactions(pkSubBucket* dst, pkSubBucket* src){
 	}
 }
 
+pkSubBucket* createNewSubBucket(Key key, RangeArray *rangeArray) {
+	pkSubBucket *new_sub_bucket = malloc(sizeof(pkSubBucket));
+	new_sub_bucket->key = key;
+	new_sub_bucket->current_entries = 1;
+	new_sub_bucket->limit = C;
+	new_sub_bucket->transaction_range = malloc(C * sizeof(RangeArray));
+	ALLOCATION_ERROR(new_sub_bucket->transaction_range);
+	new_sub_bucket->transaction_range[0].transaction_id = rangeArray->transaction_id;
+	new_sub_bucket->transaction_range[0].rec_offset = rangeArray->rec_offset;
+	for (j = 1 ; j < C ; j++) {		/* create transaction Range */
+		new_sub_bucket->transaction_range[j].transaction_id = 0;
+		new_sub_bucket->transaction_range[j].rec_offset = 0;
+	}
+	return new_sub_bucket;
+}
+
 /* creates an empty pkBucket*/
 pkBucket* createNewBucket(uint32_t local_depth) {
 	pkBucket *new_bucket = malloc(sizeof(pkBucket));
@@ -161,29 +174,13 @@ pkBucket* createNewBucket(uint32_t local_depth) {
 	new_bucket->local_depth = local_depth;
 	new_bucket->current_subBuckets = 0;
 	new_bucket->deletion_started = 0;
-	new_bucket->key_buckets = malloc(B * sizeof(pkSubBucket));
+	new_bucket->key_buckets = malloc(B * sizeof(pkSubBucket *));
 	ALLOCATION_ERROR(new_bucket->key_buckets);
 	uint32_t i, j;
 	for (i = 0 ; i < B ; i++) {	/* create subBuckets */
-		new_bucket->key_buckets[i].key = 0;
-		new_bucket->key_buckets[i].current_entries = 0;
-		new_bucket->key_buckets[i].limit = C;
-		new_bucket->key_buckets[i].transaction_range = malloc(C * sizeof(RangeArray));
-		ALLOCATION_ERROR(new_bucket->key_buckets[i].transaction_range);
-		for (j = 0 ; j < C ; j++) {		/* create transaction Range */
-			new_bucket->key_buckets[i].transaction_range[j].transaction_id = 0;
-			new_bucket->key_buckets[i].transaction_range[j].rec_offset = 0;
-		}
+		new_bucket->key_buckets[i] = NULL;
 	}
 	return new_bucket;
-}
-
-/* Adds the Key that caused the conflict as the last element of the temp_bucket transactions array */
-void addNewKeyToTmpBucket(pkBucket *tmp_bucket, Key key, RangeArray* rangeArray) {
-	tmp_bucket->key_buckets[B].key = key;
-	tmp_bucket->key_buckets[B].transaction_range[0].transaction_id = rangeArray->transaction_id;
-	tmp_bucket->key_buckets[B].transaction_range[0].rec_offset = rangeArray->rec_offset;
-	tmp_bucket->key_buckets[B].current_entries++;
 }
 
 /* The conflict bucket is empty of transaction, just hold the local_depth */
