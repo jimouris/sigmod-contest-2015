@@ -79,8 +79,9 @@ void duplicateIndex(pkHash * hash) {
 
 void destroyBucket(pkBucket *bucket) {
 	uint32_t i;
-	for (i = 0 ; i < B ; i++) { /*for each pksubBucket*/
-		free(bucket->key_buckets[i].transaction_range);
+	for (i = 0 ; i < bucket->current_subBuckets ; i++) { /*for each pksubBucket*/
+		free(bucket->key_buckets[i]->transaction_range);
+		bucket->key_buckets[i] = NULL;
 	}
 	free(bucket->key_buckets);
 	free(bucket);
@@ -138,9 +139,10 @@ pkSubBucket* createNewSubBucket(Key key, RangeArray *rangeArray) {
 	ALLOCATION_ERROR(new_sub_bucket->transaction_range);
 	new_sub_bucket->transaction_range[0].transaction_id = rangeArray->transaction_id;
 	new_sub_bucket->transaction_range[0].rec_offset = rangeArray->rec_offset;
-	for (j = 1 ; j < C ; j++) {		/* create transaction Range */
-		new_sub_bucket->transaction_range[j].transaction_id = 0;
-		new_sub_bucket->transaction_range[j].rec_offset = 0;
+	uint64_t i;
+	for (i = 1 ; i < C ; i++) {		/* create transaction Range */
+		new_sub_bucket->transaction_range[i].transaction_id = 0;
+		new_sub_bucket->transaction_range[i].rec_offset = 0;
 	}
 	return new_sub_bucket;
 }
@@ -154,7 +156,7 @@ pkBucket* createNewBucket(uint32_t local_depth) {
 	new_bucket->deletion_started = 0;
 	new_bucket->key_buckets = malloc(B * sizeof(pkSubBucket *));
 	ALLOCATION_ERROR(new_bucket->key_buckets);
-	uint32_t i, j;
+	uint32_t i;
 	for (i = 0 ; i < B ; i++) {	/* create subBuckets */
 		new_bucket->key_buckets[i] = NULL;
 	}
@@ -201,12 +203,12 @@ void printBucket(pkBucket* bucket){
 	uint64_t i;
 	uint32_t j;
 	for (i = 0 ; i < bucket->current_subBuckets ; i++) { //
-		Key key = bucket->key_buckets[i].key;
-		uint64_t current_entries = bucket->key_buckets[i].current_entries;
+		Key key = bucket->key_buckets[i]->key;
+		uint64_t current_entries = bucket->key_buckets[i]->current_entries;
 		fprintf(stderr, "\tSubBucket(%zd): key: %zd, current_entries: %zd\n", i, key, current_entries);
 		for (j = 0 ; j < current_entries ; j++) {
-			uint64_t tid = bucket->key_buckets[i].transaction_range[j].transaction_id;
-			uint64_t rec_offset = bucket->key_buckets[i].transaction_range[j].rec_offset;
+			uint64_t tid = bucket->key_buckets[i]->transaction_range[j].transaction_id;
+			uint64_t rec_offset = bucket->key_buckets[i]->transaction_range[j].rec_offset;
 			fprintf(stderr, "\t\ttid: %zd, offset :%zd\n", tid, rec_offset);
 		}
 	}
@@ -236,9 +238,9 @@ RangeArray* getHashRecord(pkHash* hash, Key key, uint64_t * current_entries) {
 	uint32_t i;
 	/* note: May need binary search later */
 	for (i = 0 ; i < hash->index[bucket_num]->current_subBuckets ; i++) { /* for i in subBuckets */
-		if (hash->index[bucket_num]->key_buckets[i].key == key) {
-			*current_entries = hash->index[bucket_num]->key_buckets[i].current_entries;
-			return hash->index[bucket_num]->key_buckets[i].transaction_range;
+		if (hash->index[bucket_num]->key_buckets[i]->key == key) {
+			*current_entries = hash->index[bucket_num]->key_buckets[i]->current_entries;
+			return hash->index[bucket_num]->key_buckets[i]->transaction_range;
 		}
 	}
 	*current_entries = 0;
@@ -264,10 +266,9 @@ int destroyHash(pkHash* hash) {
 			bucketPtr->deletion_started = 1;
 			bucketPtr->pointers_num = 1 << (hash->global_depth - bucketPtr->local_depth);
 		}
-
 		if (bucketPtr->pointers_num == 1 ) { /*if it is the last remaining pointer that points to the bucket*/
-			for (j = 0 ; j < B ; j++) {
-				free(bucketPtr->key_buckets[j].transaction_range);
+			for (j = 0 ; j < bucketPtr->current_subBuckets ; j++) {
+				free(bucketPtr->key_buckets[j]->transaction_range);
 			}
 			free(bucketPtr->key_buckets);
 			free(bucketPtr);
@@ -282,14 +283,15 @@ int destroyHash(pkHash* hash) {
 	hash = NULL;
 	return OK_SUCCESS;
 }
-int deleteHashRecord(pkHash* hash, Key key) {
-	uint64_t bucket_num = hashFunction(hash->size, key);
-	// pkBucket *bucket = hash->index[bucket_num];
-	int deletion_found = deleteSubBucket(hash,bucket_num,key);
-	if (!deletion_found)
-		return 0;
-	return 1;
-}
+// 
+// int deleteHashRecord(pkHash* hash, Key key) {
+// 	uint64_t bucket_num = hashFunction(hash->size, key);
+// 	// pkBucket *bucket = hash->index[bucket_num];
+// 	int deletion_found = deleteSubBucket(hash,bucket_num,key);
+// 	if (!deletion_found)
+// 		return 0;
+// 	return 1;
+// }
 
 // void moveSubBucketsLeft(pkBucket* bucket, uint32_t index) {
 // 		uint32_t i;
@@ -299,86 +301,72 @@ int deleteHashRecord(pkHash* hash, Key key) {
 // 	}
 // }
 
-int deleteSubBucket(pkHash* hash, uint64_t bucket_num, Key key) {
-	pkBucket *bucket = hash->index[bucket_num];
-	uint32_t i;
-	for (i = 0 ; i < bucket->current_subBuckets; i++) {	/* for all subbuckets */
-		if (bucket->key_buckets[i].key == key) {	/* pkSubBucket for deletion found*/
-			/* physical remove of the SubBukcet that contains the Key */
-			cleanSubBucket(&bucket->key_buckets[i]);
-			moveSubBucketsLeft(bucket,i+1);
-			bucket->current_subBuckets--;
-			/*now try to merge Buckets*/
-			tryMergeBuckets(hash,bucket_num);
-			return 1;
-		}
-	}
-	return 0;
-}
-
-uint8_t tryCollapseIndex(pkHash* hash) {
-	uint8_t canCollapse = 0;
-	if (hash->size > 1) {
-		canCollapse = 1;
-		uint64_t i,j;
-		for (i = 0,j=hash->size/2; i < hash->size/2; i++,j++) {
-			if (hash->index[i] != hash->index[j]) { /*we can not doublicate*/
-				canCollapse = 0;
-				break;
-			}
-		}
-	}
-	if (canCollapse) {
-		hash->global_depth --;
-		hash->size /= 2;
-		hash->index = realloc(hash->index,hash->size * sizeof(pkBucket *));
-		ALLOCATION_ERROR(hash->index);
-	}
-	return canCollapse;
-}
-
-void tryMergeBuckets(pkHash* hash, uint64_t bucket_num ) {
-	pkBucket *bucket = hash->index[bucket_num];
-	uint32_t ld_oldSize = 1 << (bucket->local_depth - 1);
-	uint64_t buddy_index;
-	/*find its buddy bucket and store its index to buddy_index*/
-	if (bucket_num + ld_oldSize < hash->size) { /*buddy bucket is under*/
-		buddy_index = bucket_num + ld_oldSize;
-		// fprintf(stderr,"It is under with buddy_index %llu\n",buddy_index);
-	} else { /*buddy bucket is above*/
-		buddy_index = bucket_num - ld_oldSize;
-		// fprintf(stderr,"It is above with buddy_index %llu\n",buddy_index);
-	}
-
-	if (bucket != hash->index[buddy_index] && bucket->local_depth == hash->index[buddy_index]->local_depth) { /*we have a buddy and not the the bucket itself*/
-		pkBucket *buddyBucket = hash->index[buddy_index];
-		uint64_t mergedBucket_entries = bucket->current_subBuckets + buddyBucket->current_subBuckets;
-		if (mergedBucket_entries <= B) { /*we can merge the two subBuckets*/
-			fprintf(stderr,"pkBucket(%zu) - Buddy(%zu)\n",bucket_num,buddy_index);
-			uint64_t i,j;
-			for (i = bucket->current_subBuckets,j=0; i < mergedBucket_entries ; i++,j++) {
-				copySubbucketTransactions(&bucket->key_buckets[i],&buddyBucket->key_buckets[j]);
-			}
-			fixDeletePointers(hash, bucket, buddyBucket, buddy_index);
-			bucket->current_subBuckets = mergedBucket_entries;
-			bucket->local_depth--;
-			destroyBucket(buddyBucket);
-			if (tryCollapseIndex(hash)) {
-				tryMergeBuckets(hash, bucket_num % (1 << bucket->local_depth));
-			}
-		}
-	}
-
-}
-
-//  Binary Search for first appearance 
-// JournalRecord_t* searchIndexByKey(pkHash* hash,uint64_t bucket_num,uint64_t keyToSearch) {
+// int deleteSubBucket(pkHash* hash, uint64_t bucket_num, Key key) {
 // 	pkBucket *bucket = hash->index[bucket_num];
-// 	int i;
-// 	for (i = 0 ; i < bucket->current_entries ; i++) {
-// 		if (bucket->transaction_range[i].rec->column_values[0] == keyToSearch) {
-// 			return bucket->transaction_range[i].rec;
+// 	uint32_t i;
+// 	for (i = 0 ; i < bucket->current_subBuckets; i++) {	/* for all subbuckets */
+// 		if (bucket->key_buckets[i].key == key) {	 pkSubBucket for deletion found
+// 			/* physical remove of the SubBukcet that contains the Key */
+// 			cleanSubBucket(&bucket->key_buckets[i]);
+// 			moveSubBucketsLeft(bucket,i+1);
+// 			bucket->current_subBuckets--;
+// 			/*now try to merge Buckets*/
+// 			tryMergeBuckets(hash,bucket_num);
+// 			return 1;
 // 		}
 // 	}
-// 	return NULL;
+// 	return 0;
+// }
+
+// uint8_t tryCollapseIndex(pkHash* hash) {
+// 	uint8_t canCollapse = 0;
+// 	if (hash->size > 1) {
+// 		canCollapse = 1;
+// 		uint64_t i,j;
+// 		for (i = 0,j=hash->size/2; i < hash->size/2; i++,j++) {
+// 			if (hash->index[i] != hash->index[j]) { we can not doublicate
+// 				canCollapse = 0;
+// 				break;
+// 			}
+// 		}
+// 	}
+// 	if (canCollapse) {
+// 		hash->global_depth --;
+// 		hash->size /= 2;
+// 		hash->index = realloc(hash->index,hash->size * sizeof(pkBucket *));
+// 		ALLOCATION_ERROR(hash->index);
+// 	}
+// 	return canCollapse;
+// }
+
+// void tryMergeBuckets(pkHash* hash, uint64_t bucket_num ) {
+// 	pkBucket *bucket = hash->index[bucket_num];
+// 	uint32_t ld_oldSize = 1 << (bucket->local_depth - 1);
+// 	uint64_t buddy_index;
+// 	/*find its buddy bucket and store its index to buddy_index*/
+// 	if (bucket_num + ld_oldSize < hash->size) { /*buddy bucket is under*/
+// 		buddy_index = bucket_num + ld_oldSize;
+// 		// fprintf(stderr,"It is under with buddy_index %llu\n",buddy_index);
+// 	} else { /*buddy bucket is above*/
+// 		buddy_index = bucket_num - ld_oldSize;
+// 		// fprintf(stderr,"It is above with buddy_index %llu\n",buddy_index);
+// 	}
+// 	if (bucket != hash->index[buddy_index] && bucket->local_depth == hash->index[buddy_index]->local_depth) { /*we have a buddy and not the the bucket itself*/
+// 		pkBucket *buddyBucket = hash->index[buddy_index];
+// 		uint64_t mergedBucket_entries = bucket->current_subBuckets + buddyBucket->current_subBuckets;
+// 		if (mergedBucket_entries <= B) { /*we can merge the two subBuckets*/
+// 			fprintf(stderr,"pkBucket(%zu) - Buddy(%zu)\n",bucket_num,buddy_index);
+// 			uint64_t i,j;
+// 			for (i = bucket->current_subBuckets,j=0; i < mergedBucket_entries ; i++,j++) {
+// 				copySubbucketTransactions(&bucket->key_buckets[i],&buddyBucket->key_buckets[j]);
+// 			}
+// 			fixDeletePointers(hash, bucket, buddyBucket, buddy_index);
+// 			bucket->current_subBuckets = mergedBucket_entries;
+// 			bucket->local_depth--;
+// 			destroyBucket(buddyBucket);
+// 			if (tryCollapseIndex(hash)) {
+// 				tryMergeBuckets(hash, bucket_num % (1 << bucket->local_depth));
+// 			}
+// 		}
+// 	}
 // }
