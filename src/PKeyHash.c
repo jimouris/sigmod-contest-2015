@@ -50,18 +50,16 @@ int insertHashRecord(pkHash* hash, Key key, RangeArray* rangeArray) {
 		}
 		cleanBucket(bucket);
 		uint32_t i;
-		uint64_t new_hash;
+		/* na to alla3w mellontika se bucket num */
+		uint64_t new_hash; 
 		for (i = 0 ; i < B ; i++) {	/* for all subBuckets in tmpBucket */
-			pkSubBucket *subbuckets = tmp_bucket->key_buckets;
-			Key sub_key = subbuckets[i].key;
-			new_hash = hashFunction(hash->size, sub_key);
-			// fprintf(stderr, "New hash for %zu is %zu\n",key,new_hash );
-			pkBucket* destination = hash->index[new_hash];
-			uint32_t current_subBuckets = destination->current_subBuckets;
-			copySubbucketTransactions(&destination->key_buckets[current_subBuckets], &subbuckets[i]);
-			destination->current_subBuckets++;
+			new_hash = hashFunction(hash->size, tmp_bucket->key_buckets[i]->key);
+			pkBucket* dest_bucket = hash->index[new_hash];
+			uint32_t current_subBuckets = dest_bucket->current_subBuckets;
+			dest_bucket->key_buckets[current_subBuckets] = tmp_bucket->key_buckets[i];
+			dest_bucket->current_subBuckets++;
 		}
-		destroyBucket(tmp_bucket);
+		free(tmp_bucket); /* not destroy tmpbucket, we want the pointers */
 		insertHashRecord(hash, key, rangeArray);
 	}
 	return OK_SUCCESS;
