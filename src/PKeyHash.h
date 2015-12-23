@@ -76,8 +76,7 @@ void printBucket(pkBucket *);
 
 /*DELETE HASH FUNCTION*/
 int deleteHashRecord(pkHash*, Key);
-int deleteSubBucket(pkHash*, uint64_t, Key);
-void destroyBucket(pkBucket*);
+// void destroyBucket(pkBucket*);
 void tryMergeBuckets(pkHash*, uint64_t);
 void fixDeletePointers(pkHash* , pkBucket* , pkBucket* , uint64_t);
 uint8_t tryCollapseIndex(pkHash*);

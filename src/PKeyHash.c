@@ -78,17 +78,6 @@ void duplicateIndex(pkHash * hash) {
 		hash->index[i] = NULL;
 }
 
-void destroyBucket(pkBucket *bucket) {
-	uint32_t i;
-	for (i = 0 ; i < bucket->current_subBuckets ; i++) { /*for each pksubBucket*/
-		free(bucket->key_buckets[i]->transaction_range);
-		bucket->key_buckets[i] = NULL;
-	}
-	free(bucket->key_buckets);
-	free(bucket);
-	bucket = NULL;
-}
-
 /* fix new indexes pointers after index doublicate */
 void fixHashPointers(pkBucket **index, pkBucket *new_bucket, uint32_t global_depth, uint64_t bucket_num) {
 	uint64_t i, j;
@@ -352,4 +341,15 @@ int destroyHash(pkHash* hash) {
 // 			}
 // 		}
 // 	}
+// }
+
+// void destroyBucket(pkBucket *bucket) {
+// 	uint32_t i;
+// 	for (i = 0 ; i < bucket->current_subBuckets ; i++) { /*for each pksubBucket*/
+// 		free(bucket->key_buckets[i]->transaction_range);
+// 		bucket->key_buckets[i] = NULL;
+// 	}
+// 	free(bucket->key_buckets);
+// 	free(bucket);
+// 	bucket = NULL;
 // }
