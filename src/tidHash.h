@@ -18,7 +18,7 @@ typedef struct tidBucket { /* Has a pointer (key_buckets) to one or more subBuck
 	uint32_t local_depth;
 	uint32_t current_subBuckets;
 	uint64_t pointers_num;
-	tidSubBucket *key_buckets;
+	tidSubBucket **key_buckets;
 } tidBucket;
 
 typedef struct tidHash {
@@ -40,10 +40,10 @@ uint64_t tidHashFunction(uint64_t, uint64_t);
 void tidFixHashPointers(tidBucket **, tidBucket *, uint32_t, uint64_t); 
 void tidFixSplitPointers(tidHash *, tidBucket *, tidBucket *, uint64_t);
 void tidDuplicateIndex(tidHash *);
-void tidCopyBucketTransactions(tidBucket* , tidBucket*);
-void tidCopySubbucketTransactions(tidSubBucket*, tidSubBucket*);
+void tidCopyBucketPtrs(tidBucket *, tidBucket *);
 int tidInsertHashRecord(tidHash* , tidSubBucket*);
 tidBucket* tidCreateNewBucket(uint32_t);
+tidSubBucket* tidCreateNewSubBucket(tidSubBucket *);
 void tidCleanBucket(tidBucket *);
 void tidCleanSubBucket(tidSubBucket *);
 /****************************************************/
@@ -51,11 +51,6 @@ void tidCleanSubBucket(tidSubBucket *);
 /*SEARCH TO HASH AND OTHER HELPER METHODS*/
 uint64_t tidGetHashOffset(tidHash *, uint64_t, Boolean_t *);
 /****************************************/
-
-/*PRINT HASH-tidBUCKET FUNCTIONS*/
-void tidPrintBucket(tidBucket *);
-void tidPrintHash(tidHash *);
-/****************************/
 
 /*DELETE HASH FUNCTION*/
 int tidDestroyHash(tidHash *); 

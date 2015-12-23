@@ -18,21 +18,20 @@ int tidInsertHashRecord(tidHash* hash, tidSubBucket* tid_record) {
 	tidBucket *bucket = hash->index[bucket_num];
 	uint32_t i;
 	for (i = 0 ; i < bucket->current_subBuckets; i++) {			/* for all subbuckets */
-		if (bucket->key_buckets[i].transaction_id == tid_record->transaction_id) {	/* if there is a tidSubBucket with this transaction_id */
+		if (bucket->key_buckets[i]->transaction_id == tid_record->transaction_id) {	/* if there is a tidSubBucket with this transaction_id */
 			return OK_SUCCESS;
 		}
 	}
 	/* If that was the first appearence of this key */
 	if (bucket->current_subBuckets < TID_B) {	/* If there is space to insert it on that bucket (there is a free subbucket) */
-		bucket->key_buckets[bucket->current_subBuckets].transaction_id = tid_record->transaction_id;
-		bucket->key_buckets[bucket->current_subBuckets].rec_offset = tid_record->rec_offset;
+		bucket->key_buckets[bucket->current_subBuckets] = tidCreateNewSubBucket(tid_record);
 		(bucket->current_subBuckets)++;
 		return OK_SUCCESS;
 	} else {
 		bucket->local_depth++;
 		tidBucket *new_bucket = tidCreateNewBucket(bucket->local_depth);
 		tidBucket *tmp_bucket = tidCreateNewBucket(bucket->local_depth);
-		tidCopyBucketTransactions(tmp_bucket, bucket);
+		tidCopyBucketPtrs(tmp_bucket, bucket);
 		if (bucket->local_depth-1 >= hash->global_depth) { /* duplicate case */
 			tidDuplicateIndex(hash);	/* duplicates and increases global depth */
 			tidFixHashPointers(hash->index, new_bucket, hash->global_depth, bucket_num);
@@ -43,22 +42,19 @@ int tidInsertHashRecord(tidHash* hash, tidSubBucket* tid_record) {
 		uint32_t i;
 		uint64_t new_hash;
 		for (i = 0 ; i < TID_B ; i++) {	/* for all subBuckets in tmpBucket */
-			tidSubBucket *subbuckets = tmp_bucket->key_buckets;
-			uint64_t sub_transaction_id = subbuckets[i].transaction_id;
-			new_hash = tidHashFunction(hash->size, sub_transaction_id);
-			// fprintf(stderr, "New hash for %zu is %zu\n",key,new_hash );
-			tidBucket* destination = hash->index[new_hash];
-			uint32_t current_subBuckets = destination->current_subBuckets;
-			tidCopySubbucketTransactions(&destination->key_buckets[current_subBuckets], &subbuckets[i]);
-			destination->current_subBuckets++;
+			new_hash = tidHashFunction(hash->size, tmp_bucket->key_buckets[i]->transaction_id);
+			tidBucket* dest_bucket = hash->index[new_hash];
+			uint32_t current_subBuckets = dest_bucket->current_subBuckets;			
+			dest_bucket->key_buckets[current_subBuckets] = tmp_bucket->key_buckets[i];
+			dest_bucket->current_subBuckets++;
 		}
-		tidDestroyBucket(tmp_bucket);
+		free(tmp_bucket->key_buckets);
+		free(tmp_bucket); /* not destroy tmpbucket, we want the pointers */
 		tidInsertHashRecord(hash, tid_record);
 	}
 	return OK_SUCCESS;
 }  
 
-// /*Does whatever it says*/
 void tidDuplicateIndex(tidHash * hash) {
 	hash->global_depth++;
 	uint64_t old_size = hash->size;
@@ -76,7 +72,7 @@ void tidDestroyBucket(tidBucket *bucket) {
 	bucket = NULL;
 }
 
-// /* fix new indexes pointers after index doublicate */
+/* fix new indexes pointers after index doublicate */
 void tidFixHashPointers(tidBucket **index, tidBucket *new_bucket, uint32_t global_depth, uint64_t bucket_num) {
 	uint64_t i, j;
 	uint64_t old_size = 1 << (global_depth-1);
@@ -101,29 +97,19 @@ void tidFixSplitPointers(tidHash* hash, tidBucket* old_bucket, tidBucket* new_bu
 	}
 }
 
-// void fixDeletePointers(tidHash* hash, tidBucket* bucket, tidBucket* buddyBucket, uint64_t buddy_index) {
-// 	uint64_t i;
-// 	uint64_t ld_size = 1 << buddyBucket->local_depth;
-// 	uint32_t first_pointer = buddy_index % ld_size;
-// 	for (i = first_pointer ; i < hash->size ; i += ld_size ) {
-// 		hash->index[i] = bucket;
-// 	}
-// }
-
-
-// /* copy transactions from one tidBucket to another one*/
-void tidCopyBucketTransactions(tidBucket* dst, tidBucket* src) {
+void tidCopyBucketPtrs(tidBucket* dst, tidBucket* src) {
 	uint64_t i;
-	dst->local_depth = src->local_depth;
+	for (i = 0 ; i < src->current_subBuckets ; i++)	/* for i in subBuckets */
+		dst->key_buckets[i] = src->key_buckets[i];
 	dst->current_subBuckets = src->current_subBuckets;
-	for (i = 0 ; i < src->current_subBuckets ; i++) {	/* for i in subBuckets */
-		tidCopySubbucketTransactions(&dst->key_buckets[i], &src->key_buckets[i]);
-	}
 }
 
-void tidCopySubbucketTransactions(tidSubBucket* dst, tidSubBucket* src){
-	dst->transaction_id = src->transaction_id;
-	dst->rec_offset = src->rec_offset;
+tidSubBucket* tidCreateNewSubBucket(tidSubBucket *subbucket) {
+	tidSubBucket *new_sub_bucket = malloc(sizeof(tidSubBucket));
+	ALLOCATION_ERROR(new_sub_bucket);
+	new_sub_bucket->transaction_id = subbucket->transaction_id;
+	new_sub_bucket->rec_offset = subbucket->rec_offset;
+	return new_sub_bucket;
 }
 
 /* creates an empty tidBucket*/
@@ -133,72 +119,35 @@ tidBucket* tidCreateNewBucket(uint32_t local_depth) {
 	new_bucket->local_depth = local_depth;
 	new_bucket->current_subBuckets = 0;
 	new_bucket->deletion_started = 0;
-	new_bucket->key_buckets = malloc(TID_B * sizeof(tidSubBucket));
+	new_bucket->key_buckets = malloc(TID_B * sizeof(tidSubBucket *));
 	ALLOCATION_ERROR(new_bucket->key_buckets);
 	uint32_t i;
 	for (i = 0 ; i < TID_B ; i++) {	/* create subBuckets */
-		new_bucket->key_buckets[i].transaction_id = 0;
-		new_bucket->key_buckets[i].rec_offset = 0;
+		new_bucket->key_buckets[i] = NULL;
 	}
 	return new_bucket;
 }
 
 // /* The conflict bucket is empty of transaction, just hold the local_depth */
-void tidCleanBucket(tidBucket* conflict_bucket) {
+void tidCleanBucket(tidBucket* bucket) {
 	uint32_t i;
-	for (i = 0 ; i < conflict_bucket->current_subBuckets ; i++) {	/* for i in all subBuckets*/ 
-		tidCleanSubBucket(&conflict_bucket->key_buckets[i]);
+	for (i = 0 ; i < bucket->current_subBuckets ; i++) {	/* for i in all subBuckets*/ 
+		bucket->key_buckets[i] = NULL;
 	}
-	conflict_bucket->current_subBuckets = 0;
+	bucket->current_subBuckets = 0;
 }
 
-void tidCleanSubBucket(tidSubBucket* tidSubBucket) {
-	tidSubBucket->transaction_id = 0;
-	tidSubBucket->rec_offset = 0;
-}
-
-uint64_t tidHashFunction(uint64_t size, uint64_t x) {
+inline uint64_t tidHashFunction(uint64_t size, uint64_t x) {
     return (x % size);
-}
-
-// /* printsBucket various info */
-void tidPrintBucket(tidBucket* bucket){
-	fprintf(stderr, "------------------------------------------------------------\n");
-	fprintf(stderr, "local_depth(%"PRIu32"), current_subBuckets(%"PRIu32")\n", bucket->local_depth, bucket->current_subBuckets);
-	uint64_t i;
-	for (i = 0 ; i < bucket->current_subBuckets ; i++) { 
-		uint64_t transaction_id = bucket->key_buckets[i].transaction_id;
-		uint64_t rec_offset = bucket->key_buckets[i].rec_offset;
-		fprintf(stderr, "\tSubBucket(%zd): transaction_id: %zd , rec_offset : %zd\n", i, transaction_id,rec_offset);
-	}
-	fprintf(stderr, "------------------------------------------------------------\n");
-}
-
-// /* Prints index, the bucket pointing to and the content of the bucket */
-void tidPrintHash(tidHash* hash){
-	uint64_t i;
-	for (i = 0 ; i < hash->size ; i++) { /*for every index*/
-		if (hash->index[i] != NULL) { /*points somewhere*/
-			fprintf(stderr, "*****Index %zd points to tidBucket address %p*******\n", i, hash->index[i]);
-			if (!hash->index[i]->current_subBuckets) {
-				tidPrintBucket(hash->index[i]);
-			} else {
-				tidPrintBucket(hash->index[i]);
-			}
-			fprintf(stderr,"***********************************************************\n\n");
-		} else {
-			fprintf(stderr,"~~~~~Index (%zd) points to no bucket~~~~~\n", i);
-		}
-	}
 }
 
 uint64_t tidGetHashOffset(tidHash* hash, uint64_t transaction_id, Boolean_t *found) {
 	uint64_t bucket_num = tidHashFunction(hash->size, transaction_id);
 	uint32_t i;
 	for (i = 0 ; i < hash->index[bucket_num]->current_subBuckets ; i++) { /* for i in subBuckets */
-		if (hash->index[bucket_num]->key_buckets[i].transaction_id == transaction_id) {
+		if (hash->index[bucket_num]->key_buckets[i]->transaction_id == transaction_id) {
 			*found = True;
-			return hash->index[bucket_num]->key_buckets[i].rec_offset;
+			return hash->index[bucket_num]->key_buckets[i]->rec_offset;
 		}
 	}
 	*found = False;
@@ -316,16 +265,4 @@ int tidDestroyHash(tidHash* hash) {
 // 		}
 // 	}
 
-// }
-
-//  Binary Search for first appearance 
-// JournalRecord_t* searchIndexByKey(tidHash* hash,uint64_t bucket_num,uint64_t keyToSearch) {
-// 	tidBucket *bucket = hash->index[bucket_num];
-// 	int i;
-// 	for (i = 0 ; i < bucket->current_entries ; i++) {
-// 		if (bucket->transaction_range[i].rec->column_values[0] == keyToSearch) {
-// 			return bucket->transaction_range[i].rec;
-// 		}
-// 	}
-// 	return NULL;
 // }
