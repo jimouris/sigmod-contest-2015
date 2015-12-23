@@ -28,28 +28,20 @@ int predicateInsertHashRecord(predicateHash* hash, predicateSubBucket* predicate
 	predicateBucket *bucket = hash->index[bucket_num];
 	uint32_t i;
 	for (i = 0 ; i < bucket->current_subBuckets; i++) {			/* for all subbuckets */
-		if (predicateRecordsEqual(&bucket->key_buckets[i], predicate_record)) {	/* if there is a predicateSubBucket with equal fields */
+		if (predicateRecordsEqual(bucket->key_buckets[i], predicate_record)) {	/* if there is a predicateSubBucket with equal fields */
 			return OK_SUCCESS;
 		}
 	}
 	/* If that was the first appearence of this key */
 	if (bucket->current_subBuckets < PREDICATE_B) {	/* If there is space to insert it on that bucket (there is a free subbucket) */
-		bucket->key_buckets[bucket->current_subBuckets].range_start = predicate_record->range_start;
-		bucket->key_buckets[bucket->current_subBuckets].range_end = predicate_record->range_end;
-		bucket->key_buckets[bucket->current_subBuckets].condition->column = predicate_record->condition->column; 
-		bucket->key_buckets[bucket->current_subBuckets].condition->op = predicate_record->condition->op;
-		bucket->key_buckets[bucket->current_subBuckets].condition->value = predicate_record->condition->value;
-		bucket->key_buckets[bucket->current_subBuckets].open_requests = predicate_record->open_requests;
-		if(bucket->key_buckets[bucket->current_subBuckets].bit_set == NULL)
-			bucket->key_buckets[bucket->current_subBuckets].bit_set = createBitSet(predicate_record->bit_set->bit_size);
-		copyBitSet(bucket->key_buckets[bucket->current_subBuckets].bit_set, predicate_record->bit_set);
+		bucket->key_buckets[bucket->current_subBuckets] = predicateCreateNewSubBucket(predicate_record);
 		(bucket->current_subBuckets)++;
 		return OK_SUCCESS;
 	} else {
 		bucket->local_depth++;
 		predicateBucket *new_bucket = predicateCreateNewBucket(bucket->local_depth);
 		predicateBucket *tmp_bucket = predicateCreateNewBucket(bucket->local_depth);
-		predicateCopyBucketTransactions(tmp_bucket, bucket);
+		predicateCopyBucketPtrs(tmp_bucket, bucket);
 		if (bucket->local_depth-1 >= hash->global_depth) { /* duplicate case */
 			predicateDuplicateIndex(hash);		/* duplicates and increases global depth */
 			predicateFixHashPointers(hash->index, new_bucket, hash->global_depth, bucket_num);
@@ -60,15 +52,14 @@ int predicateInsertHashRecord(predicateHash* hash, predicateSubBucket* predicate
 		uint32_t i;
 		uint64_t new_hash;
 		for (i = 0 ; i < PREDICATE_B ; i++) {	/* for all subBuckets in tmpBucket */
-			predicateSubBucket *subbuckets = tmp_bucket->key_buckets;
-			new_hash = predicateHashFunction(hash->size, subbuckets);
-			// fprintf(stderr, "New hash for %zu is %zu\n",key,new_hash );
-			predicateBucket* destination = hash->index[new_hash];
-			uint32_t current_subBuckets = destination->current_subBuckets;
-			predicateCopySubbucketTransactions(&destination->key_buckets[current_subBuckets], &subbuckets[i]);
-			destination->current_subBuckets++;
+			new_hash = predicateHashFunction(hash->size, tmp_bucket->key_buckets[i]);
+			predicateBucket* dest_bucket = hash->index[new_hash];
+			uint32_t current_subBuckets = dest_bucket->current_subBuckets;
+			dest_bucket->key_buckets[current_subBuckets] = tmp_bucket->key_buckets[i];
+			dest_bucket->current_subBuckets++;
 		}
-		predicateDestroyBucket(tmp_bucket);
+		free(tmp_bucket->key_buckets);
+		free(tmp_bucket); /* not destroy tmpbucket, we want the pointers */
 		predicateInsertHashRecord(hash, predicate_record);
 	}
 	return OK_SUCCESS;
@@ -77,7 +68,6 @@ int predicateInsertHashRecord(predicateHash* hash, predicateSubBucket* predicate
 /* Does whatever it says */
 void predicateDuplicateIndex(predicateHash * hash) {
 	hash->global_depth++;
-	// fprintf(stderr, "\n\ndepth: %" PRIu32 "\n\n",hash->global_depth);
 	uint64_t old_size = hash->size;
 	hash->size *= 2;
 	hash->index = realloc(hash->index, hash->size * sizeof(predicateBucket *));
@@ -86,25 +76,6 @@ void predicateDuplicateIndex(predicateHash * hash) {
 	for (i = old_size; i < hash->size; i++) {
 		hash->index[i] = NULL;
 	}
-}
-
-void predicateDestroyBucket(predicateBucket *bucket) {
-	uint32_t i;
-	for (i = 0 ; i < PREDICATE_B ; i++) {
-		predicateDestroySubBucket(&bucket->key_buckets[i]);
-	}
-	free(bucket->key_buckets);
-	bucket->key_buckets = NULL;
-	free(bucket);
-	bucket = NULL;
-}
-
-void predicateDestroySubBucket(predicateSubBucket *sub_bucket) {
-	if (sub_bucket->bit_set != NULL) {	
-		destroyBitSet(sub_bucket->bit_set);
-	}
-	free(sub_bucket->condition);
-	sub_bucket->condition = NULL;
 }
 
 /* fix new indexes pointers after index doublicate */
@@ -120,11 +91,10 @@ void predicateFixHashPointers(predicateBucket **index, predicateBucket *new_buck
 	}
 }
 
-// /* fix new indexes pointers after index splits */
+/* fix new indexes pointers after index splits */
 void predicateFixSplitPointers(predicateHash* hash, predicateBucket* old_bucket, predicateBucket* new_bucket, uint64_t bucket_num){
 	uint64_t prev_local_depth = old_bucket->local_depth-1;
-	uint64_t i;
-	uint64_t ld_size = 1 << prev_local_depth;
+	uint64_t i = 0, ld_size = 1 << prev_local_depth;
 	uint32_t first_pointer = bucket_num % ld_size;
 	for (i = first_pointer ; i < hash->size ; i+=(2*ld_size)) { /* i in all old_bucket pointers */
 		hash->index[i] = old_bucket;
@@ -141,29 +111,42 @@ void predicateFixDeletePointers(predicateHash* hash, predicateBucket* bucket, pr
 	}
 }
 
-
-// /* copy transactions from one predicateBucket to another one*/
-void predicateCopyBucketTransactions(predicateBucket* dst, predicateBucket* src) {
+/* copy transactions from one predicateBucket to another one*/
+void predicateCopyBucketPtrs(predicateBucket* dst, predicateBucket* src) {
 	uint64_t i;
 	dst->local_depth = src->local_depth;
+	for (i = 0 ; i < src->current_subBuckets ; i++)	/* for i in subBuckets */
+		dst->key_buckets[i] = src->key_buckets[i];
 	dst->current_subBuckets = src->current_subBuckets;
-	dst->deletion_started = src->deletion_started;
-	for (i = 0 ; i < src->current_subBuckets ; i++) {	/* for i in subBuckets */
-		predicateCopySubbucketTransactions(&dst->key_buckets[i], &src->key_buckets[i]);
-	}
 }
 
-void predicateCopySubbucketTransactions(predicateSubBucket* dst, predicateSubBucket* src){
-	dst->range_start = src->range_start;
-	dst->range_end = src->range_end;
-	if (dst->bit_set == NULL) {
-		dst->bit_set = createBitSet(src->bit_set->bit_size);
-	}
-	copyBitSet(dst->bit_set, src->bit_set);
-	dst->open_requests = src->open_requests;
-	dst->condition->column = src->condition->column; 
-	dst->condition->op = src->condition->op;
-	dst->condition->value = src->condition->value;
+// void predicateCopySubbucketTransactions(predicateSubBucket* dst, predicateSubBucket* src){
+// 	dst->range_start = src->range_start;
+// 	dst->range_end = src->range_end;
+// 	if (dst->bit_set == NULL) {
+// 		dst->bit_set = createBitSet(src->bit_set->bit_size);
+// 	}
+// 	copyBitSet(dst->bit_set, src->bit_set);
+// 	dst->open_requests = src->open_requests;
+// 	dst->condition->column = src->condition->column; 
+// 	dst->condition->op = src->condition->op;
+// 	dst->condition->value = src->condition->value;
+// }
+
+predicateSubBucket* predicateCreateNewSubBucket(predicateSubBucket* src_sub) {
+	predicateSubBucket *new_sub_bucket = malloc(sizeof(predicateSubBucket));
+	ALLOCATION_ERROR(new_sub_bucket);
+	new_sub_bucket->range_start = src_sub->range_start;
+	new_sub_bucket->range_end = src_sub->range_end;
+	new_sub_bucket->open_requests = src_sub->open_requests;
+	new_sub_bucket->condition = malloc(sizeof(Column_t));
+	ALLOCATION_ERROR(new_sub_bucket->condition);
+	new_sub_bucket->condition->column = src_sub->condition->column; 
+	new_sub_bucket->condition->op = src_sub->condition->op;
+	new_sub_bucket->condition->value = src_sub->condition->value;
+	new_sub_bucket->bit_set = createBitSet(src_sub->bit_set->bit_size);
+	copyBitSet(new_sub_bucket->bit_set, src_sub->bit_set);
+	return new_sub_bucket;
 }
 
 /* creates an empty predicateBucket*/
@@ -173,43 +156,22 @@ predicateBucket* predicateCreateNewBucket(uint32_t local_depth) {
 	new_bucket->local_depth = local_depth;
 	new_bucket->current_subBuckets = 0;
 	new_bucket->deletion_started = 0;
-	new_bucket->key_buckets = malloc(PREDICATE_B * sizeof(predicateSubBucket));
+	new_bucket->key_buckets = malloc(PREDICATE_B * sizeof(predicateSubBucket *));
 	ALLOCATION_ERROR(new_bucket->key_buckets);
 	uint32_t i;
 	for (i = 0 ; i < PREDICATE_B ; i++) {	/* create subBuckets */
-		new_bucket->key_buckets[i].condition = malloc(sizeof(Column_t));
-		ALLOCATION_ERROR(new_bucket->key_buckets[i].condition);
-		new_bucket->key_buckets[i].range_start = 0;
-		new_bucket->key_buckets[i].range_end = 0;
-		new_bucket->key_buckets[i].condition->column = 0;
-		new_bucket->key_buckets[i].condition->op = 0;
-		new_bucket->key_buckets[i].condition->value = 0;
-		new_bucket->key_buckets[i].bit_set = NULL;
-		new_bucket->key_buckets[i].open_requests = 0;	
+		new_bucket->key_buckets[i] = NULL;
 	}
 	return new_bucket;
 }
 
-// /* The conflict bucket is empty of transaction, just hold the local_depth */
-void predicateCleanBucket(predicateBucket* conflict_bucket) {
+/* The conflict bucket is empty of transaction, just hold the local_depth */
+void predicateCleanBucket(predicateBucket* bucket) {
 	uint32_t i;
-	for (i = 0 ; i < conflict_bucket->current_subBuckets ; i++) {	/* for i in all subBuckets*/ 
-		predicateCleanSubBucket(&conflict_bucket->key_buckets[i]);
+	for (i = 0 ; i < bucket->current_subBuckets ; i++) {	/* for i in all subBuckets*/ 
+		bucket->key_buckets[i] = NULL;
 	}
-	conflict_bucket->current_subBuckets = 0;
-}
-
-void predicateCleanSubBucket(predicateSubBucket* pred_subBucket) {
-	pred_subBucket->range_start = 0;
-	pred_subBucket->range_end = 0;
-	pred_subBucket->condition->column = 0;
-	pred_subBucket->condition->op = 0;
-	pred_subBucket->condition->value = 0;
-	if (pred_subBucket->bit_set != NULL) {
-		destroyBitSet(pred_subBucket->bit_set);
-	}
-	pred_subBucket->bit_set = NULL;
-	pred_subBucket->open_requests = 0;
+	bucket->current_subBuckets = 0;
 }
 
 uint64_t predicateHashFunction(uint64_t size, predicateSubBucket* predicate) {
@@ -223,7 +185,6 @@ uint64_t predicateHashFunction(uint64_t size, predicateSubBucket* predicate) {
    // hash *= 37;
    // hash += predicate->range_end;
    // return hash % size;
-
 /*giannopoulos*/
     // char str[50];
     // char* str1 = str;
@@ -239,9 +200,8 @@ uint64_t predicateHashFunction(uint64_t size, predicateSubBucket* predicate) {
     //      base *= 10; 
     // }
     // return hash % size;
-
 /*giannopoulos*/
-	/*murmurhash*/
+/*murmurhash*/
     // char str[50];
     // char* str1 = str;
 	char* str = malloc(50*sizeof(char));
@@ -251,29 +211,28 @@ uint64_t predicateHashFunction(uint64_t size, predicateSubBucket* predicate) {
     uint64_t hash =  murmurhash(str,strlen(str),0) % size;
     free(str);
     return hash;
-	/*murmar has end*/
+/*murmar has end*/
 	/*beris super hash function*/
-
 	// return ( ( 193 * predicate->condition->op + 47*predicate->condition->column + 5351*predicate->condition->value + 
 	// 		   6803*predicate->range_start + 1289*predicate->range_end + 31531) % size);
 }
 
-// /* printsBucket various info */
+/* printsBucket various info */
 void predicatePrintBucket(predicateBucket* bucket){
 	fprintf(stderr, "------------------------------------------------------------\n");
 	fprintf(stderr, "local_depth(%"PRIu32"), current_subBuckets(%"PRIu32")\n", bucket->local_depth, bucket->current_subBuckets);
 	uint64_t i;
 	for (i = 0 ; i < bucket->current_subBuckets ; i++) { 
-		uint64_t range_start = bucket->key_buckets[i].range_start;
-		uint64_t range_end = bucket->key_buckets[i].range_end;
-		Column_t* condition = bucket->key_buckets[i].condition;
+		uint64_t range_start = bucket->key_buckets[i]->range_start;
+		uint64_t range_end = bucket->key_buckets[i]->range_end;
+		Column_t* condition = bucket->key_buckets[i]->condition;
 		fprintf(stderr, "\tSubBucket(%zu): range_start: %zu , range_end : %zu column %"PRIu32" op %d value %zu \n",
 				i, range_start, range_end, condition->column, condition->op, condition->value);
 	}
 	fprintf(stderr, "------------------------------------------------------------\n");
 }
 
-// /* Prints index, the bucket pointing to and the content of the bucket */
+/* Prints index, the bucket pointing to and the content of the bucket */
 void predicatePrintHash(predicateHash* hash){
 	uint64_t i;
 	for (i = 0 ; i < hash->size ; i++) { /*for every index*/
@@ -291,29 +250,13 @@ void predicatePrintHash(predicateHash* hash){
 	}
 }
 
-predicateSubBucket* createPredicateSubBucket(uint64_t from, uint64_t to, uint32_t column, Op_t op, uint64_t value){
-	predicateSubBucket* subBukcet = malloc(sizeof(predicateSubBucket));
-	ALLOCATION_ERROR(subBukcet);
-	subBukcet->range_start = from;	
-	subBukcet->range_end = to;
-	subBukcet->condition = malloc(sizeof(Column_t));
-	ALLOCATION_ERROR(subBukcet->condition);
-	subBukcet->condition->column = column;
-	subBukcet->condition->op = op;
-	subBukcet->condition->value = value;
-	subBukcet->bit_set = NULL;
-	subBukcet->open_requests = 0;
-	return subBukcet;
-}
-
-
 BitSet_t* predicateGetBitSet(predicateHash* hash, predicateSubBucket* predicate) {
 	uint32_t i;
 	uint64_t bucket_num = predicateHashFunction(hash->size, predicate);
 	for (i = 0 ; i < hash->index[bucket_num]->current_subBuckets ; i++) { /* for i in subBuckets */
-		if (predicateRecordsEqual(&(hash->index[bucket_num]->key_buckets[i]), predicate)) {
-			BitSet_t* bit_set = createBitSet(hash->index[bucket_num]->key_buckets[i].bit_set->bit_size);
-			copyBitSet(bit_set, hash->index[bucket_num]->key_buckets[i].bit_set);
+		if (predicateRecordsEqual(hash->index[bucket_num]->key_buckets[i], predicate)) {
+			BitSet_t* bit_set = createBitSet(hash->index[bucket_num]->key_buckets[i]->bit_set->bit_size);
+			copyBitSet(bit_set, hash->index[bucket_num]->key_buckets[i]->bit_set);
 			return bit_set;
 		}
 	}
@@ -328,9 +271,15 @@ int predicateDestroyHash(predicateHash* hash) {
 			bucketPtr->deletion_started = 1;
 			bucketPtr->pointers_num = 1 << (hash->global_depth - bucketPtr->local_depth);
 		}
-
+		uint32_t j;
 		if (bucketPtr->pointers_num == 1 ) { /*if it is the last remaining pointer that points to the bucket*/
-			predicateDestroyBucket(bucketPtr);
+			for (j = 0 ; j < bucketPtr->current_subBuckets ; j++) {
+				// free(bucketPtr->key_buckets[j]->condition);
+				// free(bucketPtr->key_buckets[j]->bit_set);
+				free(bucketPtr->key_buckets[j]);
+			}
+			free(bucketPtr->key_buckets);
+			free(bucketPtr);
 		}else{
 			bucketPtr->pointers_num--;
 		}
@@ -431,14 +380,21 @@ int predicateDestroyHash(predicateHash* hash) {
 
 // }
 
-//  Binary Search for first appearance 
-// JournalRecord_t* searchIndexByKey(tidHash* hash,uint64_t bucket_num,uint64_t keyToSearch) {
-// 	predicateBucket *bucket = hash->index[bucket_num];
-// 	int i;
-// 	for (i = 0 ; i < bucket->current_entries ; i++) {
-// 		if (bucket->transaction_range[i].rec->column_values[0] == keyToSearch) {
-// 			return bucket->transaction_range[i].rec;
-// 		}
+// void predicateDestroyBucket(predicateBucket *bucket) {
+// 	uint32_t i;
+// 	for (i = 0 ; i < PREDICATE_B ; i++) {
+// 		predicateDestroySubBucket(&bucket->key_buckets[i]);
 // 	}
-// 	return NULL;
+// 	free(bucket->key_buckets);
+// 	bucket->key_buckets = NULL;
+// 	free(bucket);
+// 	bucket = NULL;
 // }
+
+void predicateDestroySubBucket(predicateSubBucket *sub_bucket) {
+	if (sub_bucket->bit_set != NULL) {	
+		destroyBitSet(sub_bucket->bit_set);
+	}
+	free(sub_bucket->condition);
+	sub_bucket->condition = NULL;
+}

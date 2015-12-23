@@ -138,7 +138,22 @@ Boolean_t checkQueryHash(Journal_t** journal_array, Query_t* query, uint64_t fro
 	uint64_t range_size = 0;
 	for(i = 0; i < query->columnCount; i++) {
 		Column_t* predicate = &query->columns[i];
-		predicateSubBucket* predicateSubBucket = createPredicateSubBucket(from, to, predicate->column, predicate->op, predicate->value);
+
+
+		// predicateSubBucket* predicateSubBucket = createPredicateSubBucket(from, to, predicate->column, predicate->op, predicate->value);
+				predicateSubBucket *new_sub_bucket = malloc(sizeof(predicateSubBucket));
+				new_sub_bucket->range_start = from;
+				new_sub_bucket->range_end = to;
+				new_sub_bucket->open_requests = 0;
+				new_sub_bucket->condition = malloc(sizeof(Column_t));
+				new_sub_bucket->condition->column = predicate->column; 
+				new_sub_bucket->condition->op = predicate->op;
+				new_sub_bucket->condition->value = predicate->value;
+				new_sub_bucket->bit_set = NULL;
+		predicateSubBucket* predicateSubBucket = predicateCreateNewSubBucket(new_sub_bucket);
+
+
+
 		//If bit_set for this predicate has allready been computed, get it from the hash table.
 		BitSet_t* predicate_bit_set = predicateGetBitSet(journal->predicate_index, predicateSubBucket);
 		if(predicate_bit_set == NULL){
@@ -172,8 +187,12 @@ Boolean_t checkQueryHash(Journal_t** journal_array, Query_t* query, uint64_t fro
 			//Insert predicate in the hash table.
 			predicateInsertHashRecord(journal->predicate_index,predicateSubBucket);
 		}
-		predicateDestroySubBucket(predicateSubBucket);
+
+
+		// predicateDestroySubBucket(predicateSubBucket);
 		free(predicateSubBucket);
+		
+
 		if(i == 0) {
 			intersection = predicate_bit_set;	/*Bit set of the whole query*/
 		} else {

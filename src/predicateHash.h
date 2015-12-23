@@ -25,7 +25,7 @@ typedef struct predicateBucket {
 	uint32_t local_depth;
 	uint32_t current_subBuckets;
 	uint64_t pointers_num;
-	predicateSubBucket *key_buckets;
+	predicateSubBucket **key_buckets;
 } predicateBucket;
 
 typedef struct predicateHash {
@@ -33,7 +33,6 @@ typedef struct predicateHash {
 	uint32_t global_depth;
 	predicateBucket **index;
 } predicateHash;
-
 
 
 /* HASH INIT METHOD */
@@ -48,12 +47,12 @@ uint64_t predicateHashFunction(uint64_t, predicateSubBucket*);
 void predicateFixHashPointers(predicateBucket **, predicateBucket *, uint32_t, uint64_t); 
 void predicateFixSplitPointers(predicateHash*, predicateBucket*, predicateBucket*, uint64_t );
 void predicateDuplicateIndex(predicateHash*);
-void predicateCopyBucketTransactions(predicateBucket*, predicateBucket*);
+void predicateCopyBucketPtrs(predicateBucket*, predicateBucket*);
 void predicateCopySubbucketTransactions(predicateSubBucket*, predicateSubBucket*);
 int predicateInsertHashRecord(predicateHash*, predicateSubBucket*);
 predicateBucket* predicateCreateNewBucket(uint32_t);
-void preidcateCleanBucket(predicateBucket *);
-void predicateCleanSubBucket(predicateSubBucket *);
+predicateSubBucket* predicateCreateNewSubBucket(predicateSubBucket *);
+void predicateCleanBucket(predicateBucket *);
 Boolean_t predicateRecordsEqual(predicateSubBucket*, predicateSubBucket*);
 BitSet_t* predicateGetBitSet(predicateHash *, predicateSubBucket *);
 void predicatePrintHash(predicateHash *);
@@ -63,9 +62,8 @@ predicateSubBucket* createPredicateSubBucket(uint64_t, uint64_t, uint32_t, Op_t,
 
 /*DELETE HASH FUNCTION*/
 int predicateDestroyHash(predicateHash *);
-void predicateDestroySubBucket(predicateSubBucket *);
-void predicateDestroyBucket(predicateBucket *);
-void predicateCleanBucket(predicateBucket*);
+// void predicateDestroySubBucket(predicateSubBucket *);
+// void predicateDestroyBucket(predicateBucket *);
 void predicateFixDeletePointers(predicateHash*, predicateBucket*, predicateBucket* , uint64_t);
 /**********************/
 
