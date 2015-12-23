@@ -45,7 +45,6 @@ int tidInsertHashRecord(tidHash* , tidSubBucket*);
 tidBucket* tidCreateNewBucket(uint32_t);
 tidSubBucket* tidCreateNewSubBucket(tidSubBucket *);
 void tidCleanBucket(tidBucket *);
-void tidCleanSubBucket(tidSubBucket *);
 /****************************************************/
 
 /*SEARCH TO HASH AND OTHER HELPER METHODS*/
