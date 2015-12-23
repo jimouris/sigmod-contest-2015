@@ -18,7 +18,8 @@ During the contest we will also hand out larger test datasets, similar to those 
 1. default input:
   "./execute"
 2. path-to-input:
-  "./execute ./path-to-input/file.bin [--tid]"
-  (e.g. "./execute ./inputs/small.bin [--tid]")
+  "./execute ./path-to-input/file.bin [--tid] [--predicate]"
+  (e.g. "./execute ./inputs/small.bin [--tid] [--predicate]")
 
 [--tid is optional, enables hash to every transacrion-id]
+[--predicate is also optional, enables hash to every predicate, to avoid computing the same values twice]
