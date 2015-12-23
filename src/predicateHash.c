@@ -6,7 +6,7 @@ predicateHash* predicateCreateHash(void) {
 	ALLOCATION_ERROR(hash);
 	hash->global_depth = PREDICATE_GLOBAL_DEPTH_INIT;
 	hash->size = 1 << PREDICATE_GLOBAL_DEPTH_INIT;
-	hash->index = malloc(hash->size * sizeof(tidBucket *));
+	hash->index = malloc(hash->size * sizeof(predicateBucket *));
 	ALLOCATION_ERROR(hash->index);
 	uint64_t i;
 	for (i = 0 ; i < hash->size ; i++)
@@ -15,13 +15,11 @@ predicateHash* predicateCreateHash(void) {
 }
 
 Boolean_t predicateRecordsEqual(predicateSubBucket* record1, predicateSubBucket* record2) {
-	if ( record1->range_start == record2->range_start &&
-		 record1->range_end == record2->range_end &&
-		 record1->condition->column == record2->condition->column &&
-		 record1->condition->op == record2->condition->op &&
-		 record1->condition->value == record2->condition->value
-		)
+	if (record1->range_start == record2->range_start && record1->range_end == record2->range_end && record1->condition->column == record2->condition->column
+			&& record1->condition->op == record2->condition->op && record1->condition->value == record2->condition->value)
+	{	
 		return True;
+	}
 	return False;
 }
 
@@ -76,15 +74,8 @@ int predicateInsertHashRecord(predicateHash* hash, predicateSubBucket* predicate
 	return OK_SUCCESS;
 }  
 
-/*Does whatever it says*/
+/* Does whatever it says */
 void predicateDuplicateIndex(predicateHash * hash) {
-	
-
-	// if (hash->global_depth == 25) {
-	// 	exit(10);
-	// }
-	
-
 	hash->global_depth++;
 	// fprintf(stderr, "\n\ndepth: %" PRIu32 "\n\n",hash->global_depth);
 	uint64_t old_size = hash->size;
@@ -92,8 +83,9 @@ void predicateDuplicateIndex(predicateHash * hash) {
 	hash->index = realloc(hash->index, hash->size * sizeof(predicateBucket *));
 	ALLOCATION_ERROR(hash->index);
 	uint64_t i;
-	for (i = old_size; i < hash->size; i++)
+	for (i = old_size; i < hash->size; i++) {
 		hash->index[i] = NULL;
+	}
 }
 
 void predicateDestroyBucket(predicateBucket *bucket) {
@@ -359,7 +351,7 @@ int predicateDestroyHash(predicateHash* hash) {
 // 	return 1;
 // }
 
-// void moveSubBucketsLeft(tidBucket* bucket, uint32_t index) {
+// void moveSubBucketsLeft(predicateBucket* bucket, uint32_t index) {
 // 		uint32_t i;
 // 		for(i = index ; i < bucket->current_subBuckets; i++) {
 // 			copySubbucketTransactions(&bucket->key_buckets[i-1],&bucket->key_buckets[i]);
@@ -399,14 +391,14 @@ int predicateDestroyHash(predicateHash* hash) {
 // 	if (canCollapse) {
 // 		hash->global_depth --;
 // 		hash->size /= 2;
-// 		hash->index = realloc(hash->index,hash->size * sizeof(tidBucket *));
+// 		hash->index = realloc(hash->index,hash->size * sizeof(predicateBucket *));
 // 		ALLOCATION_ERROR(hash->index);
 // 	}
 // 	return canCollapse;
 // }
 
 // void tryMergeBuckets(tidHash* hash, uint64_t bucket_num ) {
-// 	tidBucket *bucket = hash->index[bucket_num];
+// 	predicateBucket *bucket = hash->index[bucket_num];
 // 	uint32_t ld_oldSize = 1 << (bucket->local_depth - 1);
 // 	uint64_t buddy_index;
 // 	/*find its buddy bucket and store its index to buddy_index*/
@@ -419,10 +411,10 @@ int predicateDestroyHash(predicateHash* hash) {
 // 	}
 
 // 	if (bucket != hash->index[buddy_index] && bucket->local_depth == hash->index[buddy_index]->local_depth) { /*we have a buddy and not the the bucket itself*/
-// 		tidBucket *buddyBucket = hash->index[buddy_index];
+// 		predicateBucket *buddyBucket = hash->index[buddy_index];
 // 		uint64_t mergedBucket_entries = bucket->current_subBuckets + buddyBucket->current_subBuckets;
 // 		if (mergedBucket_entries <= TID_B) { /*we can merge the two subBuckets*/
-// 			fprintf(stderr,"tidBucket(%zu) - Buddy(%zu)\n",bucket_num,buddy_index);
+// 			fprintf(stderr,"predicateBucket(%zu) - Buddy(%zu)\n",bucket_num,buddy_index);
 // 			uint64_t i,j;
 // 			for (i = bucket->current_subBuckets,j=0; i < mergedBucket_entries ; i++,j++) {
 // 				copySubbucketTransactions(&bucket->key_buckets[i],&buddyBucket->key_buckets[j]);
@@ -441,7 +433,7 @@ int predicateDestroyHash(predicateHash* hash) {
 
 //  Binary Search for first appearance 
 // JournalRecord_t* searchIndexByKey(tidHash* hash,uint64_t bucket_num,uint64_t keyToSearch) {
-// 	tidBucket *bucket = hash->index[bucket_num];
+// 	predicateBucket *bucket = hash->index[bucket_num];
 // 	int i;
 // 	for (i = 0 ; i < bucket->current_entries ; i++) {
 // 		if (bucket->transaction_range[i].rec->column_values[0] == keyToSearch) {
