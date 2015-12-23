@@ -128,7 +128,7 @@ tidBucket* tidCreateNewBucket(uint32_t local_depth) {
 	return new_bucket;
 }
 
-// /* The conflict bucket is empty of transaction, just hold the local_depth */
+/* The conflict bucket is empty of transaction, just hold the local_depth */
 void tidCleanBucket(tidBucket* bucket) {
 	uint32_t i;
 	for (i = 0 ; i < bucket->current_subBuckets ; i++) {	/* for i in all subBuckets*/ 
@@ -162,8 +162,11 @@ int tidDestroyHash(tidHash* hash) {
 			bucketPtr->deletion_started = 1;
 			bucketPtr->pointers_num = 1 << (hash->global_depth - bucketPtr->local_depth);
 		}
-
 		if (bucketPtr->pointers_num == 1 ) { /*if it is the last remaining pointer that points to the bucket*/
+			uint32_t j;
+			for (j = 0 ; j < bucketPtr->current_subBuckets ; j++) {
+				free(bucketPtr->key_buckets[j]);
+			}
 			free(bucketPtr->key_buckets);
 			free(bucketPtr);
 		}else{
