@@ -296,7 +296,7 @@ int predicateDestroyHash(predicateHash* hash) {
 			bucketPtr->deletion_started = 1;
 			bucketPtr->pointers_num = 1 << (hash->global_depth - bucketPtr->local_depth);
 		}
-		uint32_t j;
+		// uint32_t j;
 		if (bucketPtr->pointers_num == 1 ) { /*if it is the last remaining pointer that points to the bucket*/
 			predicateDestroyBucket(bucketPtr);
 		}else{
