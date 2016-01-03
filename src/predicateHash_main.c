@@ -3,7 +3,8 @@
 
 int main(void)
 {
-	// predicateHash* myhash = predicateCreateHash();
+	predicateHash* myhash = predicateCreateHash();
+	
 	predicateSubBucket* predicateElement = malloc(sizeof(predicateSubBucket));
 	predicateElement->condition = malloc(sizeof(Column_t));
 	predicateElement->condition->column = 1;
@@ -13,9 +14,25 @@ int main(void)
 	predicateElement->range_end = 1 ;
 	predicateElement->open_requests = 10 ;
 	predicateElement->bit_set = createBitSet(10000);
-	// predicateInsertHashRecord(myhash,predicateElement);
-	predicateDestroySubBucket(predicateElement);
-	free(predicateElement);
+	predicateInsertHashRecord(myhash,predicateElement);
+
+
+	predicateSubBucket* predicateElement2 = malloc(sizeof(predicateSubBucket));
+	predicateElement2->condition = malloc(sizeof(Column_t));
+	predicateElement2->condition->column = 1;
+	predicateElement2->condition->op = 2;
+	predicateElement2->condition->value = 0;
+	predicateElement2->range_start = 1 ;
+	predicateElement2->range_end = 2 ;
+	predicateElement2->open_requests = 10 ;
+	predicateElement2->bit_set = createBitSet(10000);
+	predicateInsertHashRecord(myhash,predicateElement2);
+
+
+	predicateDeleteHashRecord(myhash,predicateElement);
+	predicatePrintHash(myhash);
+	// predicateDestroySubBucket(,predicateElement);
+	//free(predicateElement);
 	// predicatePrintHash(myhash);
 	// predicateDestroyHash(myhash);
 	return 0;

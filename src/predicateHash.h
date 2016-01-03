@@ -69,14 +69,20 @@ void predicatePrintBucket(predicateBucket *);
 predicateSubBucket* createPredicateSubBucket(uint64_t, uint64_t, uint32_t, Op_t, uint64_t);
 /*****************************************************/
 
+/*FORGET RELATED FUNCTIONS*/
+int predicateDeleteHashRecord(predicateHash*, predicateSubBucket*);
+int predicateForgetSubBucket(predicateHash*, uint64_t, predicateSubBucket*);
+void predicateMoveSubBucketsLeft(predicateBucket*, uint32_t);
+void predicateTryMergeBuckets(predicateHash*, uint64_t);
+uint8_t predicateTryCollapseIndex(predicateHash*);
+/**************************/
 /*DELETE HASH FUNCTION*/
+void predicateDestroyBucket(predicateBucket *);
+void predicateDestroySubBucket(predicateSubBucket *);
 int predicateDestroyHash(predicateHash *);
-// void predicateDestroySubBucket(predicateSubBucket *);
-// void predicateDestroyBucket(predicateBucket *);
 void predicateFixDeletePointers(predicateHash*, predicateBucket*, predicateBucket* , uint64_t);
 /**********************/
 
 Boolean_t predicateRecordsEqualRangeArray(predicateSubBucket*, PredicateRangeArray*);
-
 
 #endif

@@ -300,13 +300,7 @@ int predicateDestroyHash(predicateHash* hash) {
 		}
 		uint32_t j;
 		if (bucketPtr->pointers_num == 1 ) { /*if it is the last remaining pointer that points to the bucket*/
-			for (j = 0 ; j < bucketPtr->current_subBuckets ; j++) {
-				free(bucketPtr->key_buckets[j]->condition);
-				destroyBitSet(bucketPtr->key_buckets[j]->bit_set);
-				free(bucketPtr->key_buckets[j]);
-			}
-			free(bucketPtr->key_buckets);
-			free(bucketPtr);
+			predicateDestroyBucket(bucketPtr);
 		}else{
 			bucketPtr->pointers_num--;
 		}
@@ -319,109 +313,107 @@ int predicateDestroyHash(predicateHash* hash) {
 	return OK_SUCCESS;
 }
 
-// int predicateDeleteHashRecord(predicateHash* hash, predicateSubBucket* keySubBucket) {
-// 	uint64_t bucket_num = predicateHashFunction(hash->size, keySubBucket);
-// 	int deletion_found = predicateForgetSubBucket(hash,bucket_num,keySubBucket);
-// 	if (!deletion_found)
-// 		return 0;
-// 	return 1;
-// }
+int predicateDeleteHashRecord(predicateHash* hash, predicateSubBucket* predicate_record) {
+	uint64_t bucket_num = predicateHashFunction(hash->size, predicate_record->range_start, predicate_record->range_end, predicate_record->condition->column, predicate_record->condition->op, predicate_record->condition->value);
+	int deletion_found = predicateForgetSubBucket(hash,bucket_num,predicate_record);
+	if (!deletion_found)
+		return 0;
+	return 1;
+}
 
-// void moveSubBucketsLeft(predicateBucket* bucket, uint32_t index) {
-// 		uint32_t i;
-// 		for(i = index ; i < bucket->current_subBuckets; i++) {
-// 			copySubbucketTransactions(&bucket->key_buckets[i-1],&bucket->key_buckets[i]);
-// 			cleanSubBucket(&bucket->key_buckets[i]);
-// 	}
-// }
+void predicateMoveSubBucketsLeft(predicateBucket* bucket, uint32_t index) {
+		uint32_t i;
+		for(i = index ; i < bucket->current_subBuckets; i++) {
+			bucket->key_buckets[i-1] = bucket->key_buckets[i];
+			bucket->key_buckets[i] = NULL;
+	}
+}
 
-// int predicateForgetSubBucket(predicateHash* hash, uint64_t bucket_num, predicateSubBucket* keySubBucket) {
-// 	// predicateBucket *bucket = hash->index[bucket_num];
-// 	// uint32_t i;
-// 	// for (i = 0 ; i < bucket->current_subBuckets; i++) {	/* for all subbuckets */
-// 	// 	if (bucket->key_buckets[i].key == key) {	/* tidSubBucket for deletion found*/
-// 	// 		 physical remove of the SubBukcet that contains the Key 
-// 	// 		cleanSubBucket(&bucket->key_buckets[i]);
-// 	// 		moveSubBucketsLeft(bucket,i+1);
-// 	// 		bucket->current_subBuckets--;
-// 	// 		/*now try to merge Buckets*/
-// 	// 		tryMergeBuckets(hash,bucket_num);
-// 	// 		return 1;
-// 	// 	}
-// 	// }
-// 	return 0;
-// }
+int predicateForgetSubBucket(predicateHash* hash, uint64_t bucket_num, predicateSubBucket* predicate_record) {
+	predicateBucket *bucket = hash->index[bucket_num];
+	uint32_t i;
+	for (i = 0 ; i < bucket->current_subBuckets; i++) {	/* for all subbuckets */
+		if ( predicateRecordsEqual(bucket->key_buckets[i],predicate_record) ) {	/* predicateSubBucket for deletion found*/
+			fprintf(stderr,"FOUND \n");
+			//physical remove of the SubBukcet that contains the Key
+			predicateDestroySubBucket(bucket->key_buckets[i]);
+			//cleanSubBucket(&bucket->key_buckets[i]);
+			predicateMoveSubBucketsLeft(bucket,i+1);
+			bucket->current_subBuckets--;
+			/*now try to merge Buckets*/
+			predicateTryMergeBuckets(hash,bucket_num);
+			return 1;
+		}
+	}
+	return 0;
+}
 
-// uint8_t tryCollapseIndex(tidHash* hash) {
-// 	unsigned char canCollapse = 0;
-// 	if (hash->size > 1) {
-// 		canCollapse = 1;
-// 		uint64_t i,j;
-// 		for (i = 0,j=hash->size/2; i < hash->size/2; i++,j++) {
-// 			if (hash->index[i] != hash->index[j]) { /*we can not doublicate*/
-// 				canCollapse = 0;
-// 				break;
-// 			}
-// 		}
-// 	}
-// 	if (canCollapse) {
-// 		hash->global_depth --;
-// 		hash->size /= 2;
-// 		hash->index = realloc(hash->index,hash->size * sizeof(predicateBucket *));
-// 		ALLOCATION_ERROR(hash->index);
-// 	}
-// 	return canCollapse;
-// }
+uint8_t predicateTryCollapseIndex(predicateHash* hash) {
+	uint8_t canCollapse = 0;
+	if (hash->size > 1) {
+		canCollapse = 1;
+		uint64_t i,j;
+		for (i = 0,j=hash->size/2; i < hash->size/2; i++,j++) {
+			if (hash->index[i] != hash->index[j]) { /*we can not doublicate*/
+				canCollapse = 0;
+				break;
+			}
+		}
+	}
+	if (canCollapse) {
+		hash->global_depth --;
+		hash->size /= 2;
+		hash->index = realloc(hash->index,hash->size * sizeof(predicateBucket *));
+		ALLOCATION_ERROR(hash->index);
+	}
+	return canCollapse;
+}
 
-// void tryMergeBuckets(tidHash* hash, uint64_t bucket_num ) {
-// 	predicateBucket *bucket = hash->index[bucket_num];
-// 	uint32_t ld_oldSize = 1 << (bucket->local_depth - 1);
-// 	uint64_t buddy_index;
-// 	/*find its buddy bucket and store its index to buddy_index*/
-// 	if (bucket_num + ld_oldSize < hash->size) { /*buddy bucket is under*/
-// 		buddy_index = bucket_num + ld_oldSize;
-// 		// fprintf(stderr,"It is under with buddy_index %llu\n",buddy_index);
-// 	} else { /*buddy bucket is above*/
-// 		buddy_index = bucket_num - ld_oldSize;
-// 		// fprintf(stderr,"It is above with buddy_index %llu\n",buddy_index);
-// 	}
+void predicateTryMergeBuckets(predicateHash* hash, uint64_t bucket_num ) {
+	predicateBucket *bucket = hash->index[bucket_num];
+	uint32_t ld_oldSize = 1 << (bucket->local_depth - 1);
+	uint64_t buddy_index;
+	/*find its buddy bucket and store its index to buddy_index*/
+	if (bucket_num + ld_oldSize < hash->size) { /*buddy bucket is under*/
+		buddy_index = bucket_num + ld_oldSize;
+		// fprintf(stderr,"It is under with buddy_index %llu\n",buddy_index);
+	} else { /*buddy bucket is above*/
+		buddy_index = bucket_num - ld_oldSize;
+		// fprintf(stderr,"It is above with buddy_index %llu\n",buddy_index);
+	}
 
-// 	if (bucket != hash->index[buddy_index] && bucket->local_depth == hash->index[buddy_index]->local_depth) { /*we have a buddy and not the the bucket itself*/
-// 		predicateBucket *buddyBucket = hash->index[buddy_index];
-// 		uint64_t mergedBucket_entries = bucket->current_subBuckets + buddyBucket->current_subBuckets;
-// 		if (mergedBucket_entries <= TID_B) { /*we can merge the two subBuckets*/
-// 			fprintf(stderr,"predicateBucket(%zu) - Buddy(%zu)\n",bucket_num,buddy_index);
-// 			uint64_t i,j;
-// 			for (i = bucket->current_subBuckets,j=0; i < mergedBucket_entries ; i++,j++) {
-// 				copySubbucketTransactions(&bucket->key_buckets[i],&buddyBucket->key_buckets[j]);
-// 			}
-// 			fixDeletePointers(hash, bucket, buddyBucket, buddy_index);
-// 			bucket->current_subBuckets = mergedBucket_entries;
-// 			bucket->local_depth--;
-// 			destroyBucket(buddyBucket);
-// 			if (tryCollapseIndex(hash)) {
-// 				tryMergeBuckets(hash, bucket_num % (1 << bucket->local_depth));
-// 			}
-// 		}
-// 	}
+	if (bucket != hash->index[buddy_index] && bucket->local_depth == hash->index[buddy_index]->local_depth) { /*we have a buddy and not the the bucket itself*/
+		predicateBucket *buddyBucket = hash->index[buddy_index];
+		uint64_t mergedBucket_entries = bucket->current_subBuckets + buddyBucket->current_subBuckets;
+		if (mergedBucket_entries <= PREDICATE_B) { /*we can merge the two subBuckets*/
+			fprintf(stderr,"predicateBucket(%zu) - Buddy(%zu)\n",bucket_num,buddy_index);
+			uint64_t i,j;
+			for (i = bucket->current_subBuckets,j=0; i < mergedBucket_entries ; i++,j++) {
+				bucket->key_buckets[i] = buddyBucket->key_buckets[j];
+			}
+			predicateFixDeletePointers(hash, bucket, buddyBucket, buddy_index);
+			bucket->current_subBuckets = mergedBucket_entries;
+			bucket->local_depth--;
+			predicateDestroyBucket(buddyBucket);
+			if (predicateTryCollapseIndex(hash)) {
+				predicateTryMergeBuckets(hash, bucket_num % (1 << bucket->local_depth));
+			}
+		}
+	}
+ }
 
-// }
-
-// void predicateDestroyBucket(predicateBucket *bucket) {
-// 	uint32_t i;
-// 	for (i = 0 ; i < PREDICATE_B ; i++) {
-// 		predicateDestroySubBucket(&bucket->key_buckets[i]);
-// 	}
-// 	free(bucket->key_buckets);
-// 	bucket->key_buckets = NULL;
-// 	free(bucket);
-// 	bucket = NULL;
-// }
+void predicateDestroyBucket(predicateBucket *bucket) {
+	uint32_t i=0;
+	for (i = 0 ; i < bucket->current_subBuckets ; i++) {
+		predicateDestroySubBucket(bucket->key_buckets[i]);
+	}
+	free(bucket->key_buckets);
+	free(bucket);
+}
 
 void predicateDestroySubBucket(predicateSubBucket *sub_bucket) {
-	if (sub_bucket->bit_set != NULL) {	
-		destroyBitSet(sub_bucket->bit_set);
-	}
 	free(sub_bucket->condition);
-	sub_bucket->condition = NULL;
+	destroyBitSet(sub_bucket->bit_set);
+	free(sub_bucket);
+	sub_bucket = NULL;
 }
