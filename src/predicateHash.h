@@ -34,13 +34,22 @@ typedef struct predicateHash {
 	predicateBucket **index;
 } predicateHash;
 
+	/// The constant
+typedef struct PredicateRangeArray {
+	uint64_t from;
+	uint64_t to; 
+	uint32_t column;
+	Op_t op;
+	uint64_t value;
+} PredicateRangeArray;
+
 
 /* HASH INIT METHOD */
 predicateHash* predicateCreateHash(void); 
 /********************/
 
 /*HASH FUNCTION USED FOR TO GO TO THE RIGHT INDEX*/
-uint64_t predicateHashFunction(uint64_t, predicateSubBucket*);
+uint64_t predicateHashFunction(uint64_t, uint64_t, uint64_t, uint32_t, Op_t op, uint64_t);
 /*************************************************/
 
 /*INSERT TO HASH FUNCTION AND OTHER HELPER FUNCTIONS*/
@@ -54,7 +63,7 @@ predicateBucket* predicateCreateNewBucket(uint32_t);
 predicateSubBucket* predicateCreateNewSubBucket(predicateSubBucket *);
 void predicateCleanBucket(predicateBucket *);
 Boolean_t predicateRecordsEqual(predicateSubBucket*, predicateSubBucket*);
-BitSet_t* predicateGetBitSet(predicateHash *, predicateSubBucket *);
+BitSet_t* predicateGetBitSet(predicateHash *, PredicateRangeArray *);
 void predicatePrintHash(predicateHash *);
 void predicatePrintBucket(predicateBucket *);
 predicateSubBucket* createPredicateSubBucket(uint64_t, uint64_t, uint32_t, Op_t, uint64_t);
@@ -67,6 +76,7 @@ int predicateDestroyHash(predicateHash *);
 void predicateFixDeletePointers(predicateHash*, predicateBucket*, predicateBucket* , uint64_t);
 /**********************/
 
+Boolean_t predicateRecordsEqualRangeArray(predicateSubBucket*, PredicateRangeArray*);
 
 
 #endif

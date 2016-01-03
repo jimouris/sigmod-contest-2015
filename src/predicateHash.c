@@ -23,8 +23,17 @@ Boolean_t predicateRecordsEqual(predicateSubBucket* record1, predicateSubBucket*
 	return False;
 }
 
+Boolean_t predicateRecordsEqualRangeArray(predicateSubBucket* record1, PredicateRangeArray* record2) {
+	if (record1->range_start == record2->from && record1->range_end == record2->to && record1->condition->column == record2->column
+			&& record1->condition->op == record2->op && record1->condition->value == record2->value)
+	{	
+		return True;
+	}
+	return False;
+}
+
 int predicateInsertHashRecord(predicateHash* hash, predicateSubBucket* predicate_record) {
-	uint64_t bucket_num = predicateHashFunction(hash->size, predicate_record);
+	uint64_t bucket_num = predicateHashFunction(hash->size, predicate_record->range_start, predicate_record->range_end, predicate_record->condition->column, predicate_record->condition->op, predicate_record->condition->value);
 	predicateBucket *bucket = hash->index[bucket_num];
 	uint32_t i;
 	for (i = 0 ; i < bucket->current_subBuckets; i++) {			/* for all subbuckets */
@@ -34,7 +43,8 @@ int predicateInsertHashRecord(predicateHash* hash, predicateSubBucket* predicate
 	}
 	/* If that was the first appearence of this key */
 	if (bucket->current_subBuckets < PREDICATE_B) {	/* If there is space to insert it on that bucket (there is a free subbucket) */
-		bucket->key_buckets[bucket->current_subBuckets] = predicateCreateNewSubBucket(predicate_record);
+		// bucket->key_buckets[bucket->current_subBuckets] = predicateCreateNewSubBucket(predicate_record);
+		bucket->key_buckets[bucket->current_subBuckets] = predicate_record;
 		(bucket->current_subBuckets)++;
 		return OK_SUCCESS;
 	} else {
@@ -52,7 +62,7 @@ int predicateInsertHashRecord(predicateHash* hash, predicateSubBucket* predicate
 		uint32_t i;
 		uint64_t new_hash;
 		for (i = 0 ; i < PREDICATE_B ; i++) {	/* for all subBuckets in tmpBucket */
-			new_hash = predicateHashFunction(hash->size, tmp_bucket->key_buckets[i]);
+			new_hash =predicateHashFunction(hash->size, tmp_bucket->key_buckets[i]->range_start, tmp_bucket->key_buckets[i]->range_end, tmp_bucket->key_buckets[i]->condition->column, tmp_bucket->key_buckets[i]->condition->op, tmp_bucket->key_buckets[i]->condition->value);
 			predicateBucket* dest_bucket = hash->index[new_hash];
 			uint32_t current_subBuckets = dest_bucket->current_subBuckets;
 			dest_bucket->key_buckets[current_subBuckets] = tmp_bucket->key_buckets[i];
@@ -149,6 +159,21 @@ predicateSubBucket* predicateCreateNewSubBucket(predicateSubBucket* src_sub) {
 	return new_sub_bucket;
 }
 
+predicateSubBucket* createPredicateSubBucket(uint64_t from, uint64_t to, uint32_t column, Op_t op, uint64_t value){
+	predicateSubBucket* subBukcet = malloc(sizeof(predicateSubBucket));
+	ALLOCATION_ERROR(subBukcet);
+	subBukcet->range_start = from;	
+	subBukcet->range_end = to;
+	subBukcet->condition = malloc(sizeof(Column_t));
+	ALLOCATION_ERROR(subBukcet->condition);
+	subBukcet->condition->column = column;
+	subBukcet->condition->op = op;
+	subBukcet->condition->value = value;
+	subBukcet->bit_set = NULL;
+	subBukcet->open_requests = 0;
+	return subBukcet;
+}
+
 /* creates an empty predicateBucket*/
 predicateBucket* predicateCreateNewBucket(uint32_t local_depth) {
 	predicateBucket *new_bucket = malloc(sizeof(predicateBucket));
@@ -174,7 +199,7 @@ void predicateCleanBucket(predicateBucket* bucket) {
 	bucket->current_subBuckets = 0;
 }
 
-uint64_t predicateHashFunction(uint64_t size, predicateSubBucket* predicate) {
+uint64_t predicateHashFunction(uint64_t size, uint64_t from, uint64_t to, uint32_t column, Op_t op, uint64_t value) {
    // uint64_t hash = predicate->condition->column;
    // hash *= 37;
    // hash += predicate->condition->op;
@@ -205,9 +230,9 @@ uint64_t predicateHashFunction(uint64_t size, predicateSubBucket* predicate) {
     // char str[50];
     // char* str1 = str;
 	char* str = malloc(50*sizeof(char));
-    sprintf(str,"%" PRIu32 "%d%zu%zu%zu", predicate->condition->column,
-		     predicate->condition->op, predicate->condition->value, 
-		     predicate->range_start, predicate->range_end);
+    sprintf(str,"%" PRIu32 "%d%zu%zu%zu", column,
+		     op, value, 
+		     from, to);
     uint64_t hash =  murmurhash(str,strlen(str),0) % size;
     free(str);
     return hash;
@@ -250,13 +275,15 @@ void predicatePrintHash(predicateHash* hash){
 	}
 }
 
-BitSet_t* predicateGetBitSet(predicateHash* hash, predicateSubBucket* predicate) {
+BitSet_t* predicateGetBitSet(predicateHash* hash, PredicateRangeArray* range_array) {
 	uint32_t i;
-	uint64_t bucket_num = predicateHashFunction(hash->size, predicate);
+	uint64_t bucket_num = predicateHashFunction(hash->size, range_array->from, range_array->to, range_array->column, range_array->op, range_array->value);
 	for (i = 0 ; i < hash->index[bucket_num]->current_subBuckets ; i++) { /* for i in subBuckets */
-		if (predicateRecordsEqual(hash->index[bucket_num]->key_buckets[i], predicate)) {
-			BitSet_t* bit_set = createBitSet(hash->index[bucket_num]->key_buckets[i]->bit_set->bit_size);
-			copyBitSet(bit_set, hash->index[bucket_num]->key_buckets[i]->bit_set);
+		if (predicateRecordsEqualRangeArray(hash->index[bucket_num]->key_buckets[i], range_array)) {
+			BitSet_t* bit_set = hash->index[bucket_num]->key_buckets[i]->bit_set;
+			
+			// BitSet_t* bit_set = createBitSet(hash->index[bucket_num]->key_buckets[i]->bit_set->bit_size);
+			// copyBitSet(bit_set, hash->index[bucket_num]->key_buckets[i]->bit_set);
 			return bit_set;
 		}
 	}

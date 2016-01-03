@@ -139,29 +139,25 @@ Boolean_t checkQueryHash(Journal_t** journal_array, Query_t* query, uint64_t fro
 	for(i = 0; i < query->columnCount; i++) {
 		Column_t* predicate = &query->columns[i];
 
-
-		// predicateSubBucket* predicateSubBucket = createPredicateSubBucket(from, to, predicate->column, predicate->op, predicate->value);
-				predicateSubBucket *new_sub_bucket = malloc(sizeof(predicateSubBucket));
-				new_sub_bucket->range_start = from;
-				new_sub_bucket->range_end = to;
-				new_sub_bucket->open_requests = 0;
-				new_sub_bucket->condition = malloc(sizeof(Column_t));
-				new_sub_bucket->condition->column = predicate->column; 
-				new_sub_bucket->condition->op = predicate->op;
-				new_sub_bucket->condition->value = predicate->value;
-				new_sub_bucket->bit_set = NULL;
-		predicateSubBucket* predicateSubBucket = predicateCreateNewSubBucket(new_sub_bucket);
-
-
+		PredicateRangeArray* predicate_range_array = malloc(sizeof(PredicateRangeArray));
+		ALLOCATION_ERROR(predicate_range_array);
+		predicate_range_array->from = from;
+		predicate_range_array->to = to;
+		predicate_range_array->column = predicate->column;
+		predicate_range_array->op = predicate->op;
+		predicate_range_array->value = predicate->value;
 
 		//If bit_set for this predicate has allready been computed, get it from the hash table.
-		BitSet_t* predicate_bit_set = predicateGetBitSet(journal->predicate_index, predicateSubBucket);
+		BitSet_t* predicate_bit_set = predicateGetBitSet(journal->predicate_index, predicate_range_array);
+		free(predicate_range_array);
+
 		if(predicate_bit_set == NULL){
 			//Else compute it now.
 			if(records_unknown == True){
 				 record_count = getRecordCount(journal, from, to, &first_offset);
 				 records_unknown = False;
 			}
+			predicateSubBucket* predicateSubBucket = createPredicateSubBucket(from, to, predicate->column, predicate->op, predicate->value);
 			predicateSubBucket->bit_set = createBitSet(record_count);
 			if(predicate->column == 0 && predicate->op == Equal){	/*If the predicate is like "C0 == ..."*/
 				range_array = getHashRecord(journal->index, predicate->value, &range_size); /*Get records from hash table*/
@@ -182,25 +178,28 @@ Boolean_t checkQueryHash(Journal_t** journal_array, Query_t* query, uint64_t fro
 				}
 			}
 
-			predicate_bit_set = createBitSet(record_count);
-			copyBitSet(predicate_bit_set, predicateSubBucket->bit_set);
+			predicate_bit_set = predicateSubBucket->bit_set;
+			// predicate_bit_set = createBitSet(record_count);
+			// copyBitSet(predicate_bit_set, predicateSubBucket->bit_set);
+
 			//Insert predicate in the hash table.
 			predicateInsertHashRecord(journal->predicate_index,predicateSubBucket);
 		}
 
 
 		// predicateDestroySubBucket(predicateSubBucket);
-		free(predicateSubBucket);
+		// free(predicateSubBucket);
 		
 
 		if(i == 0) {
-			intersection = predicate_bit_set;	/*Bit set of the whole query*/
+			intersection = createBitSet(predicate_bit_set->bit_size);	/*Bit set of the whole query*/
+			copyBitSet(intersection, predicate_bit_set);
 		} else {
 			BitSet_t* previous_intersection = intersection;
 			intersection = intersect(predicate_bit_set, previous_intersection);	/*interset with previous bit set*/
-			destroyBitSet(predicate_bit_set);
-			destroyBitSet(previous_intersection);
-			previous_intersection = NULL;
+			// destroyBitSet(predicate_bit_set);
+			// destroyBitSet(previous_intersection);
+			// previous_intersection = NULL;
 		}
 		if(isBitSetEmpty(intersection)){
 			destroyBitSet(intersection);
