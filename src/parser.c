@@ -139,17 +139,9 @@ Boolean_t checkQueryHash(Journal_t** journal_array, Query_t* query, uint64_t fro
 	for(i = 0; i < query->columnCount; i++) {
 		Column_t* predicate = &query->columns[i];
 
-		PredicateRangeArray* predicate_range_array = malloc(sizeof(PredicateRangeArray));
-		ALLOCATION_ERROR(predicate_range_array);
-		predicate_range_array->from = from;
-		predicate_range_array->to = to;
-		predicate_range_array->column = predicate->column;
-		predicate_range_array->op = predicate->op;
-		predicate_range_array->value = predicate->value;
 
 		//If bit_set for this predicate has allready been computed, get it from the hash table.
-		BitSet_t* predicate_bit_set = predicateGetBitSet(journal->predicate_index, predicate_range_array);
-		free(predicate_range_array);
+		BitSet_t* predicate_bit_set = predicateGetBitSet(journal->predicate_index, from, to, predicate->column, predicate->op, predicate->value);
 
 		if(predicate_bit_set == NULL){
 			//Else compute it now.
@@ -177,20 +169,11 @@ Boolean_t checkQueryHash(Journal_t** journal_array, Query_t* query, uint64_t fro
 				}
 			}
 
-			// predicate_bit_set = predicateSubBucket->bit_set;
-			// predicate_bit_set = createBitSet(record_count);
-			// copyBitSet(predicate_bit_set, predicateSubBucket->bit_set);
-
 			//Insert predicate in the hash table.
 			predicateSubBucket* predicateSubBucket = createPredicateSubBucket(from, to, predicate->column, predicate->op, predicate->value);
 			predicateSubBucket->bit_set = predicate_bit_set;
 			predicateInsertHashRecord(journal->predicate_index,predicateSubBucket);
 		}
-
-
-		// predicateDestroySubBucket(predicateSubBucket);
-		// free(predicateSubBucket);
-		
 
 		if(i == 0) {
 			intersection = createBitSet(predicate_bit_set->bit_size);	/*Bit set of the whole query*/
@@ -198,7 +181,6 @@ Boolean_t checkQueryHash(Journal_t** journal_array, Query_t* query, uint64_t fro
 		} else {
 			BitSet_t* previous_intersection = intersection;
 			intersection = intersect(predicate_bit_set, previous_intersection);	/*interset with previous bit set*/
-			// destroyBitSet(predicate_bit_set);
 			destroyBitSet(previous_intersection);
 			previous_intersection = NULL;
 		}
