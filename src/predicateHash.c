@@ -143,21 +143,21 @@ void predicateCopyBucketPtrs(predicateBucket* dst, predicateBucket* src) {
 // 	dst->condition->value = src->condition->value;
 // }
 
-predicateSubBucket* predicateCreateNewSubBucket(predicateSubBucket* src_sub) {
-	predicateSubBucket *new_sub_bucket = malloc(sizeof(predicateSubBucket));
-	ALLOCATION_ERROR(new_sub_bucket);
-	new_sub_bucket->range_start = src_sub->range_start;
-	new_sub_bucket->range_end = src_sub->range_end;
-	new_sub_bucket->open_requests = src_sub->open_requests;
-	new_sub_bucket->condition = malloc(sizeof(Column_t));
-	ALLOCATION_ERROR(new_sub_bucket->condition);
-	new_sub_bucket->condition->column = src_sub->condition->column; 
-	new_sub_bucket->condition->op = src_sub->condition->op;
-	new_sub_bucket->condition->value = src_sub->condition->value;
-	new_sub_bucket->bit_set = createBitSet(src_sub->bit_set->bit_size);
-	copyBitSet(new_sub_bucket->bit_set, src_sub->bit_set);
-	return new_sub_bucket;
-}
+// predicateSubBucket* predicateCreateNewSubBucket(predicateSubBucket* src_sub) {
+// 	predicateSubBucket *new_sub_bucket = malloc(sizeof(predicateSubBucket));
+// 	ALLOCATION_ERROR(new_sub_bucket);
+// 	new_sub_bucket->range_start = src_sub->range_start;
+// 	new_sub_bucket->range_end = src_sub->range_end;
+// 	new_sub_bucket->open_requests = src_sub->open_requests;
+// 	new_sub_bucket->condition = malloc(sizeof(Column_t));
+// 	ALLOCATION_ERROR(new_sub_bucket->condition);
+// 	new_sub_bucket->condition->column = src_sub->condition->column; 
+// 	new_sub_bucket->condition->op = src_sub->condition->op;
+// 	new_sub_bucket->condition->value = src_sub->condition->value;
+// 	new_sub_bucket->bit_set = createBitSet(src_sub->bit_set->bit_size);
+// 	copyBitSet(new_sub_bucket->bit_set, src_sub->bit_set);
+// 	return new_sub_bucket;
+// }
 
 predicateSubBucket* createPredicateSubBucket(uint64_t from, uint64_t to, uint32_t column, Op_t op, uint64_t value){
 	predicateSubBucket* subBukcet = malloc(sizeof(predicateSubBucket));
@@ -301,8 +301,8 @@ int predicateDestroyHash(predicateHash* hash) {
 		uint32_t j;
 		if (bucketPtr->pointers_num == 1 ) { /*if it is the last remaining pointer that points to the bucket*/
 			for (j = 0 ; j < bucketPtr->current_subBuckets ; j++) {
-				// free(bucketPtr->key_buckets[j]->condition);
-				// free(bucketPtr->key_buckets[j]->bit_set);
+				free(bucketPtr->key_buckets[j]->condition);
+				destroyBitSet(bucketPtr->key_buckets[j]->bit_set);
 				free(bucketPtr->key_buckets[j]);
 			}
 			free(bucketPtr->key_buckets);

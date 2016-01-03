@@ -157,8 +157,7 @@ Boolean_t checkQueryHash(Journal_t** journal_array, Query_t* query, uint64_t fro
 				 record_count = getRecordCount(journal, from, to, &first_offset);
 				 records_unknown = False;
 			}
-			predicateSubBucket* predicateSubBucket = createPredicateSubBucket(from, to, predicate->column, predicate->op, predicate->value);
-			predicateSubBucket->bit_set = createBitSet(record_count);
+			predicate_bit_set = createBitSet(record_count);
 			if(predicate->column == 0 && predicate->op == Equal){	/*If the predicate is like "C0 == ..."*/
 				range_array = getHashRecord(journal->index, predicate->value, &range_size); /*Get records from hash table*/
 				for(j = 0; j < range_size; j++){
@@ -166,23 +165,25 @@ Boolean_t checkQueryHash(Journal_t** journal_array, Query_t* query, uint64_t fro
 						break;
 					if(range_array[j].transaction_id >= from){
 						uint64_t bit = range_array[j].rec_offset - first_offset;
-						setBit(bit, predicateSubBucket->bit_set);
+						setBit(bit, predicate_bit_set);
 					}
 				}
 			} else { /*Else check all the records in the range [from,to]*/
 				for(j = 0, offset = first_offset; j < record_count; j++, offset++){
 					JournalRecord_t* record = &journal->records[offset];
 					if(checkConstraint(record, predicate)){
-						setBit(j,predicateSubBucket->bit_set);
+						setBit(j,predicate_bit_set);
 					}
 				}
 			}
 
-			predicate_bit_set = predicateSubBucket->bit_set;
+			// predicate_bit_set = predicateSubBucket->bit_set;
 			// predicate_bit_set = createBitSet(record_count);
 			// copyBitSet(predicate_bit_set, predicateSubBucket->bit_set);
 
 			//Insert predicate in the hash table.
+			predicateSubBucket* predicateSubBucket = createPredicateSubBucket(from, to, predicate->column, predicate->op, predicate->value);
+			predicateSubBucket->bit_set = predicate_bit_set;
 			predicateInsertHashRecord(journal->predicate_index,predicateSubBucket);
 		}
 
@@ -198,8 +199,8 @@ Boolean_t checkQueryHash(Journal_t** journal_array, Query_t* query, uint64_t fro
 			BitSet_t* previous_intersection = intersection;
 			intersection = intersect(predicate_bit_set, previous_intersection);	/*interset with previous bit set*/
 			// destroyBitSet(predicate_bit_set);
-			// destroyBitSet(previous_intersection);
-			// previous_intersection = NULL;
+			destroyBitSet(previous_intersection);
+			previous_intersection = NULL;
 		}
 		if(isBitSetEmpty(intersection)){
 			destroyBitSet(intersection);
