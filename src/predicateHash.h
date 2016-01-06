@@ -81,6 +81,7 @@ void predicateDestroyBucket(predicateBucket *);
 void predicateDestroySubBucket(predicateSubBucket *);
 int predicateDestroyHash(predicateHash *);
 void predicateFixDeletePointers(predicateHash*, predicateBucket*, predicateBucket* , uint64_t);
+void predicateDestroyBucketNoSubBuckets(predicateBucket *bucket);
 /**********************/
 
 Boolean_t predicateRecordsEqualRangeArray(predicateSubBucket*, PredicateRangeArray*);

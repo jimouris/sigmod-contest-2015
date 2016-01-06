@@ -368,6 +368,11 @@ uint8_t predicateTryCollapseIndex(predicateHash* hash) {
 }
 
 void predicateTryMergeBuckets(predicateHash* hash, uint64_t bucket_num ) {
+	
+	if (hash->global_depth == 0) { /*base case for recursion*/
+		return;
+	}
+
 	predicateBucket *bucket = hash->index[bucket_num];
 	uint32_t ld_oldSize = 1 << (bucket->local_depth - 1);
 	uint64_t buddy_index;
@@ -384,7 +389,7 @@ void predicateTryMergeBuckets(predicateHash* hash, uint64_t bucket_num ) {
 		predicateBucket *buddyBucket = hash->index[buddy_index];
 		uint64_t mergedBucket_entries = bucket->current_subBuckets + buddyBucket->current_subBuckets;
 		if (mergedBucket_entries <= PREDICATE_B) { /*we can merge the two subBuckets*/
-			fprintf(stderr,"predicateBucket(%zu) - Buddy(%zu)\n",bucket_num,buddy_index);
+			fprintf(stderr,"predicateBucket(%zu) - Buddy(%zu) mergedBucket_entries (%zu) \n",bucket_num,buddy_index,mergedBucket_entries);
 			uint64_t i,j;
 			for (i = bucket->current_subBuckets,j=0; i < mergedBucket_entries ; i++,j++) {
 				bucket->key_buckets[i] = buddyBucket->key_buckets[j];
@@ -392,7 +397,7 @@ void predicateTryMergeBuckets(predicateHash* hash, uint64_t bucket_num ) {
 			predicateFixDeletePointers(hash, bucket, buddyBucket, buddy_index);
 			bucket->current_subBuckets = mergedBucket_entries;
 			bucket->local_depth--;
-			predicateDestroyBucket(buddyBucket);
+			predicateDestroyBucketNoSubBuckets(buddyBucket);
 			if (predicateTryCollapseIndex(hash)) {
 				predicateTryMergeBuckets(hash, bucket_num % (1 << bucket->local_depth));
 			}
@@ -405,6 +410,12 @@ void predicateDestroyBucket(predicateBucket *bucket) {
 	for (i = 0 ; i < bucket->current_subBuckets ; i++) {
 		predicateDestroySubBucket(bucket->key_buckets[i]);
 	}
+	free(bucket->key_buckets);
+	free(bucket);
+}
+
+/*use it on forget only to keep SubBuckets as they will be pointed by other bucket*/
+void predicateDestroyBucketNoSubBuckets(predicateBucket *bucket) {
 	free(bucket->key_buckets);
 	free(bucket);
 }
