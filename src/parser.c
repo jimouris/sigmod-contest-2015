@@ -93,9 +93,19 @@ void processFlush(Flush_t *fl, Journal_t** journal_array, ValidationList_t* vali
 	}
 }
 
-void processForget(Forget_t *fo, Journal_t** journal_array) {
+void processForget(Forget_t *fo, Journal_t** journal_array,int relation_count) {
 	// Unimplemented;
-	// printf("Forget %lu\n", fo->transactionId);
+	uint32_t i;
+	for(i = 0; i < relation_count; i++){
+		Journal_t* journal = journal_array[i];
+		forgetJournal(journal, fo->transactionId);
+	}
+}
+
+void forgetJournal(Journal_t* journal, uint64_t transactionId) {
+	if ( journal->predicate_index != NULL) {
+		forgetPredicateIndex(journal->predicate_index,transactionId);
+	}
 }
 
 Boolean_t checkValidation(Journal_t** journal_array, ValidationQueries_t* val_query){

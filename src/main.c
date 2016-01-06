@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
 					free(body);
 				break;
 			case Forget:
-				processForget(body,journal_array);
+				processForget(body,journal_array,relation_count);
 				if (body != NULL)
 					free(body);
 				break;

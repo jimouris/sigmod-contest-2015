@@ -332,7 +332,6 @@ int predicateForgetSubBucket(predicateHash* hash, uint64_t bucket_num, predicate
 	uint32_t i;
 	for (i = 0 ; i < bucket->current_subBuckets; i++) {	/* for all subbuckets */
 		if ( predicateRecordsEqual(bucket->key_buckets[i],predicate_record) ) {	/* predicateSubBucket for deletion found*/
-			fprintf(stderr,"FOUND \n");
 			//physical remove of the SubBukcet that contains the Key
 			predicateDestroySubBucket(bucket->key_buckets[i]);
 			//cleanSubBucket(&bucket->key_buckets[i]);
@@ -389,7 +388,7 @@ void predicateTryMergeBuckets(predicateHash* hash, uint64_t bucket_num ) {
 		predicateBucket *buddyBucket = hash->index[buddy_index];
 		uint64_t mergedBucket_entries = bucket->current_subBuckets + buddyBucket->current_subBuckets;
 		if (mergedBucket_entries <= PREDICATE_B) { /*we can merge the two subBuckets*/
-			fprintf(stderr,"predicateBucket(%zu) - Buddy(%zu) mergedBucket_entries (%zu) \n",bucket_num,buddy_index,mergedBucket_entries);
+			// fprintf(stderr,"predicateBucket(%zu) - Buddy(%zu) mergedBucket_entries (%zu) \n",bucket_num,buddy_index,mergedBucket_entries);
 			uint64_t i,j;
 			for (i = bucket->current_subBuckets,j=0; i < mergedBucket_entries ; i++,j++) {
 				bucket->key_buckets[i] = buddyBucket->key_buckets[j];
@@ -425,4 +424,17 @@ void predicateDestroySubBucket(predicateSubBucket *sub_bucket) {
 	destroyBitSet(sub_bucket->bit_set);
 	free(sub_bucket);
 	sub_bucket = NULL;
+}
+
+void forgetPredicateIndex(predicateHash* hash,uint64_t transaction_id) {
+	uint64_t i;
+	uint32_t j;
+	for (i = 0 ; i < hash->size ; i++) { /*for every bucket on the hash*/
+		predicateBucket * bucketPtr = hash->index[i];
+		for (j = 0 ; j < bucketPtr->current_subBuckets ; j++) {
+			if (bucketPtr->key_buckets[j]->range_start < transaction_id) {
+				predicateDeleteHashRecord(hash,bucketPtr->key_buckets[j]);
+			}
+		}
+	}
 }

@@ -75,6 +75,7 @@ int predicateForgetSubBucket(predicateHash*, uint64_t, predicateSubBucket*);
 void predicateMoveSubBucketsLeft(predicateBucket*, uint32_t);
 void predicateTryMergeBuckets(predicateHash*, uint64_t);
 uint8_t predicateTryCollapseIndex(predicateHash*);
+void forgetPredicateIndex(predicateHash*, uint64_t);
 /**************************/
 /*DELETE HASH FUNCTION*/
 void predicateDestroyBucket(predicateBucket *);
