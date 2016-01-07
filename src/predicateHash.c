@@ -71,22 +71,22 @@ predicateHash* predicateCreateHash(void) {
 	return hash;
 }
 
-Boolean_t predicateRecordsEqual(predicateSubBucket* record1, predicateSubBucket* record2) {
+bool predicateRecordsEqual(predicateSubBucket* record1, predicateSubBucket* record2) {
 	if (record1->range_start == record2->range_start && record1->range_end == record2->range_end && record1->condition->column == record2->condition->column
 			&& record1->condition->op == record2->condition->op && record1->condition->value == record2->condition->value)
 	{	
-		return True;
+		return true;
 	}
-	return False;
+	return false;
 }
 
-Boolean_t predicateRecordsEqualArguements(predicateSubBucket* record1, uint64_t from, uint64_t to, uint32_t column, Op_t op, uint64_t value) {
+bool predicateRecordsEqualArguements(predicateSubBucket* record1, uint64_t from, uint64_t to, uint32_t column, Op_t op, uint64_t value) {
 	if (record1->range_start == from && record1->range_end == to && record1->condition->column == column
 			&& record1->condition->op == op && record1->condition->value == value)
 	{	
-		return True;
+		return true;
 	}
-	return False;
+	return false;
 }
 int predicateInsertBitSet(predicateHash* hash, uint64_t from, uint64_t to, uint32_t column, Op_t op, uint64_t value, BitSet_t* bit_set) {
 	uint64_t bucket_num = predicateHashFunction(hash->size, from, to, column, op, value);

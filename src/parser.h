@@ -112,7 +112,7 @@ typedef struct ValidationList {
 } ValidationList_t;
 
 
-Boolean_t validation_isEmpty(Val_list_t*);
+bool validation_isEmpty(Val_list_t*);
 
 Column_t** removeDuplicates(Column_t** old, uint64_t old_size, uint64_t* new_size);
 
@@ -139,7 +139,7 @@ ValidationList_t* validationListCreate();
 
 void validationListDestroy(ValidationList_t*);
 
-Journal_t** processDefineSchema(DefineSchema_t *, int*, Boolean_t*);
+Journal_t** processDefineSchema(DefineSchema_t *, int*, bool*);
 
 void processTransaction(Transaction_t *, Journal_t**);
 
@@ -147,10 +147,10 @@ void processValidationQueries(ValidationQueries_t *, Journal_t**, ValidationList
 
 void processFlush(Flush_t *, Journal_t**, ValidationList_t*);
 
-Boolean_t checkValidation(Journal_t**, ValidationQueries_t*);
+bool checkValidation(Journal_t**, ValidationQueries_t*);
 
-Boolean_t checkSingleQuery(Journal_t**, Query_t*, uint64_t, uint64_t);
-Boolean_t checkQueryHash(Journal_t **, Query_t *, uint64_t, uint64_t);
+bool checkSingleQuery(Journal_t**, Query_t*, uint64_t, uint64_t);
+bool checkQueryHash(Journal_t **, Query_t *, uint64_t, uint64_t);
 
 void processForget(Forget_t*, Journal_t**, int);
 void forgetJournal(Journal_t*, uint64_t);
@@ -163,7 +163,7 @@ void printColumn(Column_t);
 
 int cmp_col(const void *, const void *);
 
-Boolean_t equal_col(const void *p1, const void *p2);
+bool equal_col(const void *p1, const void *p2);
 
 
 #endif

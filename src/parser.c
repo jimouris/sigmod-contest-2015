@@ -2,7 +2,7 @@
 
 static uint32_t* schema = NULL;
 
-Journal_t** processDefineSchema(DefineSchema_t *s, int *relation_count, Boolean_t* modes) {
+Journal_t** processDefineSchema(DefineSchema_t *s, int *relation_count, bool* modes) {
 	uint64_t i;
 	if (schema == NULL)
 		free(schema);
@@ -27,9 +27,9 @@ void processTransaction(Transaction_t *t, Journal_t** journal_array) {
 			//Find the latest insert record.
 			uint64_t key = o->keys[j];
 			JournalRecord_t* last_insertion = getLastRecord(journal_array[o->relationId], key);
-			if (last_insertion != NULL && last_insertion->dirty_bit == False) {
+			if (last_insertion != NULL && last_insertion->dirty_bit == false) {
 				//Insert the JournalRecord.
-				insertJournalRecordCopy(journal_array[o->relationId], last_insertion, t->transactionId, True); 
+				insertJournalRecordCopy(journal_array[o->relationId], last_insertion, t->transactionId, true); 
 			} /* else { // the key doesn't exist, skip it } */
 		}
 		reader += sizeof(TransactionOperationDelete_t) + (sizeof(uint64_t) * o->rowCount);
@@ -38,7 +38,7 @@ void processTransaction(Transaction_t *t, Journal_t** journal_array) {
 		const TransactionOperationInsert_t* o = (TransactionOperationInsert_t*)reader;
 		for(j = 0; j < o->rowCount; j++){
 			const uint64_t *values = o->values + j*schema[o->relationId];
-			insertJournalRecord(journal_array[o->relationId], t->transactionId, schema[o->relationId], values, False);			
+			insertJournalRecord(journal_array[o->relationId], t->transactionId, schema[o->relationId], values, false);			
 		}
 		reader += sizeof(TransactionOperationInsert_t) + (sizeof(uint64_t) * o->rowCount * schema[o->relationId]);
 	}
@@ -120,20 +120,20 @@ void forgetJournal(Journal_t* journal, uint64_t transactionId) {
 	}
 }
 
-Boolean_t checkValidation(Journal_t** journal_array, ValidationQueries_t* val_query){
-	Boolean_t result = False;
+bool checkValidation(Journal_t** journal_array, ValidationQueries_t* val_query){
+	bool result = false;
 	uint64_t i;
 	const char* reader = val_query->queries;
 	for(i = 0; i < val_query->queryCount; i++){
 		Query_t* query = (Query_t*)reader;
 		Journal_t* journal = journal_array[query->relationId];
-		Boolean_t partial_result;
+		bool partial_result;
 		if(journal->predicate_index != NULL)
 			partial_result = checkQueryHash(journal_array, query, val_query->from, val_query->to);
 		else
 			partial_result = checkSingleQuery(journal_array, query, val_query->from, val_query->to);
-		if(partial_result == True){	/*Short circuiting*/
-			return True;
+		if(partial_result == true){	/*Short circuiting*/
+			return true;
 		}
 		result = result || partial_result;
 		reader += sizeof(Query_t) + (sizeof(Column_t) * query->columnCount);
@@ -142,19 +142,19 @@ Boolean_t checkValidation(Journal_t** journal_array, ValidationQueries_t* val_qu
 }
 
 
-Boolean_t checkQueryHash(Journal_t** journal_array, Query_t* query, uint64_t from, uint64_t to){
+bool checkQueryHash(Journal_t** journal_array, Query_t* query, uint64_t from, uint64_t to){
 	uint64_t i,j;
 	uint64_t first_offset, offset;
 	Journal_t* journal = journal_array[query->relationId];
 	BitSet_t* intersection = NULL;
 	if(query->columnCount == 0){		/*Empty query*/
 		if (getRecordCount(journal, from, to, &first_offset) > 0){
-			return True;
+			return true;
 		} else {
-			return False;
+			return false;
 		}
 	}
-	Boolean_t records_unknown = True;
+	bool records_unknown = true;
 	RangeArray* range_array = NULL;
 	uint64_t record_count = 0;
 	uint64_t range_size = 0;
@@ -167,9 +167,9 @@ Boolean_t checkQueryHash(Journal_t** journal_array, Query_t* query, uint64_t fro
 
 		if(predicate_bit_set == NULL){
 			//Else compute it now.
-			if(records_unknown == True){
+			if(records_unknown == true){
 				 record_count = getRecordCount(journal, from, to, &first_offset);
-				 records_unknown = False;
+				 records_unknown = false;
 			}
 			predicate_bit_set = createBitSet(record_count);
 			if(predicate->column == 0 && predicate->op == Equal){	/*If the predicate is like "C0 == ..."*/
@@ -205,18 +205,18 @@ Boolean_t checkQueryHash(Journal_t** journal_array, Query_t* query, uint64_t fro
 		}
 		if(isBitSetEmpty(intersection)){
 			destroyBitSet(intersection);
-			return False;
+			return false;
 		}
 	}
 	if(intersection != NULL){
 		destroyBitSet(intersection);
 	}
-	return True;
+	return true;
 }
 
 
-Boolean_t checkSingleQuery(Journal_t** journal_array, Query_t* query, uint64_t from, uint64_t to){
-	Boolean_t result = False; 
+bool checkSingleQuery(Journal_t** journal_array, Query_t* query, uint64_t from, uint64_t to){
+	bool result = false; 
 	Journal_t* journal = journal_array[query->relationId];
 	uint64_t i, j, range_size = 0;
 	RangeArray* range_array = NULL;
@@ -225,7 +225,7 @@ Boolean_t checkSingleQuery(Journal_t** journal_array, Query_t* query, uint64_t f
 		if (query->columns[0].column == 0 && query->columns[0].op == Equal){ /* if primary key */
 			range_array = getHashRecord(journal->index, query->columns[0].value, &range_size);
 			if(range_array == NULL || range_size == 0){
-				return False;
+				return false;
 			}
 		}
 	}
@@ -234,8 +234,8 @@ Boolean_t checkSingleQuery(Journal_t** journal_array, Query_t* query, uint64_t f
 		uint64_t last = range_size - 1;
 		uint64_t middle = (first+last)/2;
 		uint64_t first_appearance;
-		Boolean_t not_found = False;
-		while (first <= last && not_found == False) {
+		bool not_found = false;
+		while (first <= last && not_found == false) {
 			if (range_array[middle].transaction_id < from){
 				first = middle + 1;    
 			} else if (range_array[middle].transaction_id == from) {
@@ -243,21 +243,21 @@ Boolean_t checkSingleQuery(Journal_t** journal_array, Query_t* query, uint64_t f
 				break;
 			} else {
 				if(middle == 0){
-					not_found = True;
+					not_found = true;
 					break;
 				}
 				last = middle - 1;
 			}
 			middle = (first + last)/2;
 		}
-		if (first > last || not_found == True){	//Not found
+		if (first > last || not_found == true){	//Not found
 			first_appearance = (last <= first) ? last : first;
 			while(first_appearance < range_size && range_array[first_appearance].transaction_id < from){
 				first_appearance++;
 			}
 		}
 		if(first_appearance >= range_size){
-			return False;
+			return false;
 		}
 		while(first_appearance > 0 && range_array[first_appearance-1].transaction_id == range_array[first_appearance].transaction_id){
 			first_appearance--;
@@ -266,17 +266,17 @@ Boolean_t checkSingleQuery(Journal_t** journal_array, Query_t* query, uint64_t f
 		while(i < range_size && range_array[i].transaction_id <= to ) {				/* for i in range_array */
 			uint64_t offset = range_array[i].rec_offset;
 			JournalRecord_t* record = &journal->records[offset];
-			Boolean_t record_result = True;
+			bool record_result = true;
 			for (j = 1 ; j < query->columnCount ; j++) { 	/* check all column constraints */
 				Column_t* constraint = &query->columns[j];
-				Boolean_t partial_result = checkConstraint(record,constraint);
+				bool partial_result = checkConstraint(record,constraint);
 				record_result = record_result && partial_result;
-				if(partial_result == False){
+				if(partial_result == false){
 					break;
 				}
 			}
-			if(record_result == True){ /*Short circuiting*/
-				return True;
+			if(record_result == true){ /*Short circuiting*/
+				return true;
 			}
 			result = result || record_result;
 			i++;
@@ -286,17 +286,17 @@ Boolean_t checkSingleQuery(Journal_t** journal_array, Query_t* query, uint64_t f
 		i = first_appearance;
 		while(i < journal->num_of_recs && journal->records[i].transaction_id <= to ) {
 			JournalRecord_t* record = &journal->records[i];
-			Boolean_t record_result = True;
+			bool record_result = true;
 			for(j = 0; j < query->columnCount; j++){
 				Column_t* constraint = &query->columns[j];
-				Boolean_t partial_result = checkConstraint(record,constraint);
+				bool partial_result = checkConstraint(record,constraint);
 				record_result = record_result && partial_result;
-				if(partial_result == False){
+				if(partial_result == false){
 					break;
 				}
 			}
-			if(record_result == True){ /*Short circuiting*/
-				return True;
+			if(record_result == true){ /*Short circuiting*/
+				return true;
 			}
 			result = result || record_result;
 			i++;
@@ -447,7 +447,7 @@ void destroy_validation_list(Val_list_t* list){
 	free(list);
 }
 
-Boolean_t validation_isEmpty(Val_list_t* list){
+bool validation_isEmpty(Val_list_t* list){
 	return (list->size == 0);
 }
 

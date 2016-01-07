@@ -6,9 +6,9 @@
 #include "parser.h"
 #include "journal.h"
 
-Boolean_t* usage(int argc, char **argv) {
+bool* usage(int argc, char **argv) {
 	int i;
-	Boolean_t* modes = calloc(2, sizeof(Boolean_t));
+	bool* modes = calloc(2, sizeof(bool));
 	for (i = 1 ; i < argc ; i++) {
 		if (!strcmp(argv[i], "-tid") || !strcmp(argv[i], "tid") || !strcmp(argv[i], "--tid")) {
 			modes[0] = True;
@@ -23,7 +23,7 @@ Boolean_t* usage(int argc, char **argv) {
 }
 
 int main(int argc, char **argv) {
-	Boolean_t* modes = usage(argc, argv); /* modes[0]: tid on/off, modes[1]: predicate on/off*/
+	bool* modes = usage(argc, argv); /* modes[0]: tid on/off, modes[1]: predicate on/off*/
 	MessageHead_t head;
 	void *body = NULL;
 	uint32_t len;
