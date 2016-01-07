@@ -14,22 +14,22 @@ predicateHash* predicateCreateHash(void) {
 	return hash;
 }
 
-Boolean_t predicateRecordsEqual(predicateSubBucket* record1, predicateSubBucket* record2) {
+bool predicateRecordsEqual(predicateSubBucket* record1, predicateSubBucket* record2) {
 	if (record1->range_start == record2->range_start && record1->range_end == record2->range_end && record1->condition->column == record2->condition->column
 			&& record1->condition->op == record2->condition->op && record1->condition->value == record2->condition->value)
 	{	
-		return True;
+		return true;
 	}
-	return False;
+	return false;
 }
 
-Boolean_t predicateRecordsEqualRangeArray(predicateSubBucket* record1, PredicateRangeArray* record2) {
+bool predicateRecordsEqualRangeArray(predicateSubBucket* record1, PredicateRangeArray* record2) {
 	if (record1->range_start == record2->from && record1->range_end == record2->to && record1->condition->column == record2->column
 			&& record1->condition->op == record2->op && record1->condition->value == record2->value)
 	{	
-		return True;
+		return true;
 	}
-	return False;
+	return false;
 }
 
 int predicateInsertHashRecord(predicateHash* hash, predicateSubBucket* predicate_record) {

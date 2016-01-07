@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <inttypes.h>
 #include <errno.h>
+#include <stdbool.h>
 #include <string.h>
 #include "constants.h"
 
@@ -48,7 +49,7 @@ void tidCleanBucket(tidBucket *);
 /****************************************************/
 
 /*SEARCH TO HASH AND OTHER HELPER METHODS*/
-uint64_t tidGetHashOffset(tidHash *, uint64_t, Boolean_t *);
+uint64_t tidGetHashOffset(tidHash *, uint64_t, bool *);
 /****************************************/
 
 /*DELETE HASH FUNCTION*/

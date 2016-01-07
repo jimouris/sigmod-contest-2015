@@ -10,8 +10,7 @@
 #include <stdint.h>
 #include "murmurhash.h"
 
-uint32_t
-murmurhash (const char *key, uint32_t len, uint32_t seed) {
+uint32_t murmurhash (const char *key, uint32_t len, uint32_t seed) {
   uint32_t c1 = 0xcc9e2d51;
   uint32_t c2 = 0x1b873593;
   uint32_t r1 = 15;

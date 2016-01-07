@@ -141,16 +141,16 @@ inline uint64_t tidHashFunction(uint64_t size, uint64_t x) {
     return (x % size);
 }
 
-uint64_t tidGetHashOffset(tidHash* hash, uint64_t transaction_id, Boolean_t *found) {
+uint64_t tidGetHashOffset(tidHash* hash, uint64_t transaction_id, bool *found) {
 	uint64_t bucket_num = tidHashFunction(hash->size, transaction_id);
 	uint32_t i;
 	for (i = 0 ; i < hash->index[bucket_num]->current_subBuckets ; i++) { /* for i in subBuckets */
 		if (hash->index[bucket_num]->key_buckets[i]->transaction_id == transaction_id) {
-			*found = True;
+			*found = true;
 			return hash->index[bucket_num]->key_buckets[i]->rec_offset;
 		}
 	}
-	*found = False;
+	*found = false;
 	return 0;
 } 
 

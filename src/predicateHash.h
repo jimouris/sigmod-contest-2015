@@ -62,7 +62,7 @@ int predicateInsertHashRecord(predicateHash*, predicateSubBucket*);
 predicateBucket* predicateCreateNewBucket(uint32_t);
 predicateSubBucket* predicateCreateNewSubBucket(predicateSubBucket *);
 void predicateCleanBucket(predicateBucket *);
-Boolean_t predicateRecordsEqual(predicateSubBucket*, predicateSubBucket*);
+bool predicateRecordsEqual(predicateSubBucket*, predicateSubBucket*);
 BitSet_t* predicateGetBitSet(predicateHash *, uint64_t, uint64_t, uint32_t, Op_t op, uint64_t);
 void predicatePrintHash(predicateHash *);
 void predicatePrintBucket(predicateBucket *);
@@ -85,6 +85,6 @@ void predicateFixDeletePointers(predicateHash*, predicateBucket*, predicateBucke
 void predicateDestroyBucketNoSubBuckets(predicateBucket *bucket);
 /**********************/
 
-Boolean_t predicateRecordsEqualRangeArray(predicateSubBucket*, PredicateRangeArray*);
+bool predicateRecordsEqualRangeArray(predicateSubBucket*, PredicateRangeArray*);
 
 #endif
