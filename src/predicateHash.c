@@ -130,35 +130,6 @@ void predicateCopyBucketPtrs(predicateBucket* dst, predicateBucket* src) {
 	dst->current_subBuckets = src->current_subBuckets;
 }
 
-// void predicateCopySubbucketTransactions(predicateSubBucket* dst, predicateSubBucket* src){
-// 	dst->range_start = src->range_start;
-// 	dst->range_end = src->range_end;
-// 	if (dst->bit_set == NULL) {
-// 		dst->bit_set = createBitSet(src->bit_set->bit_size);
-// 	}
-// 	copyBitSet(dst->bit_set, src->bit_set);
-// 	dst->open_requests = src->open_requests;
-// 	dst->condition->column = src->condition->column; 
-// 	dst->condition->op = src->condition->op;
-// 	dst->condition->value = src->condition->value;
-// }
-
-// predicateSubBucket* predicateCreateNewSubBucket(predicateSubBucket* src_sub) {
-// 	predicateSubBucket *new_sub_bucket = malloc(sizeof(predicateSubBucket));
-// 	ALLOCATION_ERROR(new_sub_bucket);
-// 	new_sub_bucket->range_start = src_sub->range_start;
-// 	new_sub_bucket->range_end = src_sub->range_end;
-// 	new_sub_bucket->open_requests = src_sub->open_requests;
-// 	new_sub_bucket->condition = malloc(sizeof(Column_t));
-// 	ALLOCATION_ERROR(new_sub_bucket->condition);
-// 	new_sub_bucket->condition->column = src_sub->condition->column; 
-// 	new_sub_bucket->condition->op = src_sub->condition->op;
-// 	new_sub_bucket->condition->value = src_sub->condition->value;
-// 	new_sub_bucket->bit_set = createBitSet(src_sub->bit_set->bit_size);
-// 	copyBitSet(new_sub_bucket->bit_set, src_sub->bit_set);
-// 	return new_sub_bucket;
-// }
-
 predicateSubBucket* createPredicateSubBucket(uint64_t from, uint64_t to, uint32_t column, Op_t op, uint64_t value){
 	predicateSubBucket* subBukcet = malloc(sizeof(predicateSubBucket));
 	ALLOCATION_ERROR(subBukcet);
@@ -210,34 +181,12 @@ uint64_t predicateHashFunction(uint64_t size, uint64_t from, uint64_t to, uint32
    hash *= 37;
    hash += to;
    return hash % size;
-/*giannopoulos*/
-    // char str[50];
-    // char* str1 = str;
-    // sprintf(str,"%" PRIu32 "%d%zu%zu%zu", predicate->condition->column,
-		  //    predicate->condition->op, predicate->condition->value, 
-		  //    predicate->range_start, predicate->range_end);
-    // uint64_t hash = 0;
-    // uint64_t base = 1;
-    // // printf("string: %s\n",str);
-    // int c;
-    // while ((c = *str1++) != '\0'){
-    //      hash += base*(c - '0');
-    //      base *= 10; 
-    // }
-    // return hash % size;
-/*giannopoulos*/
 /*murmurhash*/
 	// char* str = malloc(50*sizeof(char));
- //    sprintf(str,"%" PRIu32 "%d%zu%zu%zu", column,
-	// 	     op, value, 
-	// 	     from, to);
- //    uint64_t hash =  murmurhash(str,strlen(str),0) % size;
- //    free(str);
- //    return hash;
-/*murmar has end*/
-	/*beris super hash function*/
-	// return ( ( 193 * predicate->condition->op + 47*predicate->condition->column + 5351*predicate->condition->value + 
-	// 		   6803*predicate->range_start + 1289*predicate->range_end + 31531) % size);
+	// sprintf(str,"%" PRIu32 "%d%zu%zu%zu", column, op, value, from, to);
+	// uint64_t hash =  murmurhash(str,strlen(str),0) % size;
+	// free(str);
+	// return hash;
 }
 
 /* printsBucket various info */
@@ -320,8 +269,8 @@ int predicateDeleteHashRecord(predicateHash* hash, predicateSubBucket* predicate
 }
 
 void predicateMoveSubBucketsLeft(predicateBucket* bucket, uint32_t index) {
-		uint32_t i;
-		for(i = index ; i < bucket->current_subBuckets; i++) {
+	uint32_t i;
+	for(i = index ; i < bucket->current_subBuckets; i++) {
 			bucket->key_buckets[i-1] = bucket->key_buckets[i];
 			bucket->key_buckets[i] = NULL;
 	}
@@ -367,11 +316,9 @@ uint8_t predicateTryCollapseIndex(predicateHash* hash) {
 }
 
 void predicateTryMergeBuckets(predicateHash* hash, uint64_t bucket_num ) {
-	
 	if (hash->global_depth == 0) { /*base case for recursion*/
 		return;
 	}
-
 	predicateBucket *bucket = hash->index[bucket_num];
 	uint32_t ld_oldSize = 1 << (bucket->local_depth - 1);
 	uint64_t buddy_index;
@@ -383,7 +330,6 @@ void predicateTryMergeBuckets(predicateHash* hash, uint64_t bucket_num ) {
 		buddy_index = bucket_num - ld_oldSize;
 		// fprintf(stderr,"It is above with buddy_index %llu\n",buddy_index);
 	}
-
 	if (bucket != hash->index[buddy_index] && bucket->local_depth == hash->index[buddy_index]->local_depth) { /*we have a buddy and not the the bucket itself*/
 		predicateBucket *buddyBucket = hash->index[buddy_index];
 		uint64_t mergedBucket_entries = bucket->current_subBuckets + buddyBucket->current_subBuckets;
@@ -402,7 +348,7 @@ void predicateTryMergeBuckets(predicateHash* hash, uint64_t bucket_num ) {
 			}
 		}
 	}
- }
+}
 
 void predicateDestroyBucket(predicateBucket *bucket) {
 	uint32_t i=0;
