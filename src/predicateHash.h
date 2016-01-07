@@ -65,6 +65,7 @@ typedef struct ZombieList {
 ZombieList* zombieList_create(void);
 Zombie_node * zombieList_insert_end(ZombieList*, predicateSubBucket*);
 void zombieList_remove(ZombieList *, Zombie_node *);
+void zombieList_destroy(ZombieList *);
 /*******************/
 /* HASH INIT METHOD */
 predicateHash* predicateCreateHash(void); 

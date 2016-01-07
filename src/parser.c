@@ -107,7 +107,6 @@ void processFlush(Flush_t *fl, Journal_t** journal_array, ValidationList_t* vali
 }
 
 void processForget(Forget_t *fo, Journal_t** journal_array,int relation_count) {
-	// Unimplemented;
 	uint32_t i;
 	for(i = 0; i < relation_count; i++){
 		Journal_t* journal = journal_array[i];

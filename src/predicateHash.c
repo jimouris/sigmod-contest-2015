@@ -46,7 +46,15 @@ void zombieList_remove(ZombieList *zombie_list, Zombie_node * zombie) {
 			zombie_list->last_zombie = zombie->prev;
 		}
 	}
+	zombie_list->num_of_zombies--;
 	free(zombie);
+}
+
+
+void zombieList_destroy(ZombieList *zombie_list){
+	while(zombie_list->num_of_zombies > 0)
+		zombieList_remove(zombie_list, zombie_list->first_zombie);
+	free(zombie_list);
 }
 
 predicateHash* predicateCreateHash(void) {
@@ -100,6 +108,9 @@ int predicateInsertHashRecord(predicateHash* hash, uint64_t from, uint64_t to, u
 	for (i = 0 ; i < bucket->current_subBuckets; i++) {			/* for all subbuckets */
 		if (predicateRecordsEqualArguements(bucket->key_buckets[i], from, to, column, op, value)) {	/* if there is a predicateSubBucket with equal fields */
 			if(validationId != bucket->key_buckets[i]->last_validationId){
+				if(bucket->key_buckets[i]->open_requests == 0){
+					zombieList_remove(hash->zombie_list, bucket->key_buckets[i]->zombie);
+				}
 				bucket->key_buckets[i]->open_requests++;
 				bucket->key_buckets[i]->last_validationId = validationId;
 			}
@@ -326,6 +337,7 @@ int predicateDestroyHash(predicateHash* hash) {
 		hash->index[i] = NULL;
 		bucketPtr = NULL;
 	}
+	zombieList_destroy(hash->zombie_list);
 	free(hash->index);
 	free(hash);
 	hash = NULL;
@@ -445,15 +457,23 @@ void predicateDestroySubBucket(predicateSubBucket *sub_bucket) {
 	sub_bucket = NULL;
 }
 
-void forgetPredicateIndex(predicateHash* hash,uint64_t transaction_id) {
-	uint64_t i;
-	uint32_t j;
-	for (i = 0 ; i < hash->size ; i++) { /*for every bucket on the hash*/
-		predicateBucket * bucketPtr = hash->index[i];
-		for (j = 0 ; j < bucketPtr->current_subBuckets ; j++) {
-			if (bucketPtr->key_buckets[j]->range_start < transaction_id) {
-				predicateDeleteHashRecord(hash,bucketPtr->key_buckets[j]);
-			}
+void forgetPredicateIndex(predicateHash* hash, uint64_t transaction_id) {
+	Zombie_node* node = hash->zombie_list->first_zombie;
+	Zombie_node* to_delete = NULL;
+	while(node != NULL){
+		if(node->subBucket->range_start < transaction_id){
+			to_delete = node;
+			predicateDeleteHashRecord(hash,node->subBucket);
 		}
+		node = node->next;
+		// zombieList_remove(hash->zombie_list, to_delete);
 	}
+	// for (i = 0 ; i < hash->size ; i++) { /*for every bucket on the hash*/
+	// 	predicateBucket * bucketPtr = hash->index[i];
+	// 	for (j = 0 ; j < bucketPtr->current_subBuckets ; j++) {
+	// 		if (bucketPtr->key_buckets[j]->range_start < transaction_id) {
+	// 			predicateDeleteHashRecord(hash,bucketPtr->key_buckets[j]);
+	// 		}
+	// 	}
+	// }
 }
