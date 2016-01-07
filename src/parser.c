@@ -63,14 +63,17 @@ void processValidationQueries(ValidationQueries_t *v, Journal_t** journal_array,
 		// 	}
 		// }
 		/*Bring C0==X first*/
+
+
 		qsort(query->columns, query->columnCount, sizeof(Column_t), cmp_col);
-		for(j = 0; j < query->columnCount; j++) {
-			Column_t* predicate = &query->columns[j];
-			// predicateSubBucket* predicateSubBucket = createPredicateSubBucket(val_query->from, val_query->to, predicate->column, predicate->op, predicate->value);
-			predicateInsertHashRecord(journal->predicate_index,val_query->from, val_query->to, predicate->column, predicate->op, predicate->value, val_query->validationId);
+		if (journal->predicate_index != NULL) {
+			for(j = 0; j < query->columnCount; j++) {
+				Column_t* predicate = &query->columns[j];
+				// predicateSubBucket* predicateSubBucket = createPredicateSubBucket(val_query->from, val_query->to, predicate->column, predicate->op, predicate->value);
+				predicateInsertHashRecord(journal->predicate_index,val_query->from, val_query->to, predicate->column, predicate->op, predicate->value, val_query->validationId);
+			}	
 		}
-
-
+		
 		reader += sizeof(Query_t) + (sizeof(Column_t) * query->columnCount);
 	}
 	// printValidation(val_query);
