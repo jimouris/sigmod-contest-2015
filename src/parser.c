@@ -48,9 +48,11 @@ void processTransaction(Transaction_t *t, Journal_t** journal_array) {
 void processValidationQueries(ValidationQueries_t *v, Journal_t** journal_array, ValidationList_t* validation_list) {
 	ValidationQueries_t* val_query = v;
 	char* reader = v->queries;
-	uint32_t i;
+	uint32_t i,j;
 	for (i = 0; i < v->queryCount; i++) {
 		Query_t* query = (Query_t*)reader;
+		Journal_t* journal = journal_array[query->relationId];
+		/*Bring C0==X first*/
 		// uint32_t j;
 		// for(j = 0; j<query->columnCount; j++){
 		// 	if(query->columns[j].column == 0 && query->columns[j].op == Equal){
@@ -60,7 +62,15 @@ void processValidationQueries(ValidationQueries_t *v, Journal_t** journal_array,
 		// 		break;
 		// 	}
 		// }
+		/*Bring C0==X first*/
 		qsort(query->columns, query->columnCount, sizeof(Column_t), cmp_col);
+		for(j = 0; j < query->columnCount; j++) {
+			Column_t* predicate = &query->columns[j];
+			// predicateSubBucket* predicateSubBucket = createPredicateSubBucket(val_query->from, val_query->to, predicate->column, predicate->op, predicate->value);
+			predicateInsertHashRecord(journal->predicate_index,val_query->from, val_query->to, predicate->column, predicate->op, predicate->value, val_query->validationId);
+		}
+
+
 		reader += sizeof(Query_t) + (sizeof(Column_t) * query->columnCount);
 	}
 	// printValidation(val_query);
@@ -179,12 +189,9 @@ Boolean_t checkQueryHash(Journal_t** journal_array, Query_t* query, uint64_t fro
 				}
 			}
 
-			//Insert predicate in the hash table.
-			predicateSubBucket* predicateSubBucket = createPredicateSubBucket(from, to, predicate->column, predicate->op, predicate->value);
-			predicateSubBucket->bit_set = predicate_bit_set;
-			predicateInsertHashRecord(journal->predicate_index,predicateSubBucket);
+			//Insert bit_set in the hash table.
+			predicateInsertBitSet(journal->predicate_index,from, to, predicate->column, predicate->op, predicate->value, predicate_bit_set);
 		}
-
 		if(i == 0) {
 			intersection = createBitSet(predicate_bit_set->bit_size);	/*Bit set of the whole query*/
 			copyBitSet(intersection, predicate_bit_set);

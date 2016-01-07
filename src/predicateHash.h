@@ -18,6 +18,7 @@ typedef struct predicateSubBucket {
 	Column_t *condition;
 	BitSet_t* bit_set;
 	uint64_t open_requests;
+	uint64_t last_validationId;
 } predicateSubBucket;
 
 typedef struct predicateBucket {
@@ -58,7 +59,7 @@ void predicateFixSplitPointers(predicateHash*, predicateBucket*, predicateBucket
 void predicateDuplicateIndex(predicateHash*);
 void predicateCopyBucketPtrs(predicateBucket*, predicateBucket*);
 void predicateCopySubbucketTransactions(predicateSubBucket*, predicateSubBucket*);
-int predicateInsertHashRecord(predicateHash*, predicateSubBucket*);
+int predicateInsertHashRecord(predicateHash*, uint64_t, uint64_t, uint32_t, Op_t, uint64_t, uint64_t);
 predicateBucket* predicateCreateNewBucket(uint32_t);
 predicateSubBucket* predicateCreateNewSubBucket(predicateSubBucket *);
 void predicateCleanBucket(predicateBucket *);
@@ -66,7 +67,7 @@ Boolean_t predicateRecordsEqual(predicateSubBucket*, predicateSubBucket*);
 BitSet_t* predicateGetBitSet(predicateHash *, uint64_t, uint64_t, uint32_t, Op_t op, uint64_t);
 void predicatePrintHash(predicateHash *);
 void predicatePrintBucket(predicateBucket *);
-predicateSubBucket* createPredicateSubBucket(uint64_t, uint64_t, uint32_t, Op_t, uint64_t);
+predicateSubBucket* createPredicateSubBucket(uint64_t, uint64_t, uint32_t, Op_t, uint64_t, uint64_t);
 /*****************************************************/
 
 /*FORGET RELATED FUNCTIONS*/
@@ -85,6 +86,8 @@ void predicateFixDeletePointers(predicateHash*, predicateBucket*, predicateBucke
 void predicateDestroyBucketNoSubBuckets(predicateBucket *bucket);
 /**********************/
 
-Boolean_t predicateRecordsEqualRangeArray(predicateSubBucket*, PredicateRangeArray*);
+Boolean_t predicateRecordsEqualArguements(predicateSubBucket*,  uint64_t, uint64_t, uint32_t, Op_t, uint64_t);
+int predicateInsertBitSet(predicateHash*, uint64_t, uint64_t, uint32_t, Op_t, uint64_t, BitSet_t*);
+
 
 #endif
