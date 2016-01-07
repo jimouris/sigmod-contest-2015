@@ -1,6 +1,54 @@
 #include "murmurhash.h"
 #include "predicateHash.h"
 
+ZombieList* zombieList_create(void) {
+	ZombieList* zombie_list = malloc(sizeof(ZombieList));
+	ALLOCATION_ERROR(zombie_list);
+	zombie_list->first_zombie = NULL;
+	zombie_list->last_zombie = NULL;
+	zombie_list->num_of_zombies = 0;
+	return zombie_list;
+}
+
+Zombie_node * zombieList_insert_end(ZombieList* zombie_list,predicateSubBucket* subBucket) {
+	Zombie_node *new_zombie = malloc(sizeof(Zombie_node));
+	ALLOCATION_ERROR(new_zombie);
+	new_zombie->subBucket = subBucket;
+	new_zombie->next = NULL;	
+	if (zombie_list->num_of_zombies == 0){
+		zombie_list->first_zombie = new_zombie;
+		zombie_list->last_zombie = new_zombie;
+		new_zombie->prev = NULL;		
+	} else {
+		new_zombie->prev = zombie_list->last_zombie;
+		zombie_list->last_zombie->next = new_zombie;
+		zombie_list->last_zombie = new_zombie;
+	}
+	zombie_list->num_of_zombies++;
+	return new_zombie;
+}
+
+void zombieList_remove(ZombieList *zombie_list, Zombie_node * zombie) {
+	if (zombie->next != NULL) { /*there is next zombie*/
+		if (zombie->prev != NULL) { /*somewhere in the middle of the list*/
+			zombie->next->prev = zombie->prev;
+			zombie->prev->next = zombie->next;
+		} else { /*you are the first node*/
+			zombie->next->prev = NULL;
+			zombie_list->first_zombie = zombie->next;
+		}
+	} else {
+		if (zombie->prev == NULL) { /*only one zombie on the zombie list*/
+			zombie_list->first_zombie = NULL;
+			zombie_list->last_zombie = NULL;
+		} else { /*you are the last node*/
+			zombie->prev->next = NULL;
+			zombie_list->last_zombie = zombie->prev;
+		}
+	}
+	free(zombie);
+}
+
 predicateHash* predicateCreateHash(void) {
 	predicateHash *hash = malloc(sizeof(predicateHash));
 	ALLOCATION_ERROR(hash);
@@ -11,6 +59,7 @@ predicateHash* predicateCreateHash(void) {
 	uint64_t i;
 	for (i = 0 ; i < hash->size ; i++)
 		hash->index[i] = predicateCreateNewBucket(PREDICATE_GLOBAL_DEPTH_INIT);
+	hash->zombie_list = zombieList_create();
 	return hash;
 }
 
@@ -158,6 +207,7 @@ predicateSubBucket* createPredicateSubBucket(uint64_t from, uint64_t to, uint32_
 	subBukcet->condition->value = value;
 	subBukcet->bit_set = NULL;
 	subBukcet->open_requests = 1;
+	subBukcet->zombie = NULL;
 	subBukcet->last_validationId = validationId;
 	return subBukcet;
 }
@@ -251,6 +301,7 @@ BitSet_t* predicateGetBitSet(predicateHash* hash, uint64_t from, uint64_t to, ui
 			hash->index[bucket_num]->key_buckets[i]->open_requests--;
 			if(hash->index[bucket_num]->key_buckets[i]->open_requests == 0){
 				//Insert into ZombieList
+				hash->index[bucket_num]->key_buckets[i]->zombie = zombieList_insert_end(hash->zombie_list,hash->index[bucket_num]->key_buckets[i]);
 			}
 			return bit_set;
 		}

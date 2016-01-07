@@ -11,6 +11,8 @@
 #include "constants.h"
 
 typedef struct Column Column_t;
+typedef struct Zombie_node Zombie_node;
+typedef struct ZombieList ZombieList;
 
 typedef struct predicateSubBucket {
 	uint64_t range_start;
@@ -19,6 +21,7 @@ typedef struct predicateSubBucket {
 	BitSet_t* bit_set;
 	uint64_t open_requests;
 	uint64_t last_validationId;
+	Zombie_node *zombie;
 } predicateSubBucket;
 
 typedef struct predicateBucket {
@@ -33,6 +36,7 @@ typedef struct predicateHash {
 	uint64_t size;
 	uint32_t global_depth;
 	predicateBucket **index;
+	ZombieList* zombie_list;
 } predicateHash;
 
 	/// The constant
@@ -44,7 +48,24 @@ typedef struct PredicateRangeArray {
 	uint64_t value;
 } PredicateRangeArray;
 
+typedef struct Zombie_node {
+   predicateSubBucket* subBucket;
+   struct Zombie_node *next;
+   struct Zombie_node *prev;
+} Zombie_node;
 
+typedef struct ZombieList {
+  	Zombie_node* first_zombie;
+  	Zombie_node* last_zombie;
+	uint64_t num_of_zombies;
+} ZombieList;
+
+
+/*Zombie functions*/
+ZombieList* zombieList_create(void);
+Zombie_node * zombieList_insert_end(ZombieList*, predicateSubBucket*);
+void zombieList_remove(ZombieList *, Zombie_node *);
+/*******************/
 /* HASH INIT METHOD */
 predicateHash* predicateCreateHash(void); 
 /********************/
@@ -68,6 +89,8 @@ BitSet_t* predicateGetBitSet(predicateHash *, uint64_t, uint64_t, uint32_t, Op_t
 void predicatePrintHash(predicateHash *);
 void predicatePrintBucket(predicateBucket *);
 predicateSubBucket* createPredicateSubBucket(uint64_t, uint64_t, uint32_t, Op_t, uint64_t, uint64_t);
+Boolean_t predicateRecordsEqualArguements(predicateSubBucket*,  uint64_t, uint64_t, uint32_t, Op_t, uint64_t);
+int predicateInsertBitSet(predicateHash*, uint64_t, uint64_t, uint32_t, Op_t, uint64_t, BitSet_t*);
 /*****************************************************/
 
 /*FORGET RELATED FUNCTIONS*/
@@ -85,9 +108,5 @@ int predicateDestroyHash(predicateHash *);
 void predicateFixDeletePointers(predicateHash*, predicateBucket*, predicateBucket* , uint64_t);
 void predicateDestroyBucketNoSubBuckets(predicateBucket *bucket);
 /**********************/
-
-Boolean_t predicateRecordsEqualArguements(predicateSubBucket*,  uint64_t, uint64_t, uint32_t, Op_t, uint64_t);
-int predicateInsertBitSet(predicateHash*, uint64_t, uint64_t, uint32_t, Op_t, uint64_t, BitSet_t*);
-
 
 #endif
