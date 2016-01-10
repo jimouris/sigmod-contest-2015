@@ -33,6 +33,7 @@
 
 # Big input files
 *.test
+*.bin
 
 # Valgrind output
 callgrind.out.*
