@@ -37,3 +37,6 @@
 
 # Valgrind output
 callgrind.out.*
+
+# png graphs
+*.png
