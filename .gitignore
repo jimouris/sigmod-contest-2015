@@ -33,6 +33,10 @@
 
 # Big input files
 *.test
+*.bin
 
 # Valgrind output
 callgrind.out.*
+
+# png graphs
+*.png
