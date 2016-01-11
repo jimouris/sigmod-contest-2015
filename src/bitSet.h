@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include <inttypes.h>
 #include <limits.h>
 #include "constants.h"
@@ -17,7 +18,7 @@ typedef struct BitSet_t {
 	uint64_t bit_size;
 } BitSet_t;
 
-Boolean_t isBitSetEmpty(BitSet_t*);
+bool isBitSetEmpty(BitSet_t*);
 BitSet_t* createBitSet(uint64_t);
 BitSet_t* intersect(BitSet_t*, BitSet_t*);
 

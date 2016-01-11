@@ -22,7 +22,7 @@
 
 // 	// printBitSet(intersection);
 
-// 	isBitSetEmpty(intersection) ? printf("True\n") : printf("False\n");
+// 	isBitSetEmpty(intersection) ? printf("true\n") : printf("false\n");
 
 // 	destroyBitSet(intersection);
 // 	destroyBitSet(bit_set1);
@@ -31,15 +31,15 @@
 // }
 
 
-Boolean_t isBitSetEmpty(BitSet_t* bit_set){
+bool isBitSetEmpty(BitSet_t* bit_set){
 	uint64_t byte_size = BITS2BYTES(bit_set->bit_size);
 	uint64_t i = 0;
 	for(i=0; i< byte_size; i++){
 		if(bit_set->array[i] | 0){
-			return False;
+			return false;
 		}
 	}
-	return True;
+	return true;
 }
 
 /*

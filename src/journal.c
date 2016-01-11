@@ -66,7 +66,7 @@ void destroy_list(List_t* list){
 	free(list);
 }
 
-Boolean_t isEmpty(List_t* list){
+bool isEmpty(List_t* list){
 	return (list->size == 0);
 }
 
@@ -82,7 +82,7 @@ void printList(List_t* list){
 
 /* Journal_t functions */
 
-Journal_t* createJournal(uint64_t relation_id, Boolean_t* modes) {
+Journal_t* createJournal(uint64_t relation_id, bool* modes) {
 	Journal_t* journal = malloc(sizeof(Journal_t));
 	ALLOCATION_ERROR(journal);
 	journal->journal_capacity = JOURNAL_CAPACITY_INIT;
@@ -91,8 +91,8 @@ Journal_t* createJournal(uint64_t relation_id, Boolean_t* modes) {
 	journal->num_of_recs = 0;
 	journal->relation_id = relation_id;
 	journal->index = createHash();
-	journal->tid_index = (modes[0] == True) ? tidCreateHash() : NULL;
-	journal->predicate_index = (modes[1] == True) ? predicateCreateHash() : NULL;
+	journal->tid_index = (modes[0] == true) ? tidCreateHash() : NULL;
+	journal->predicate_index = (modes[1] == true) ? predicateCreateHash() : NULL;
 	return journal;
 }
 
@@ -106,7 +106,7 @@ int increaseJournal(Journal_t* journal){
 
 /*Returns a pointer to the inserted record*/
 
-void insertJournalRecord(Journal_t* journal, uint64_t transaction_id, size_t columns, const uint64_t* column_values, Boolean_t dirty_bit){
+void insertJournalRecord(Journal_t* journal, uint64_t transaction_id, size_t columns, const uint64_t* column_values, bool dirty_bit){
 	if(journal->num_of_recs >= journal->journal_capacity) {
 		increaseJournal(journal);
 	}
@@ -144,26 +144,26 @@ uint64_t getRecordCount(Journal_t* journal, uint64_t range_start, uint64_t range
 	uint64_t first_appearance_start = 0, first_appearance_end = 0;
 	if(journal->tid_index != NULL) {
 		/*Search for range_start*/
-		Boolean_t found = False;
+		bool found = false;
 		uint64_t transaction_id1 = range_start;
-		while(found == False && transaction_id1 <= range_end){
+		while(found == false && transaction_id1 <= range_end){
 			first_appearance_start = tidGetHashOffset(journal->tid_index, transaction_id1, &found);
-			if(found == False){
+			if(found == false){
 				transaction_id1++;
 			} else{
 				break;
 			}
 		}
-		if(found == False){
+		if(found == false){
 			*first_offset = 0;
 			return 0;
 		}
 		/*Search for range_end*/
-		found = False;
+		found = false;
 		uint64_t transaction_id2 = range_end;
-		while(found == False && transaction_id2 >= range_start){
+		while(found == false && transaction_id2 >= range_start){
 			first_appearance_end = tidGetHashOffset(journal->tid_index, transaction_id2, &found);
-			if(found == False){
+			if(found == false){
 				transaction_id2--;
 			} else{
 				break;
@@ -175,9 +175,9 @@ uint64_t getRecordCount(Journal_t* journal, uint64_t range_start, uint64_t range
 		uint64_t first = 0;
 		uint64_t last = journal->num_of_recs - 1;
 		uint64_t middle = (first+last)/2;
-		Boolean_t not_found = False;
+		bool not_found = false;
 
-		while (first <= last && not_found == False) {
+		while (first <= last && not_found == false) {
 			if (journal->records[middle].transaction_id < range_start){
 				first = middle + 1;    
 			}
@@ -187,14 +187,14 @@ uint64_t getRecordCount(Journal_t* journal, uint64_t range_start, uint64_t range
 			}
 			else{
 				if(middle == 0){
-					not_found = True;
+					not_found = true;
 					break;
 				}
 				last = middle - 1;
 			}
 			middle = (first + last)/2;
 		}
-		if (first > last || not_found == True){	//Not found
+		if (first > last || not_found == true){	//Not found
 			first_appearance_start = (last <= first) ? last : first;
 			while(first_appearance_start < journal->num_of_recs && journal->records[first_appearance_start].transaction_id < range_start){
 				first_appearance_start++;
@@ -212,9 +212,9 @@ uint64_t getRecordCount(Journal_t* journal, uint64_t range_start, uint64_t range
 		first = 0;
 		last = journal->num_of_recs - 1;
 		middle = (first+last)/2;
-		not_found = False;
+		not_found = false;
 
-		while (first <= last && not_found == False) {
+		while (first <= last && not_found == false) {
 			if (journal->records[middle].transaction_id < range_end){
 				first = middle + 1;    
 			}
@@ -224,14 +224,14 @@ uint64_t getRecordCount(Journal_t* journal, uint64_t range_start, uint64_t range
 			}
 			else{
 				if(middle == 0){
-					not_found = True;
+					not_found = true;
 					break;
 				}
 				last = middle - 1;
 			}
 			middle = (first + last)/2;
 		}
-		if (first > last || not_found == True){	//Not found
+		if (first > last || not_found == true){	//Not found
 			first_appearance_end = (last > first) ? last : first;
 			if(first_appearance_end >= journal->num_of_recs){
 				first_appearance_end = journal->num_of_recs-1;
@@ -260,17 +260,17 @@ uint64_t getJournalRecords(Journal_t* journal, uint64_t range_start, uint64_t ra
 	uint64_t first_appearance = 0;
 
 	if(journal->tid_index != NULL) {
-		Boolean_t found = False;
+		bool found = false;
 		uint64_t transaction_id = range_start;
-		while(found == False && transaction_id <= range_end){
+		while(found == false && transaction_id <= range_end){
 			first_appearance = tidGetHashOffset(journal->tid_index, transaction_id, &found);
-			if(found == False){
+			if(found == false){
 				transaction_id++;
 			} else{
 				break;
 			}
 		}
-		if(found == False){
+		if(found == false){
 			return journal->num_of_recs;
 		}
 	} else {
@@ -278,9 +278,9 @@ uint64_t getJournalRecords(Journal_t* journal, uint64_t range_start, uint64_t ra
 		uint64_t first = 0;
 		uint64_t last = journal->num_of_recs - 1;
 		uint64_t middle = (first+last)/2;
-		Boolean_t not_found = False;
+		bool not_found = false;
 
-		while (first <= last && not_found == False) {
+		while (first <= last && not_found == false) {
 			if (journal->records[middle].transaction_id < range_start){
 				first = middle + 1;    
 			}
@@ -290,14 +290,14 @@ uint64_t getJournalRecords(Journal_t* journal, uint64_t range_start, uint64_t ra
 			}
 			else{
 				if(middle == 0){
-					not_found = True;
+					not_found = true;
 					break;
 				}
 				last = middle - 1;
 			}
 			middle = (first + last)/2;
 		}
-		if (first > last || not_found == True){	//Not found
+		if (first > last || not_found == true){	//Not found
 			first_appearance = (last <= first) ? last : first;
 			while(first_appearance < journal->num_of_recs && journal->records[first_appearance].transaction_id < range_start){
 				first_appearance++;
@@ -313,7 +313,7 @@ uint64_t getJournalRecords(Journal_t* journal, uint64_t range_start, uint64_t ra
 	return first_appearance;
 }
 
-Boolean_t checkConstraint(JournalRecord_t* record, Column_t* constraint){
+bool checkConstraint(JournalRecord_t* record, Column_t* constraint){
 	uint32_t column = constraint->column;
 	Op_t operator = constraint->op;
 	uint64_t value = constraint->value;
@@ -331,11 +331,11 @@ Boolean_t checkConstraint(JournalRecord_t* record, Column_t* constraint){
 		case GreaterOrEqual:
 			return (record->column_values[column] >= value);
 	}
-	return False;
+	return false;
 }
 
 /*Returns a pointer to the inserted record*/
-void insertJournalRecordCopy(Journal_t* journal, JournalRecord_t* old, uint64_t new_transaction_id, Boolean_t dirty_bit){
+void insertJournalRecordCopy(Journal_t* journal, JournalRecord_t* old, uint64_t new_transaction_id, bool dirty_bit){
 	uint64_t transaction_id = new_transaction_id;
 	size_t columns = old->columns;
 	uint64_t* column_values = old->column_values;
