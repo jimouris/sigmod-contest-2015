@@ -145,31 +145,41 @@ uint64_t getRecordCount(Journal_t* journal, uint64_t range_start, uint64_t range
 	if(journal->tid_index != NULL) {
 		/*Search for range_start*/
 		bool found1 = false, found2 = false;
+		bool range_start_found = true;
 		uint64_t transaction_id1 = range_start;
 		uint64_t transaction_id2 = range_end;
 		first_appearance_start = tidGetHashOffset(journal->tid_index, transaction_id1, &found1);
 		first_appearance_end = tidGetHashOffset(journal->tid_index, transaction_id2, &found2);
 		if(found1 == false){
 			if(found2 == false) {
-				first_appearance_start = findRangeStart(journal, 0, journal->num_of_recs-1, range_start, first_offset);
-				first_appearance_end = findRangeEnd(journal, 0, journal->num_of_recs-1, range_end, first_offset);
+				first_appearance_start = findRangeStart(journal, 0, journal->num_of_recs-1, range_start, first_offset,&range_start_found);
+				if(range_start_found == false){
+					*first_offset = 0;
+					return 0;
+				}
+				first_appearance_end = findRangeEnd(journal, 0, journal->num_of_recs-1, range_end, first_offset, first_appearance_start);
 			} else {
-				first_appearance_start = findRangeStart(journal, 0, first_appearance_end, range_start, first_offset);
+				first_appearance_start = findRangeStart(journal, 0, first_appearance_end, range_start, first_offset, &range_start_found);
+				if(range_start_found == false){
+					*first_offset = 0;
+					return 0;
+				}
 			}
 		} else {
 			if(found2 == false){
-				first_appearance_end = findRangeEnd(journal, first_appearance_start, journal->num_of_recs-1, range_end, first_offset);
-			} 
-			
+				first_appearance_end = findRangeEnd(journal, 0, journal->num_of_recs-1, range_end, first_offset, first_appearance_start);
+			} 			
 		}
 	} else {
-		/*Search for range_start*/
-		first_appearance_start = findRangeStart(journal, 0, journal->num_of_recs-1, range_start, first_offset);
-		
-		/*Search for range_end*/
-		first_appearance_end = findRangeEnd(journal, first_appearance_start, journal->num_of_recs-1, range_end, first_offset);
-		
+		bool found = true;
+		first_appearance_start = findRangeStart(journal, 0, journal->num_of_recs-1, range_start, first_offset, &found);
+		if(found == false){
+			*first_offset = 0;
+			return 0;
+		}
+		first_appearance_end = findRangeEnd(journal, 0, journal->num_of_recs-1, range_end, first_offset, first_appearance_start);
 	}
+
 	uint64_t last = first_appearance_end;
 	while(last+1 < journal->num_of_recs && journal->records[last+1].transaction_id <= range_end ) {
 		last++;
@@ -178,11 +188,10 @@ uint64_t getRecordCount(Journal_t* journal, uint64_t range_start, uint64_t range
 	return (last - first_appearance_start) + 1;
 }
 
-uint64_t findRangeEnd(Journal_t* journal, uint64_t first, uint64_t last, uint64_t key, uint64_t* first_offset){
+uint64_t findRangeEnd(Journal_t* journal, uint64_t first, uint64_t last, uint64_t key, uint64_t* first_offset, uint64_t first_appearance_start){
 	uint64_t middle = (first+last)/2;
 	bool not_found = false;
 	uint64_t first_appearance_end = 0;
-	uint64_t initial_first = first;
 
 	while (first <= last && not_found == false) {
 		if (journal->records[middle].transaction_id < key){
@@ -206,7 +215,7 @@ uint64_t findRangeEnd(Journal_t* journal, uint64_t first, uint64_t last, uint64_
 		if(first_appearance_end >= journal->num_of_recs){
 			first_appearance_end = journal->num_of_recs-1;
 		}
-		while(first_appearance_end >= initial_first && journal->records[first_appearance_end].transaction_id > key){
+		while(first_appearance_end >= first_appearance_start && journal->records[first_appearance_end].transaction_id > key){
 			first_appearance_end--;
 		}
 	}
@@ -214,11 +223,11 @@ uint64_t findRangeEnd(Journal_t* journal, uint64_t first, uint64_t last, uint64_
 }
 
 
-uint64_t findRangeStart(Journal_t* journal, uint64_t first, uint64_t last, uint64_t key, uint64_t* first_offset){
+uint64_t findRangeStart(Journal_t* journal, uint64_t first, uint64_t last, uint64_t key, uint64_t* first_offset, bool* found){
 	uint64_t middle = (first+last)/2;
 	bool not_found = false;
+	*found = true;
 	uint64_t first_appearance_start = 0;
-
 	while (first <= last && not_found == false) {
 		if (journal->records[middle].transaction_id < key){
 			first = middle + 1;    
@@ -244,6 +253,7 @@ uint64_t findRangeStart(Journal_t* journal, uint64_t first, uint64_t last, uint6
 	}
 	if(first_appearance_start >= journal->num_of_recs){
 		*first_offset = 0;
+		*found = false;
 		return 0;
 	}
 	while(first_appearance_start > 0 && journal->records[first_appearance_start-1].transaction_id == journal->records[first_appearance_start].transaction_id){

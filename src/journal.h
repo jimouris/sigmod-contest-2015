@@ -2,6 +2,7 @@
 #define __JOURNAL__
 #include <inttypes.h>
 #include <stdbool.h>
+#include <assert.h>
 #include "PKeyHash.h"
 #include "tidHash.h"
 #include "predicateHash.h"
@@ -89,8 +90,8 @@ void printJournalRecord(JournalRecord_t*);
 
 uint64_t getRecordCount(Journal_t*, uint64_t, uint64_t, uint64_t*);
 
-uint64_t findRangeEnd(Journal_t*, uint64_t, uint64_t, uint64_t, uint64_t*);
-uint64_t findRangeStart(Journal_t*, uint64_t, uint64_t, uint64_t, uint64_t*);
+uint64_t findRangeEnd(Journal_t*, uint64_t, uint64_t, uint64_t, uint64_t*, uint64_t);
+uint64_t findRangeStart(Journal_t*, uint64_t, uint64_t, uint64_t, uint64_t*, bool*);
 
 
 #endif
