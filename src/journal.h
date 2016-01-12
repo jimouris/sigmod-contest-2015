@@ -2,7 +2,6 @@
 #define __JOURNAL__
 #include <inttypes.h>
 #include <stdbool.h>
-#include <assert.h>
 #include "PKeyHash.h"
 #include "tidHash.h"
 #include "predicateHash.h"

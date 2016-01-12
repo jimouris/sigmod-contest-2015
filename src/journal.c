@@ -222,7 +222,6 @@ uint64_t findRangeEnd(Journal_t* journal, uint64_t first, uint64_t last, uint64_
 	return first_appearance_end;
 }
 
-
 uint64_t findRangeStart(Journal_t* journal, uint64_t first, uint64_t last, uint64_t key, uint64_t* first_offset, bool* found){
 	uint64_t middle = (first+last)/2;
 	bool not_found = false;
