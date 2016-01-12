@@ -107,6 +107,7 @@ void processFlush(Flush_t *fl, Journal_t** journal_array, ValidationList_t* vali
 }
 
 void processForget(Forget_t *fo, Journal_t** journal_array,int relation_count) {
+	return;
 	uint32_t i;
 	for(i = 0; i < relation_count; i++){
 		Journal_t* journal = journal_array[i];
@@ -185,7 +186,32 @@ bool checkQueryHash(Journal_t** journal_array, Query_t* query, uint64_t from, ui
 			} else { /*Else check all the records in the range [from,to]*/
 				for(j = 0, offset = first_offset; j < record_count; j++, offset++){
 					JournalRecord_t* record = &journal->records[offset];
-					if(checkConstraint(record, predicate)){
+					// if(checkConstraint(record, predicate)){
+					uint32_t column = predicate->column;
+					Op_t operator = predicate->op;
+					uint64_t value = predicate->value;
+					bool cond = false;
+					switch(operator){
+						case Equal:
+							cond = (record->column_values[column] == value);
+							break;
+						case NotEqual:
+							cond = (record->column_values[column] != value);
+							break;
+						case Less:
+							cond = (record->column_values[column] < value);
+							break;
+						case LessOrEqual:
+							cond = (record->column_values[column] <= value);
+							break;
+						case Greater:
+							cond = (record->column_values[column] > value);
+							break;
+						case GreaterOrEqual:
+							cond = (record->column_values[column] >= value);
+							break;
+					}
+					if(cond){
 						setBit(j,predicate_bit_set);
 					}
 				}
@@ -269,7 +295,32 @@ bool checkSingleQuery(Journal_t** journal_array, Query_t* query, uint64_t from, 
 			bool record_result = true;
 			for (j = 1 ; j < query->columnCount ; j++) { 	/* check all column constraints */
 				Column_t* constraint = &query->columns[j];
-				bool partial_result = checkConstraint(record,constraint);
+				uint32_t column = constraint->column;
+				Op_t operator = constraint->op;
+				uint64_t value = constraint->value;
+				bool cond = false;
+				switch(operator){
+					case Equal:
+						cond = (record->column_values[column] == value);
+						break;
+					case NotEqual:
+						cond = (record->column_values[column] != value);
+						break;
+					case Less:
+						cond = (record->column_values[column] < value);
+						break;
+					case LessOrEqual:
+						cond = (record->column_values[column] <= value);
+						break;
+					case Greater:
+						cond = (record->column_values[column] > value);
+						break;
+					case GreaterOrEqual:
+						cond = (record->column_values[column] >= value);
+						break;
+				}
+				bool partial_result = cond;
+
 				record_result = record_result && partial_result;
 				if(partial_result == false){
 					break;
@@ -289,7 +340,31 @@ bool checkSingleQuery(Journal_t** journal_array, Query_t* query, uint64_t from, 
 			bool record_result = true;
 			for(j = 0; j < query->columnCount; j++){
 				Column_t* constraint = &query->columns[j];
-				bool partial_result = checkConstraint(record,constraint);
+				uint32_t column = constraint->column;
+				Op_t operator = constraint->op;
+				uint64_t value = constraint->value;
+				bool cond = false;
+				switch(operator){
+					case Equal:
+						cond = (record->column_values[column] == value);
+						break;
+					case NotEqual:
+						cond = (record->column_values[column] != value);
+						break;
+					case Less:
+						cond = (record->column_values[column] < value);
+						break;
+					case LessOrEqual:
+						cond = (record->column_values[column] <= value);
+						break;
+					case Greater:
+						cond = (record->column_values[column] > value);
+						break;
+					case GreaterOrEqual:
+						cond = (record->column_values[column] >= value);
+						break;
+				}
+				bool partial_result = cond;
 				record_result = record_result && partial_result;
 				if(partial_result == false){
 					break;
