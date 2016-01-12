@@ -145,31 +145,6 @@ uint64_t getRecordCount(Journal_t* journal, uint64_t range_start, uint64_t range
 	if(journal->tid_index != NULL) {
 		/*Search for range_start*/
 		bool found1 = false, found2 = false;
-		// uint64_t transaction_id1 = range_start;
-		// while(found == false && transaction_id1 <= range_end){
-		// 	first_appearance_start = tidGetHashOffset(journal->tid_index, transaction_id1, &found);
-		// 	if(found == false){
-		// 		transaction_id1++;
-		// 	} else{
-		// 		break;
-		// 	}
-		// }
-		// if(found == false){
-		// 	*first_offset = 0;
-		// 	return 0;
-		// }
-		// /*Search for range_end*/
-		// found = false;
-		// uint64_t transaction_id2 = range_end;
-		// while(found == false && transaction_id2 >= range_start){
-		// 	first_appearance_end = tidGetHashOffset(journal->tid_index, transaction_id2, &found);
-		// 	if(found == false){
-		// 		transaction_id2--;
-		// 	} else{
-		// 		break;
-		// 	}
-		// }
-
 		uint64_t transaction_id1 = range_start;
 		uint64_t transaction_id2 = range_end;
 		first_appearance_start = tidGetHashOffset(journal->tid_index, transaction_id1, &found1);
