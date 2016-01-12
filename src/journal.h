@@ -89,5 +89,8 @@ void printJournalRecord(JournalRecord_t*);
 
 uint64_t getRecordCount(Journal_t*, uint64_t, uint64_t, uint64_t*);
 
+uint64_t findRangeEnd(Journal_t*, uint64_t, uint64_t, uint64_t, uint64_t*);
+uint64_t findRangeStart(Journal_t*, uint64_t, uint64_t, uint64_t, uint64_t*);
+
 
 #endif

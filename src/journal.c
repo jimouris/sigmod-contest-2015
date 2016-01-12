@@ -144,102 +144,56 @@ uint64_t getRecordCount(Journal_t* journal, uint64_t range_start, uint64_t range
 	uint64_t first_appearance_start = 0, first_appearance_end = 0;
 	if(journal->tid_index != NULL) {
 		/*Search for range_start*/
-		bool found = false;
+		bool found1 = false, found2 = false;
+		// uint64_t transaction_id1 = range_start;
+		// while(found == false && transaction_id1 <= range_end){
+		// 	first_appearance_start = tidGetHashOffset(journal->tid_index, transaction_id1, &found);
+		// 	if(found == false){
+		// 		transaction_id1++;
+		// 	} else{
+		// 		break;
+		// 	}
+		// }
+		// if(found == false){
+		// 	*first_offset = 0;
+		// 	return 0;
+		// }
+		// /*Search for range_end*/
+		// found = false;
+		// uint64_t transaction_id2 = range_end;
+		// while(found == false && transaction_id2 >= range_start){
+		// 	first_appearance_end = tidGetHashOffset(journal->tid_index, transaction_id2, &found);
+		// 	if(found == false){
+		// 		transaction_id2--;
+		// 	} else{
+		// 		break;
+		// 	}
+		// }
+
 		uint64_t transaction_id1 = range_start;
-		while(found == false && transaction_id1 <= range_end){
-			first_appearance_start = tidGetHashOffset(journal->tid_index, transaction_id1, &found);
-			if(found == false){
-				transaction_id1++;
-			} else{
-				break;
-			}
-		}
-		if(found == false){
-			*first_offset = 0;
-			return 0;
-		}
-		/*Search for range_end*/
-		found = false;
 		uint64_t transaction_id2 = range_end;
-		while(found == false && transaction_id2 >= range_start){
-			first_appearance_end = tidGetHashOffset(journal->tid_index, transaction_id2, &found);
-			if(found == false){
-				transaction_id2--;
-			} else{
-				break;
+		first_appearance_start = tidGetHashOffset(journal->tid_index, transaction_id1, &found1);
+		first_appearance_end = tidGetHashOffset(journal->tid_index, transaction_id2, &found2);
+		if(found1 == false){
+			if(found2 == false) {
+				first_appearance_start = findRangeStart(journal, 0, journal->num_of_recs-1, range_start, first_offset);
+				first_appearance_end = findRangeEnd(journal, 0, journal->num_of_recs-1, range_end, first_offset);
+			} else {
+				first_appearance_start = findRangeStart(journal, 0, first_appearance_end, range_start, first_offset);
 			}
+		} else {
+			if(found2 == false){
+				first_appearance_end = findRangeEnd(journal, first_appearance_start, journal->num_of_recs-1, range_end, first_offset);
+			} 
+			
 		}
-		
 	} else {
 		/*Search for range_start*/
-		uint64_t first = 0;
-		uint64_t last = journal->num_of_recs - 1;
-		uint64_t middle = (first+last)/2;
-		bool not_found = false;
-
-		while (first <= last && not_found == false) {
-			if (journal->records[middle].transaction_id < range_start){
-				first = middle + 1;    
-			}
-			else if (journal->records[middle].transaction_id == range_start) {
-				first_appearance_start = middle;
-				break;
-			}
-			else{
-				if(middle == 0){
-					not_found = true;
-					break;
-				}
-				last = middle - 1;
-			}
-			middle = (first + last)/2;
-		}
-		if (first > last || not_found == true){	//Not found
-			first_appearance_start = (last <= first) ? last : first;
-			while(first_appearance_start < journal->num_of_recs && journal->records[first_appearance_start].transaction_id < range_start){
-				first_appearance_start++;
-			}
-		}
-		if(first_appearance_start >= journal->num_of_recs){
-			*first_offset = 0;
-			return 0;
-		}
-		while(first_appearance_start > 0 && journal->records[first_appearance_start-1].transaction_id == journal->records[first_appearance_start].transaction_id){
-			first_appearance_start--;
-		}
-
+		first_appearance_start = findRangeStart(journal, 0, journal->num_of_recs-1, range_start, first_offset);
+		
 		/*Search for range_end*/
-		first = 0;
-		last = journal->num_of_recs - 1;
-		middle = (first+last)/2;
-		not_found = false;
-
-		while (first <= last && not_found == false) {
-			if (journal->records[middle].transaction_id < range_end){
-				first = middle + 1;    
-			}
-			else if (journal->records[middle].transaction_id == range_end) {
-				first_appearance_end = middle;
-				break;
-			}
-			else{
-				if(middle == 0){
-					not_found = true;
-					break;
-				}
-				last = middle - 1;
-			}
-			middle = (first + last)/2;
-		}
-		if (first > last || not_found == true){	//Not found
-			first_appearance_end = (last > first) ? last : first;
-			if(first_appearance_end >= journal->num_of_recs){
-				first_appearance_end = journal->num_of_recs-1;
-			}
-			while(first_appearance_end >= first_appearance_start && journal->records[first_appearance_end].transaction_id > range_end){
-				first_appearance_end--;
-			}
-		}
+		first_appearance_end = findRangeEnd(journal, first_appearance_start, journal->num_of_recs-1, range_end, first_offset);
+		
 	}
 	uint64_t last = first_appearance_end;
 	while(last+1 < journal->num_of_recs && journal->records[last+1].transaction_id <= range_end ) {
@@ -247,6 +201,80 @@ uint64_t getRecordCount(Journal_t* journal, uint64_t range_start, uint64_t range
 	}
 	*first_offset = first_appearance_start;
 	return (last - first_appearance_start) + 1;
+}
+
+uint64_t findRangeEnd(Journal_t* journal, uint64_t first, uint64_t last, uint64_t key, uint64_t* first_offset){
+	uint64_t middle = (first+last)/2;
+	bool not_found = false;
+	uint64_t first_appearance_end = 0;
+	uint64_t initial_first = first;
+
+	while (first <= last && not_found == false) {
+		if (journal->records[middle].transaction_id < key){
+			first = middle + 1;    
+		}
+		else if (journal->records[middle].transaction_id == key) {
+			first_appearance_end = middle;
+			break;
+		}
+		else{
+			if(middle == 0){
+				not_found = true;
+				break;
+			}
+			last = middle - 1;
+		}
+		middle = (first + last)/2;
+	}
+	if (first > last || not_found == true){	//Not found
+		first_appearance_end = (last > first) ? last : first;
+		if(first_appearance_end >= journal->num_of_recs){
+			first_appearance_end = journal->num_of_recs-1;
+		}
+		while(first_appearance_end >= initial_first && journal->records[first_appearance_end].transaction_id > key){
+			first_appearance_end--;
+		}
+	}
+	return first_appearance_end;
+}
+
+
+uint64_t findRangeStart(Journal_t* journal, uint64_t first, uint64_t last, uint64_t key, uint64_t* first_offset){
+	uint64_t middle = (first+last)/2;
+	bool not_found = false;
+	uint64_t first_appearance_start = 0;
+
+	while (first <= last && not_found == false) {
+		if (journal->records[middle].transaction_id < key){
+			first = middle + 1;    
+		}
+		else if (journal->records[middle].transaction_id == key) {
+			first_appearance_start = middle;
+			break;
+		}
+		else{
+			if(middle == 0){
+				not_found = true;
+				break;
+			}
+			last = middle - 1;
+		}
+		middle = (first + last)/2;
+	}
+	if (first > last || not_found == true){	//Not found
+		first_appearance_start = (last <= first) ? last : first;
+		while(first_appearance_start < journal->num_of_recs && journal->records[first_appearance_start].transaction_id < key){
+			first_appearance_start++;
+		}
+	}
+	if(first_appearance_start >= journal->num_of_recs){
+		*first_offset = 0;
+		return 0;
+	}
+	while(first_appearance_start > 0 && journal->records[first_appearance_start-1].transaction_id == journal->records[first_appearance_start].transaction_id){
+		first_appearance_start--;
+	}
+	return first_appearance_start;
 }
 
 
