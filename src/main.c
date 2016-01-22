@@ -12,6 +12,7 @@ int *modes;
 void usage(int argc, char **argv) {
 	int i;
 	modes = calloc(4, sizeof(int));
+	modes[3] = 1; // default rounds
 	for (i = 1 ; i < argc ; i++) {
 		if (!strcmp(argv[i], "-tid") || !strcmp(argv[i], "tid") || !strcmp(argv[i], "--tid")) {
 			modes[0] = 1;
