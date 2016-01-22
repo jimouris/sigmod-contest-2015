@@ -6,10 +6,12 @@
 #include "parser.h"
 #include "journal.h"
 
+int *modes;
+
 /* modes[tid, predicate, threads, rounds] */
-int* usage(int argc, char **argv) {
+void usage(int argc, char **argv) {
 	int i;
-	int* modes = calloc(4, sizeof(int));
+	modes = calloc(4, sizeof(int));
 	for (i = 1 ; i < argc ; i++) {
 		if (!strcmp(argv[i], "-tid") || !strcmp(argv[i], "tid") || !strcmp(argv[i], "--tid")) {
 			modes[0] = 1;
@@ -17,23 +19,23 @@ int* usage(int argc, char **argv) {
 			modes[1] = 1; 
 		} else if (!strcmp(argv[i], "-threads") || !strcmp(argv[i], "threads") || !strcmp(argv[i], "--threads")) {
 			i++;
-			if (argc < i) { goto errorInput; }
+			if (argc <= i) { goto errorInput; }
 			modes[2] = atoi(argv[i]);
 		} else if (!strcmp(argv[i], "-rounds") || !strcmp(argv[i], "rounds") || !strcmp(argv[i], "--rounds")) {
 			i++;
-			if (argc < i) { goto errorInput; }
+			if (argc <= i) { goto errorInput; }
 			modes[3] = atoi(argv[i]);
 		} else {
 errorInput:
-			fprintf(stderr, "Wrong Input! Run like:\n%s\nor\n%s --tid\nor\n%s --tid --predicate\n", argv[0], argv[0], argv[0]);
+			fprintf(stderr, "Wrong Input! Run like:\n%s\nor\n%s --tid\nor\n%s --tid --predicate\nor\n%s --tid --threads T\nor\n%s --threads T\nor\n%s --threads T -- rounds R\nor\n%s --tid --threads T -- rounds R\n"
+					, argv[0], argv[0], argv[0], argv[0], argv[0], argv[0], argv[0]);
 			exit(EXIT_FAILURE);
 		}
 	}
-	return modes;
 }
 
 int main(int argc, char **argv) {
-	int* modes = usage(argc, argv); /* modes[0]: tid on/off, modes[1]: predicate on/off*/
+	usage(argc, argv); /* modes[0]: tid on/off, modes[1]: predicate on/off*/
 	MessageHead_t head;
 	void *body = NULL;
 	uint32_t len;
