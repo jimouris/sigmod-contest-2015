@@ -75,7 +75,7 @@ else
 	fi
 
 	if [ $exitstatus -ne 0 ] ; then
-		echo "Return Value != 0:\nProbably Sigsegv\nor\nWrong Input! Run like:\n./execute\nor\n./execute --tid\nor\n./execute --tid --predicate\nor\n./execute --tid --threads T\nor\n./execute --threads T\nor\n./execute --threads T --rounds R\nor\n./execute --tid --threads T --rounds R\n"
+		echo "\nReturn Value != 0:\nProbably Sigsegv\nor\nWrong Input! Run like:\n./execute\nor\n./execute --tid\nor\n./execute --tid --predicate\nor\n./execute --tid --threads T\nor\n./execute --threads T\nor\n./execute --threads T --rounds R\nor\n./execute --tid --threads T --rounds R\n"
 		exit 1
 	fi
 
