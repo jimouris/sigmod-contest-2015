@@ -25,7 +25,9 @@ void usage(int argc, char **argv) {
 		} else if (!strcmp(argv[i], "-rounds") || !strcmp(argv[i], "rounds") || !strcmp(argv[i], "--rounds")) {
 			i++;
 			if (argc <= i) { goto errorInput; }
-			modes[3] = atoi(argv[i]);
+			int flushes = atoi(argv[i]);
+			if (flushes < 1) { fprintf(stderr, "Rounds must be greater than zero\n"); exit(1); }
+			modes[3] = flushes;
 		} else {
 errorInput:
 			fprintf(stderr, "Wrong Input! Run like:\n%s\nor\n%s --tid\nor\n%s --tid --predicate\nor\n%s --tid --threads T\nor\n%s --threads T\nor\n%s --threads T --rounds R\nor\n%s --tid --threads T --rounds R\n"
