@@ -5,9 +5,13 @@
 #include <stdint.h>
 #include <pthread.h>
 #include <unistd.h>
+#include "parser.h"
 
-typedef struct thread_t {
-	
-} thread_t;
+typedef struct thread_arg_t {
+	ValidationQueries_t** validation_array;
+	uint64_t size;
+	uint64_t validation_num;
+	uint8_t* result_array;
+} thread_arg_t;
 
 #endif

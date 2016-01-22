@@ -13,6 +13,8 @@
 #define OK_SUCCESS 0
 #define NOK_FAILURE 1
 
+#define THREAD_VAL_ARRAY_SIZE 500
+
 #define ALLOCATION_ERROR(X) if (X == NULL) { \
 							perror("allocation error"); \
 							exit(EXIT_FAILURE);} \
