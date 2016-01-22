@@ -12,7 +12,7 @@ FLAGS 	= -c -g -Wall -O2
 # -c flag generates object code for separate files
 
 all: $(OBJS)
-	$(CC) $(OBJS) -o $(OUT) -O2
+	$(CC) $(OBJS) -o $(OUT) -O2 -lpthread
 
 # create/compile the individual files >>separately<< 
 main.o: main.c constants.h
