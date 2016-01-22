@@ -74,12 +74,9 @@ else
 		exitstatus=$?
 	fi
 
-	if [ $exitstatus = 1 ] ; then
-		echo "\nWrong Input! Run like:\n./execute\nor\n./execute --tid\nor\n./execute --tid --predicate\nor\n./execute --tid --threads T\nor\n./execute --threads T\nor\n./execute --threads T --rounds R\nor\n./execute --tid --threads T --rounds R\n"
+	if [ $exitstatus -ne 0 ] ; then
+		echo "Return Value != 0:\nProbably Sigsegv\nor\nWrong Input! Run like:\n./execute\nor\n./execute --tid\nor\n./execute --tid --predicate\nor\n./execute --tid --threads T\nor\n./execute --threads T\nor\n./execute --threads T --rounds R\nor\n./execute --tid --threads T --rounds R\n"
 		exit 1
-	elif [ $exitstatus = 11 ] ; then
-		echo "\nProcess terminated with signal 11"
-		exit 11
 	fi
 
 	./perlineprinter.out < myout.test > myoutperline.test
