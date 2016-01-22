@@ -1,6 +1,10 @@
 #include "parser.h"
+#include "scheduler.h"
 
 static uint32_t* schema = NULL;
+
+thread_arg_t* thread_array;
+extern int* modes;
 
 Journal_t** processDefineSchema(DefineSchema_t *s, int *relation_count, int* modes) {
 	uint64_t i;
@@ -15,6 +19,18 @@ Journal_t** processDefineSchema(DefineSchema_t *s, int *relation_count, int* mod
 		schema[i] = s->columnCounts[i];
 		journal_array[i] = createJournal(i, modes);
 	}
+
+	if(modes[2] != 0){
+		thread_array = malloc(sizeof(thread_arg_t) * modes[2]);
+		ALLOCATION_ERROR(thread_array);
+		for(i = 0; i < modes[2]; i++){
+			thread_array[i].validation_array = malloc(THREAD_VAL_ARRAY_SIZE * sizeof(ValidationQueries_t*));
+			ALLOCATION_ERROR(thread_array[i].validation_array);
+			thread_array[i].size = THREAD_VAL_ARRAY_SIZE;
+			thread_array[i].validation_num = 0;
+		}
+	}
+
 	return journal_array;
 }
 
@@ -94,17 +110,54 @@ int cmp_col(const void *p1, const void *p2) {
 	}
 	return 0;
 }
+// void threadFunction(void* arg){}
 
 void processFlush(Flush_t *fl, Journal_t** journal_array, ValidationList_t* validation_list) {
+	static uint64_t last_validation_id = 0;
+	uint64_t num_of_validations = fl->validationId - last_validation_id + 1;	//Number of Validations to evaluate
+	uint8_t* result_array = calloc(num_of_validations,sizeof(uint8_t));
+	int thread_num = modes[2];
+	uint64_t max_validations = num_of_validations / thread_num + 1;
+	int i;
+	if (max_validations > thread_array[0].size){
+		for(i = 0; i < thread_num; i++){
+			thread_array[i].validation_array = realloc(thread_array[i].validation_array, max_validations * sizeof(ValidationQueries_t*));
+			thread_array[i].size = max_validations;
+		}
+	}
+	
+	for(i = 0; i < thread_num; i++){
+		thread_array[i].validation_num = 0;	
+		thread_array[i].result_array = result_array;
+	}
+	/*Assign validation pointers to thread arguements*/
 	Val_list_node* iter = validation_list->list->list_beg;
+	uint64_t index = 0;
 	while(iter != NULL && iter->data->validationId < fl->validationId){
 		ValidationQueries_t* val_query = iter->data;
-		printf("%d", checkValidation(journal_array, val_query));
-		// printValidation(val_query);
+		uint64_t validation_num = thread_array[index].validation_num;
+		thread_array[index].validation_array[validation_num] = val_query;
+		thread_array[index].validation_num++;
+		// printf("%d",checkValidation(journal_array, val_query));
+		if(++index == thread_num){
+			index = 0;
+		}
 		iter = iter->next;
+	}
+
+
+
+
+
+
+	/*Remove Validations from validation list*/
+	for(i = 0; i< num_of_validations; i++){
 		validation_remove_start(validation_list->list);
 	}
+	last_validation_id = fl->validationId + 1;
+	free(result_array);
 }
+
 
 void processForget(Forget_t *fo, Journal_t** journal_array,int relation_count) {
 	return;
