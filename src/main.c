@@ -27,7 +27,7 @@ void usage(int argc, char **argv) {
 			modes[3] = atoi(argv[i]);
 		} else {
 errorInput:
-			fprintf(stderr, "Wrong Input! Run like:\n%s\nor\n%s --tid\nor\n%s --tid --predicate\nor\n%s --tid --threads T\nor\n%s --threads T\nor\n%s --threads T -- rounds R\nor\n%s --tid --threads T -- rounds R\n"
+			fprintf(stderr, "Wrong Input! Run like:\n%s\nor\n%s --tid\nor\n%s --tid --predicate\nor\n%s --tid --threads T\nor\n%s --threads T\nor\n%s --threads T --rounds R\nor\n%s --tid --threads T --rounds R\n"
 					, argv[0], argv[0], argv[0], argv[0], argv[0], argv[0], argv[0]);
 			exit(EXIT_FAILURE);
 		}
