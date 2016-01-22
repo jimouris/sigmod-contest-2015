@@ -82,7 +82,7 @@ void printList(List_t* list){
 
 /* Journal_t functions */
 
-Journal_t* createJournal(uint64_t relation_id, bool* modes) {
+Journal_t* createJournal(uint64_t relation_id, int* modes) {
 	Journal_t* journal = malloc(sizeof(Journal_t));
 	ALLOCATION_ERROR(journal);
 	journal->journal_capacity = JOURNAL_CAPACITY_INIT;
@@ -91,8 +91,8 @@ Journal_t* createJournal(uint64_t relation_id, bool* modes) {
 	journal->num_of_recs = 0;
 	journal->relation_id = relation_id;
 	journal->index = createHash();
-	journal->tid_index = (modes[0] == true) ? tidCreateHash() : NULL;
-	journal->predicate_index = (modes[1] == true) ? predicateCreateHash() : NULL;
+	journal->tid_index = (modes[0] == 1) ? tidCreateHash() : NULL;
+	journal->predicate_index = (modes[1] == 1) ? predicateCreateHash() : NULL;
 	return journal;
 }
 

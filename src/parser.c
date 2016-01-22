@@ -2,7 +2,7 @@
 
 static uint32_t* schema = NULL;
 
-Journal_t** processDefineSchema(DefineSchema_t *s, int *relation_count, bool* modes) {
+Journal_t** processDefineSchema(DefineSchema_t *s, int *relation_count, int* modes) {
 	uint64_t i;
 	if (schema == NULL)
 		free(schema);

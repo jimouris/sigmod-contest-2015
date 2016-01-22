@@ -67,7 +67,7 @@ List_t* info_init();
 
 void print_list(List_t *l_info);
 
-Journal_t* createJournal(uint64_t, bool*);
+Journal_t* createJournal(uint64_t, int*);
 
 void insertJournalRecord(Journal_t*, uint64_t, size_t, const uint64_t*, bool);
 

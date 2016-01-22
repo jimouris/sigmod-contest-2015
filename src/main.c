@@ -6,15 +6,25 @@
 #include "parser.h"
 #include "journal.h"
 
-bool* usage(int argc, char **argv) {
+/* modes[tid, predicate, threads, rounds] */
+int* usage(int argc, char **argv) {
 	int i;
-	bool* modes = calloc(2, sizeof(bool));
+	int* modes = calloc(4, sizeof(int));
 	for (i = 1 ; i < argc ; i++) {
 		if (!strcmp(argv[i], "-tid") || !strcmp(argv[i], "tid") || !strcmp(argv[i], "--tid")) {
-			modes[0] = true;
+			modes[0] = 1;
 		} else if (!strcmp(argv[i], "-predicate") || !strcmp(argv[i], "predicate") || !strcmp(argv[i], "--predicate")) {
-			modes[1] = true;
+			modes[1] = 1; 
+		} else if (!strcmp(argv[i], "-threads") || !strcmp(argv[i], "threads") || !strcmp(argv[i], "--threads")) {
+			i++;
+			if (argc < i) { goto errorInput; }
+			modes[2] = atoi(argv[i]);
+		} else if (!strcmp(argv[i], "-rounds") || !strcmp(argv[i], "rounds") || !strcmp(argv[i], "--rounds")) {
+			i++;
+			if (argc < i) { goto errorInput; }
+			modes[3] = atoi(argv[i]);
 		} else {
+errorInput:
 			fprintf(stderr, "Wrong Input! Run like:\n%s\nor\n%s --tid\nor\n%s --tid --predicate\n", argv[0], argv[0], argv[0]);
 			exit(EXIT_FAILURE);
 		}
@@ -23,7 +33,7 @@ bool* usage(int argc, char **argv) {
 }
 
 int main(int argc, char **argv) {
-	bool* modes = usage(argc, argv); /* modes[0]: tid on/off, modes[1]: predicate on/off*/
+	int* modes = usage(argc, argv); /* modes[0]: tid on/off, modes[1]: predicate on/off*/
 	MessageHead_t head;
 	void *body = NULL;
 	uint32_t len;
