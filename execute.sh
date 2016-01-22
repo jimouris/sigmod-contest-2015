@@ -5,7 +5,7 @@ DEFAULTOUTPUT="./outputs/small.out.bin"
 
 make clean
 make
-gcc -o perlineprinter src/printperline.c
+gcc -o perlineprinter.out src/printperline.c
 
 exitstatus=1
 echo "\nNow running!"
@@ -14,9 +14,9 @@ if [ $# -eq 0 ] ; then
 	time -f "\t%E Elapsed Real Time \n\t%S CPU-seconds" --quiet ./a.out < $DEFAULTINPUT > myout.test
 	exitstatus=$?
 	echo "done :)\n"
-	./perlineprinter < myout.test > myoutperline.test
+	./perlineprinter.out < myout.test > myoutperline.test
 	rm myout.test
-	./perlineprinter < $DEFAULTOUTPUT > $DEFAULTOUTPUT.perline.test
+	./perlineprinter.out < $DEFAULTOUTPUT > $DEFAULTOUTPUT.perline.test
 	diff myoutperline.test $DEFAULTOUTPUT.perline.test
 	echo "\n\n"
 else
@@ -79,13 +79,13 @@ else
 		exit
 	fi
 
-	./perlineprinter < myout.test > myoutperline.test
+	./perlineprinter.out < myout.test > myoutperline.test
 	rm myout.test
 	output="./outputs/"${input#*/}
 	ending=${output##*.}
 	output=${output%.*}".out."$ending
 	# echo "$output"
-	./perlineprinter < $output > $output.perline.test
+	./perlineprinter.out < $output > $output.perline.test
 
 	DIFF=$(diff myoutperline.test $output.perline.test)
 	if [ "$DIFF" != "" ] ; then
@@ -99,4 +99,4 @@ else
 	echo "\n\n"
 fi
 
-rm myoutperline.test $DEFAULTOUTPUT.perline.test perlineprinter
+rm myoutperline.test $DEFAULTOUTPUT.perline.test perlineprinter.out
