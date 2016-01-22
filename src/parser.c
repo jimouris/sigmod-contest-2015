@@ -28,6 +28,9 @@ Journal_t** processDefineSchema(DefineSchema_t *s, int *relation_count, int* mod
 			ALLOCATION_ERROR(thread_array[i].validation_array);
 			thread_array[i].size = THREAD_VAL_ARRAY_SIZE;
 			thread_array[i].validation_num = 0;
+			thread_array[i].result_array = NULL;
+			thread_array[i].first_val_id = 0;
+			thread_array[i].journal_array = NULL;
 		}
 	}
 
@@ -110,10 +113,22 @@ int cmp_col(const void *p1, const void *p2) {
 	}
 	return 0;
 }
-// void threadFunction(void* arg){}
+void* threadFunction(void* thread_arg){
+	thread_arg_t* arg = (thread_arg_t*) thread_arg; 
+	uint64_t i;
+	for(i = 0; i < arg->validation_num; i++){
+		if(checkValidation(arg->journal_array, arg->validation_array[i])){
+			uint64_t position = arg->validation_array[i]->validationId - arg->first_val_id;
+			arg->result_array[position] = 1;
+		}
+	}
+	return NULL;
+}
 
 void processFlush(Flush_t *fl, Journal_t** journal_array, ValidationList_t* validation_list) {
 	static uint64_t last_validation_id = 0;
+	// fprintf(stderr, "%zu\n",fl->validationId );
+	uint64_t remove_count = 0;
 	uint64_t num_of_validations = fl->validationId - last_validation_id + 1;	//Number of Validations to evaluate
 	uint8_t* result_array = calloc(num_of_validations,sizeof(uint8_t));
 	int thread_num = modes[2];
@@ -125,13 +140,19 @@ void processFlush(Flush_t *fl, Journal_t** journal_array, ValidationList_t* vali
 			thread_array[i].size = max_validations;
 		}
 	}
+	// if(validation_list->list->size == 0){
+	// 	fprintf(stderr, "Mhdeniko\n");
+	// 	return;
+	// }
+	Val_list_node* iter = validation_list->list->list_beg;
 	
 	for(i = 0; i < thread_num; i++){
 		thread_array[i].validation_num = 0;	
 		thread_array[i].result_array = result_array;
+		thread_array[i].journal_array = journal_array;
+		thread_array[i].first_val_id = iter->data->validationId;
 	}
 	/*Assign validation pointers to thread arguements*/
-	Val_list_node* iter = validation_list->list->list_beg;
 	uint64_t index = 0;
 	while(iter != NULL && iter->data->validationId < fl->validationId){
 		ValidationQueries_t* val_query = iter->data;
@@ -143,18 +164,40 @@ void processFlush(Flush_t *fl, Journal_t** journal_array, ValidationList_t* vali
 			index = 0;
 		}
 		iter = iter->next;
+		remove_count++;
 	}
 
+	pthread_t* thread_id = malloc(thread_num*sizeof(pthread_t));
+	ALLOCATION_ERROR(thread_id);
 
+	int err;
+	for(i=0; i<thread_num; i++){
+		if( (err = pthread_create(&thread_id[i], NULL, threadFunction, &thread_array[i])) != 0){
+			fprintf(stderr, "Error in pthread_create \n");
+			fprintf(stderr, "\tError: %s\n",strerror(err));
+			exit(-1);
+		}
+	}
+
+	for(i=0; i<thread_num; i++){
+		if( (err = pthread_join(thread_id[i], NULL ))!= 0){
+			fprintf(stderr, "Error in pthread_join \n");
+			fprintf(stderr, "\tError: %s\n",strerror(err));
+			exit(-1);
+		}
+	}
 
 
 
 
 	/*Remove Validations from validation list*/
-	for(i = 0; i< num_of_validations; i++){
+	// fprintf(stderr, "list size: %zu, removes: %zu\n", validation_list->list->size, remove_count);
+	for(i = 0; i < remove_count; i++){
 		validation_remove_start(validation_list->list);
+		printf("%" PRIu8 "",result_array[i]);
 	}
 	last_validation_id = fl->validationId + 1;
+	// free(thread_id);
 	free(result_array);
 }
 
@@ -439,6 +482,12 @@ void destroySchema(Journal_t** journal_array, int relation_count){
 	}
 	free(journal_array);
 	free(schema);
+	if(modes[2] != 0){
+		for(i = 0; i < modes[2]; i++){
+			free(thread_array[i].validation_array);
+		}
+		free(thread_array);
+	}
 }
 
 ValidationList_t* validationListCreate(){
