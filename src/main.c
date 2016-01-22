@@ -7,7 +7,8 @@
 #include "journal.h"
 
 int *modes;
-
+extern Flush_t* last_flush;
+extern int flushes;
 /* modes[tid, predicate, threads, rounds] */
 void usage(int argc, char **argv) {
 	int i;
@@ -84,6 +85,9 @@ int main(int argc, char **argv) {
 				break;
 			case Flush:
 				processFlush(body,journal_array,validation_list);
+				while(flushes != 0){
+					processFlush(last_flush,journal_array,validation_list);
+				}
 				if (body != NULL)
 					free(body);
 				break;
