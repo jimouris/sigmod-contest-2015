@@ -33,6 +33,30 @@ else
 		elif  [ "${3}" = "-tid" -o "${3}" = "--tid" -o "${3}" = "tid" ] && [ "${2}" = "-predicate" -o "${2}" = "--predicate" -o "${2}" = "predicate" ] ; then
 			echo "Both predicateHash and tidHash are enabled"
 			time -f "\t%E Elapsed Real Time \n\t%S CPU-seconds" ./a.out --tid --predicate < $input > myout.test
+		elif  [ "${2}" = "-threads" -o "${2}" = "--threads" -o "${2}" = "threads" ] ; then
+			threadNum="${3}"
+			echo "Running with" $threadNum "threads"
+			time -f "\t%E Elapsed Real Time \n\t%S CPU-seconds" ./a.out --threads $threadNum < $input > myout.test
+		fi
+	elif [ $# -eq 4 ] ; then
+		if  [ "${2}" = "-tid" -o "${2}" = "--tid" -o "${2}" = "tid" ] && [ "${3}" = "-threads" -o "${3}" = "--threads" -o "${3}" = "threads" ]; then
+			threadNum="${4}"
+			echo "Running with tidHash and" $threadNum "threads"
+			time -f "\t%E Elapsed Real Time \n\t%S CPU-seconds" ./a.out --tid --threads $threadNum < $input > myout.test
+		fi
+	elif [ $# -eq 5 ] ; then
+		if  [ "${2}" = "-threads" -o "${2}" = "--threads" -o "${2}" = "threads" ] && [ "${4}" = "-rounds" -o "${4}" = "--rounds" -o "${4}" = "rounds" ]; then
+			threadNum="${3}"
+			roundNum="${5}"
+			echo "Running with" $threadNum "threads and" $roundNum "rounds" 
+			time -f "\t%E Elapsed Real Time \n\t%S CPU-seconds" ./a.out --threads $threadNum --rounds $roundNum < $input > myout.test
+		fi
+	elif [ $# -eq 6 ] ; then
+		if  [ "${2}" = "-tid" -o "${2}" = "--tid" -o "${2}" = "tid" ] && [ "${3}" = "-threads" -o "${3}" = "--threads" -o "${3}" = "threads" ] && [ "${5}" = "-rounds" -o "${5}" = "--rounds" -o "${5}" = "rounds" ]; then
+			threadNum="${4}"
+			roundNum="${6}"
+			echo "Running with tidHash," $threadNum "threads and" $roundNum "rounds" 
+			time -f "\t%E Elapsed Real Time \n\t%S CPU-seconds" ./a.out --threads $threadNum --rounds $roundNum < $input > myout.test
 		fi
 	else
 		# T="$(date +%s)"
@@ -46,13 +70,13 @@ else
 	# echo "$output"
 	./perlineprinter < $output > $output.perline.test
 
-	DIFF=$(diff myoutperline.test $output.perline.test)
-	if [ "$DIFF" != "" ] ; then
-	    echo "\n\nThe force wasn't with you my friend"
-	    diff myoutperline.test $output.perline.test
-	else
-	    echo "\n\nThe force was with you this time, diff num of results 0!!"
-	fi
+	# DIFF=$(diff myoutperline.test $output.perline.test)
+	# if [ "$DIFF" != "" ] ; then
+	#     echo "\n\nThe force wasn't with you my friend"
+	#     diff myoutperline.test $output.perline.test
+	# else
+	#     echo "\n\nThe force was with you this time, diff num of results 0!!"
+	# fi
 
 	DEFAULTOUTPUT=$output
 	echo "\n\n"
