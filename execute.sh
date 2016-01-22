@@ -70,13 +70,13 @@ else
 	# echo "$output"
 	./perlineprinter < $output > $output.perline.test
 
-	# DIFF=$(diff myoutperline.test $output.perline.test)
-	# if [ "$DIFF" != "" ] ; then
-	#     echo "\n\nThe force wasn't with you my friend"
-	#     diff myoutperline.test $output.perline.test
-	# else
-	#     echo "\n\nThe force was with you this time, diff num of results 0!!"
-	# fi
+	DIFF=$(diff myoutperline.test $output.perline.test)
+	if [ "$DIFF" != "" ] ; then
+	    echo "\n\nThe force wasn't with you my friend"
+	    diff myoutperline.test $output.perline.test
+	else
+	    echo "\n\nThe force was with you this time, diff num of results 0!!"
+	fi
 
 	DEFAULTOUTPUT=$output
 	echo "\n\n"
