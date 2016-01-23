@@ -180,7 +180,7 @@ void processFlush(Flush_t *fl, Journal_t** journal_array, ValidationList_t* vali
 				if( (err = pthread_create(&thread_id[i], NULL, threadFunction, &thread_array[i])) != 0){
 					fprintf(stderr, "Error in pthread_create \n");
 					fprintf(stderr, "\tError: %s\n",strerror(err));
-					exit(-1);
+					exit(EXIT_FAILURE);
 				}
 			}
 
@@ -188,7 +188,7 @@ void processFlush(Flush_t *fl, Journal_t** journal_array, ValidationList_t* vali
 				if( (err = pthread_join(thread_id[i], NULL ))!= 0){
 					fprintf(stderr, "Error in pthread_join \n");
 					fprintf(stderr, "\tError: %s\n",strerror(err));
-					exit(-1);
+					exit(EXIT_FAILURE);
 				}
 			}
 
@@ -562,7 +562,7 @@ void printColumn(Column_t column){
 			break;
 		default:
 			fprintf(stderr,"Wrong operator\n");
-			exit(1);
+			exit(EXIT_FAILURE);
 	}			
 }
 
