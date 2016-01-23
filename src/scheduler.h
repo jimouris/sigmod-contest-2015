@@ -6,6 +6,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include "parser.h"
+#include "constants.h"
 
 typedef struct thread_arg_t {
 	ValidationQueries_t** validation_array;
@@ -15,5 +16,11 @@ typedef struct thread_arg_t {
 	Journal_t** journal_array;
 	uint64_t first_val_id;
 } thread_arg_t;
+
+typedef struct threadpool_t {
+	pthread_t *threads;
+	int thread_count;
+	pthread_mutex_t lock;
+} threadpool_t;
 
 #endif
