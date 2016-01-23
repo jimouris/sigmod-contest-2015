@@ -21,6 +21,7 @@ typedef struct threadpool_t {
 	pthread_t *threads;
 	int thread_count;
 	pthread_mutex_t lock;
+	pthread_cond_t cond;
 } threadpool_t;
 
 #endif

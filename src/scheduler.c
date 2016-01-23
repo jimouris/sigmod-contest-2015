@@ -6,7 +6,7 @@ threadpool_t* threadpoolCreate(int thread_count) {
 	threadpool->thread_count = thread_count;
 	threadpool->threads = malloc(thread_count * sizeof(pthread_t));
 	ALLOCATION_ERROR(threadpool->threads);
-	if (pthread_mutex_init(&(threadpool->lock), NULL) != 0) {
+	if ((pthread_mutex_init(&(threadpool->lock), NULL) != 0) || (pthread_cond_init(&(threadpool->cond), NULL) != 0)) {
 		fprintf(stderr, "Mutex allocation Error\n");
 		exit(EXIT_FAILURE);
 	}
@@ -39,5 +39,16 @@ void threadpoolAdd(threadpool_t *threadpool, void (*function)(void *), thread_ar
     }
 }
 
-
+void threadpoolFree(threadpool_t *threadpool) {
+    if (threadpool == NULL) {
+        fprintf(stderr, "threadPool is null\n");
+        exit(EXIT_FAILURE);
+    }
+    if (threadpool->threads != NULL) {
+        free(threadpool->threads);
+        pthread_mutex_destroy(&(threadpool->lock));
+        pthread_cond_destroy(&(threadpool->cond));
+    }
+    free(threadpool);    
+}
 
