@@ -32,13 +32,17 @@ typedef struct job_queue {
 typedef struct threadpool_t {
 	pthread_t *threads;
 	int thread_count;
+	Journal_t** journal_array;
+	uint8_t* result_array;
+	uint64_t first_val_id;
 	pthread_mutex_t lock;
 	pthread_cond_t cond;
 	job_queue *queue;
 } threadpool_t;
 
+void threadpoolBarrier(threadpool_t*);
 job_queue* createQueue(void);
-threadpool_t* threadpoolCreate(int);
+threadpool_t* threadpoolCreate(int, Journal_t**);
 void* jobConsumer(void *);
 void threadpoolAdd(threadpool_t *, ValidationQueries_t *);
 void threadpoolFree(threadpool_t *);

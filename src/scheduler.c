@@ -1,6 +1,6 @@
 #include "scheduler.h"
 
-threadpool_t* threadpoolCreate(int thread_count) {
+threadpool_t* threadpoolCreate(int thread_count, Journal_t** journal_array) {
 	threadpool_t* threadpool = malloc(sizeof(threadpool_t));
 	ALLOCATION_ERROR(threadpool);
 	threadpool->thread_count = thread_count;
@@ -21,14 +21,38 @@ threadpool_t* threadpoolCreate(int thread_count) {
 	return threadpool;
 }
 
-void* jobConsumer(void *arg) {
+void* jobConsumer(void *arg) {    
     threadpool_t * threadpool = (threadpool_t *) arg;
     if (pthread_mutex_lock(&(threadpool->lock)) != 0) {
         fprintf(stderr, "Mutex locking Error\n");
         exit(EXIT_FAILURE);
     }
+    //Critical section start
 
     while (isQueueEmpty(threadpool->queue)) {
+        pthread_cond_wait(&(threadpool->cond), &(threadpool->lock));
+    }
+    ValidationQueries_t* validation = popJob(threadpool->queue);
+    if(checkValidation(threadpool->journal_array, validation)){
+        uint64_t position = validation->validationId - threadpool->first_val_id;
+        threadpool->result_array[position] = 1;
+    }
+
+    //Critical section end
+    if (pthread_mutex_unlock(&threadpool->lock) != 0) {
+        fprintf(stderr, "Mutex locking Error\n");
+        exit(EXIT_FAILURE);
+    }
+    return NULL;
+}
+
+void threadpoolBarrier(threadpool_t* threadpool){
+    if (pthread_mutex_lock(&(threadpool->lock)) != 0) {
+        fprintf(stderr, "Mutex locking Error\n");
+        exit(EXIT_FAILURE);
+    }
+
+    while (!isQueueEmpty(threadpool->queue)) {
         pthread_cond_wait(&(threadpool->cond), &(threadpool->lock));
     }
 
@@ -36,8 +60,10 @@ void* jobConsumer(void *arg) {
         fprintf(stderr, "Mutex locking Error\n");
         exit(EXIT_FAILURE);
     }
-    return NULL;
+    return;    
 }
+
+
 
 /* scheduler producer */
 void threadpoolAdd(threadpool_t *threadpool, ValidationQueries_t* v) {
@@ -100,7 +126,7 @@ bool isQueueEmpty(job_queue *queue) {
 }
 
 job_queue* createQueue(void) {
-    job_queue* queue = malloc(sizeof(job_queue *));
+    job_queue* queue = malloc(sizeof(job_queue));
     ALLOCATION_ERROR(queue);
     queue->jobs = 0;
     queue->list_start = NULL;

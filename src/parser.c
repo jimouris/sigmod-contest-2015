@@ -8,6 +8,8 @@ static thread_arg_t* thread_array;
 Flush_t* last_flush = NULL;
 int flushes = 0;
 
+threadpool_t* threadpool;
+
 extern int* modes;
 
 
@@ -37,6 +39,9 @@ Journal_t** processDefineSchema(DefineSchema_t *s, int *relation_count, int* mod
 			thread_array[i].first_val_id = 0;
 			thread_array[i].journal_array = NULL;
 		}
+	}
+	if(modes[4] != 0){
+		threadpool = threadpoolCreate(modes[2], journal_array);
 	}
 
 	return journal_array;
@@ -132,75 +137,105 @@ void* threadFunction(void* thread_arg){
 
 void processFlush(Flush_t *fl, Journal_t** journal_array, ValidationList_t* validation_list) {
 	last_flush = fl;
-	if(modes[2] != 0){
+	if(modes[2] != 0){ //Threads enabled
 		flushes++;
-		if(flushes == modes[3]){
-			flushes = 0;
-			static uint64_t last_validation_id = 0;
-			// fprintf(stderr, "%zu\n",fl->validationId );
-			uint64_t remove_count = 0;
-			uint64_t num_of_validations = fl->validationId - last_validation_id + 1;	//Number of Validations to evaluate
-			uint8_t* result_array = calloc(num_of_validations,sizeof(uint8_t));
-			int thread_num = modes[2];
-			uint64_t max_validations = num_of_validations / thread_num + 1;
-			int i;
-			if (max_validations > thread_array[0].size){
-				for(i = 0; i < thread_num; i++){
-					thread_array[i].validation_array = realloc(thread_array[i].validation_array, max_validations * sizeof(ValidationQueries_t*));
-					thread_array[i].size = max_validations;
-				}
-			}
+
+		int thread_num = modes[2];
+		static uint64_t last_validation_id = 0;
+		uint64_t num_of_validations = fl->validationId - last_validation_id + 1;	//Number of Validations to evaluate
+		uint8_t* result_array = calloc(num_of_validations,sizeof(uint8_t));
+		uint64_t remove_count = 0; //Number of validations to be removed from the list.
+		
+		if(modes[4] != 0){ //Scheduler enabled
+			uint64_t i;
 			Val_list_node* iter = validation_list->list->list_beg;
-			
-			for(i = 0; i < thread_num; i++){
-				thread_array[i].validation_num = 0;	
-				thread_array[i].result_array = result_array;
-				thread_array[i].journal_array = journal_array;
-				thread_array[i].first_val_id = iter->data->validationId;
-			}
-			/*Assign validation pointers to thread arguements*/
-			uint64_t index = 0;
+			uint64_t first_val_id = iter->data->validationId;
+		
+			threadpool->result_array = result_array;
+			threadpool->first_val_id = first_val_id;
+			// threadpool_t* threadpool = threadpoolCreate(thread_num, journal_array, result_array, first_val_id);
 			while(iter != NULL && iter->data->validationId < fl->validationId){
 				ValidationQueries_t* val_query = iter->data;
-				uint64_t validation_num = thread_array[index].validation_num;
-				thread_array[index].validation_array[validation_num] = val_query;
-				thread_array[index].validation_num++;
-				if(++index == thread_num){
-					index = 0;
-				}
+				threadpoolAdd(threadpool, val_query);
 				iter = iter->next;
 				remove_count++;
 			}
+			
 
-			pthread_t* thread_id = malloc(thread_num*sizeof(pthread_t));
-			ALLOCATION_ERROR(thread_id);
+			threadpoolBarrier(threadpool);
 
-			int err;
-			for(i=0; i<thread_num; i++){
-				if( (err = pthread_create(&thread_id[i], NULL, threadFunction, &thread_array[i])) != 0){
-					fprintf(stderr, "Error in pthread_create \n");
-					fprintf(stderr, "\tError: %s\n",strerror(err));
-					exit(EXIT_FAILURE);
-				}
-			}
 
-			for(i=0; i<thread_num; i++){
-				if( (err = pthread_join(thread_id[i], NULL ))!= 0){
-					fprintf(stderr, "Error in pthread_join \n");
-					fprintf(stderr, "\tError: %s\n",strerror(err));
-					exit(EXIT_FAILURE);
-				}
-			}
-
-			/*Remove Validations from validation list*/
 			for(i = 0; i < remove_count; i++){
 				validation_remove_start(validation_list->list);
 				printf("%" PRIu8 "",result_array[i]);
 			}
 			last_validation_id = fl->validationId + 1;
-			free(thread_id);
 			free(result_array);
-		} 
+
+		} else { //Scheduler Not enabled
+			if(flushes == modes[3]){
+				flushes = 0;
+				// fprintf(stderr, "%zu\n",fl->validationId );
+				uint64_t max_validations = num_of_validations / thread_num + 1;
+				int i;
+				if (max_validations > thread_array[0].size){
+					for(i = 0; i < thread_num; i++){
+						thread_array[i].validation_array = realloc(thread_array[i].validation_array, max_validations * sizeof(ValidationQueries_t*));
+						thread_array[i].size = max_validations;
+					}
+				}
+				Val_list_node* iter = validation_list->list->list_beg;
+				
+				for(i = 0; i < thread_num; i++){
+					thread_array[i].validation_num = 0;	
+					thread_array[i].result_array = result_array;
+					thread_array[i].journal_array = journal_array;
+					thread_array[i].first_val_id = iter->data->validationId;
+				}
+				/*Assign validation pointers to thread arguements*/
+				uint64_t index = 0;
+				while(iter != NULL && iter->data->validationId < fl->validationId){
+					ValidationQueries_t* val_query = iter->data;
+					uint64_t validation_num = thread_array[index].validation_num;
+					thread_array[index].validation_array[validation_num] = val_query;
+					thread_array[index].validation_num++;
+					if(++index == thread_num){
+						index = 0;
+					}
+					iter = iter->next;
+					remove_count++;
+				}
+
+				pthread_t* thread_id = malloc(thread_num*sizeof(pthread_t));
+				ALLOCATION_ERROR(thread_id);
+
+				int err;
+				for(i=0; i<thread_num; i++){
+					if( (err = pthread_create(&thread_id[i], NULL, threadFunction, &thread_array[i])) != 0){
+						fprintf(stderr, "Error in pthread_create \n");
+						fprintf(stderr, "\tError: %s\n",strerror(err));
+						exit(EXIT_FAILURE);
+					}
+				}
+
+				for(i=0; i<thread_num; i++){
+					if( (err = pthread_join(thread_id[i], NULL ))!= 0){
+						fprintf(stderr, "Error in pthread_join \n");
+						fprintf(stderr, "\tError: %s\n",strerror(err));
+						exit(EXIT_FAILURE);
+					}
+				}
+
+				/*Remove Validations from validation list*/
+				for(i = 0; i < remove_count; i++){
+					validation_remove_start(validation_list->list);
+					printf("%" PRIu8 "",result_array[i]);
+				}
+				last_validation_id = fl->validationId + 1;
+				free(thread_id);
+				free(result_array);
+			} 			
+		}
 	} else {
 		Val_list_node* iter = validation_list->list->list_beg;
 		while(iter != NULL && iter->data->validationId < fl->validationId){
