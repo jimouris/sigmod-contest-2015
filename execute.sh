@@ -30,6 +30,10 @@ else
 		echo "predicateHash is enabled"
 		time -f "\t%E Elapsed Real Time \n\t%S CPU-seconds" --quiet ./a.out --predicate < $input > myout.test
 		exitstatus=$?
+	elif [ $# -eq 2 ] && [ "${2}" = "-scheduler" -o "${2}" = "--scheduler" -o "${2}" = "scheduler" ] ; then
+		echo "scheduler is enabled"
+		time -f "\t%E Elapsed Real Time \n\t%S CPU-seconds" --quiet ./a.out --scheduler < $input > myout.test
+		exitstatus=$?
 	elif [ $# -eq 3 ] ; then
 		if [ "${2}" = "-tid" -o "${2}" = "--tid" -o "${2}" = "tid" ] && [ "${3}" = "-predicate" -o "${3}" = "--predicate" -o "${3}" = "predicate" ] ; then
 			echo "Both predicateHash and tidHash are enabled"
@@ -44,12 +48,30 @@ else
 			echo "Running with" $threadNum "threads"
 			time -f "\t%E Elapsed Real Time \n\t%S CPU-seconds" --quiet ./a.out --threads $threadNum < $input > myout.test
 			exitstatus=$?
+		elif  [ "${3}" = "-tid" -o "${3}" = "--tid" -o "${3}" = "tid" ] && [ "${2}" = "-scheduler" -o "${2}" = "--scheduler" -o "${2}" = "scheduler" ] ; then
+			echo "tidHash and scheduler are enabled"
+			time -f "\t%E Elapsed Real Time \n\t%S CPU-seconds" --quiet ./a.out --tid --scheduler < $input > myout.test
+			exitstatus=$?
+		elif  [ "${2}" = "-tid" -o "${2}" = "--tid" -o "${2}" = "tid" ] && [ "${3}" = "-scheduler" -o "${3}" = "--scheduler" -o "${3}" = "scheduler" ] ; then
+			echo "tidHash and scheduler are enabled"
+			time -f "\t%E Elapsed Real Time \n\t%S CPU-seconds" --quiet ./a.out --tid --scheduler < $input > myout.test
+			exitstatus=$?
 		fi
 	elif [ $# -eq 4 ] ; then
 		if  [ "${2}" = "-tid" -o "${2}" = "--tid" -o "${2}" = "tid" ] && [ "${3}" = "-threads" -o "${3}" = "--threads" -o "${3}" = "threads" ]; then
 			threadNum="${4}"
 			echo "Running with tidHash and" $threadNum "threads"
 			time -f "\t%E Elapsed Real Time \n\t%S CPU-seconds" --quiet ./a.out --tid --threads $threadNum < $input > myout.test
+			exitstatus=$?
+		elif  [ "${2}" = "-scheduler" -o "${2}" = "--scheduler" -o "${2}" = "scheduler" ] && [ "${3}" = "-threads" -o "${3}" = "--threads" -o "${3}" = "threads" ]; then
+			threadNum="${4}"
+			echo "Running with scheduler and" $threadNum "threads"
+			time -f "\t%E Elapsed Real Time \n\t%S CPU-seconds" --quiet ./a.out --scheduler --threads $threadNum < $input > myout.test
+			exitstatus=$?
+		elif  [ "${4}" = "-scheduler" -o "${4}" = "--scheduler" -o "${4}" = "scheduler" ] && [ "${2}" = "-threads" -o "${2}" = "--threads" -o "${2}" = "threads" ]; then
+			threadNum="${3}"
+			echo "Running with scheduler and" $threadNum "threads"
+			time -f "\t%E Elapsed Real Time \n\t%S CPU-seconds" --quiet ./a.out --scheduler --threads $threadNum < $input > myout.test
 			exitstatus=$?
 		fi
 	elif [ $# -eq 5 ] ; then
@@ -65,7 +87,27 @@ else
 			threadNum="${4}"
 			roundNum="${6}"
 			echo "Running with tidHash," $threadNum "threads and" $roundNum "rounds" 
-			time -f "\t%E Elapsed Real Time \n\t%S CPU-seconds" --quiet ./a.out --threads $threadNum --rounds $roundNum < $input > myout.test
+			time -f "\t%E Elapsed Real Time \n\t%S CPU-seconds" --quiet ./a.out --tid --threads $threadNum --rounds $roundNum < $input > myout.test
+			exitstatus=$?
+		elif  [ "${2}" = "-scheduler" -o "${2}" = "--scheduler" -o "${2}" = "scheduler" ] && [ "${3}" = "-threads" -o "${3}" = "--threads" -o "${3}" = "threads" ] && [ "${5}" = "-rounds" -o "${5}" = "--rounds" -o "${5}" = "rounds" ]; then
+			threadNum="${4}"
+			roundNum="${6}"
+			echo "Running with scheduler," $threadNum "threads and" $roundNum "rounds" 
+			time -f "\t%E Elapsed Real Time \n\t%S CPU-seconds" --quiet ./a.out --scheduler --threads $threadNum --rounds $roundNum < $input > myout.test
+			exitstatus=$?
+		elif  [ "${6}" = "-scheduler" -o "${6}" = "--scheduler" -o "${6}" = "scheduler" ] && [ "${2}" = "-threads" -o "${2}" = "--threads" -o "${2}" = "threads" ] && [ "${4}" = "-rounds" -o "${4}" = "--rounds" -o "${4}" = "rounds" ]; then
+			threadNum="${3}"
+			roundNum="${5}"
+			echo "Running with scheduler," $threadNum "threads and" $roundNum "rounds" 
+			time -f "\t%E Elapsed Real Time \n\t%S CPU-seconds" --quiet ./a.out --scheduler --threads $threadNum --rounds $roundNum < $input > myout.test
+			exitstatus=$?
+		fi
+	elif [ $# -eq 7 ] ; then
+		if  [ "${2}" = "-tid" -o "${2}" = "--tid" -o "${2}" = "tid" ] && [ "${7}" = "-scheduler" -o "${7}" = "--scheduler" -o "${7}" = "scheduler" ] && [ "${3}" = "-threads" -o "${3}" = "--threads" -o "${3}" = "threads" ] && [ "${5}" = "-rounds" -o "${5}" = "--rounds" -o "${5}" = "rounds" ]; then
+			threadNum="${4}"
+			roundNum="${6}"
+			echo "Running with tidHash, scheduler," $threadNum "threads and" $roundNum "rounds" 
+			time -f "\t%E Elapsed Real Time \n\t%S CPU-seconds" --quiet ./a.out --tid --scheduler --threads $threadNum --rounds $roundNum < $input > myout.test
 			exitstatus=$?
 		fi
 	else
