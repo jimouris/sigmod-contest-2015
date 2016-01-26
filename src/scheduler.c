@@ -10,25 +10,19 @@ threadpool_t* threadpoolCreate(int thread_count) {
 		fprintf(stderr, "Mutex allocation Error\n");
 		exit(EXIT_FAILURE);
 	}
-    threadpool->queue = malloc(sizeof(job_queue *));
-    ALLOCATION_ERROR(threadpool->queue);
-    threadpool->queue->jobs = 0;
-    threadpool->queue->list_start = NULL;
-    threadpool->queue->list_end = NULL;
-
+    threadpool->queue = createQueue();
 	int i = 0;
-/*edw 8elei allagh to create alla de 3erw me ti.*/
     for (i = 0; i < thread_count; i++) {
-        if (pthread_create(&(threadpool->threads[i]), NULL, threadFunction, NULL) != 0) {
+        if (pthread_create(&(threadpool->threads[i]), NULL, jobConsumer, threadpool) != 0) {
         	fprintf(stderr, "Error creating thread %d\n", i);
         	exit(EXIT_FAILURE);
         }
     }
-
 	return threadpool;
 }
 
-void jobConsumer(threadpool_t *threadpool) {
+void* jobConsumer(void *arg) {
+    threadpool_t * threadpool = (threadpool_t *) arg;
     if (pthread_mutex_lock(&(threadpool->lock)) != 0) {
         fprintf(stderr, "Mutex locking Error\n");
         exit(EXIT_FAILURE);
@@ -42,6 +36,7 @@ void jobConsumer(threadpool_t *threadpool) {
         fprintf(stderr, "Mutex locking Error\n");
         exit(EXIT_FAILURE);
     }
+    return NULL;
 }
 
 /* scheduler producer */
@@ -102,4 +97,13 @@ ValidationQueries_t* popJob(job_queue *queue) {
 
 bool isQueueEmpty(job_queue *queue) {
     return (queue->jobs) ? true : false;
+}
+
+job_queue* createQueue(void) {
+    job_queue* queue = malloc(sizeof(job_queue *));
+    ALLOCATION_ERROR(queue);
+    queue->jobs = 0;
+    queue->list_start = NULL;
+    queue->list_end = NULL;
+    return queue;
 }

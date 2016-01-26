@@ -37,8 +37,13 @@ typedef struct threadpool_t {
 	job_queue *queue;
 } threadpool_t;
 
-void pushJob(job_queue *queue, ValidationQueries_t* v);
-ValidationQueries_t* popJob(job_queue *queue);
-bool isQueueEmpty(job_queue *queue);
+job_queue* createQueue(void);
+threadpool_t* threadpoolCreate(int);
+void* jobConsumer(void *);
+void threadpoolAdd(threadpool_t *, ValidationQueries_t *);
+void threadpoolFree(threadpool_t *);
+void pushJob(job_queue *, ValidationQueries_t *);
+ValidationQueries_t* popJob(job_queue *);
+bool isQueueEmpty(job_queue *);
 
 #endif
