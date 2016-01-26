@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <stdbool.h>
 #include "parser.h"
 #include "constants.h"
 
@@ -23,6 +24,7 @@ typedef struct job_node_t {
 } job_node_t;
 
 typedef struct job_queue {
+	uint64_t jobs;
 	job_node_t *list_start;
 	job_node_t *list_end;
 } job_queue;
@@ -35,5 +37,8 @@ typedef struct threadpool_t {
 	job_queue *queue;
 } threadpool_t;
 
+void pushJob(job_queue *queue, ValidationQueries_t* v);
+ValidationQueries_t* popJob(job_queue *queue);
+bool isQueueEmpty(job_queue *queue);
 
 #endif

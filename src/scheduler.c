@@ -10,11 +10,16 @@ threadpool_t* threadpoolCreate(int thread_count) {
 		fprintf(stderr, "Mutex allocation Error\n");
 		exit(EXIT_FAILURE);
 	}
-	int i = 0;
+    threadpool->queue = malloc(sizeof(job_queue *));
+    ALLOCATION_ERROR(threadpool->queue);
+    threadpool->queue->jobs = 0;
+    threadpool->queue->list_start = NULL;
+    threadpool->queue->list_end = NULL;
 
+	int i = 0;
 /*edw 8elei allagh to create alla de 3erw me ti.*/
     for (i = 0; i < thread_count; i++) {
-        if (pthread_create(&(threadpool->threads[i]), NULL, threadFunction, (void*)threadpool) != 0) {
+        if (pthread_create(&(threadpool->threads[i]), NULL, threadFunction, NULL) != 0) {
         	fprintf(stderr, "Error creating thread %d\n", i);
         	exit(EXIT_FAILURE);
         }
@@ -23,15 +28,31 @@ threadpool_t* threadpoolCreate(int thread_count) {
 	return threadpool;
 }
 
-void threadpoolAdd(threadpool_t *threadpool, void (*function)(void *), thread_arg_t *argument) {
+void jobConsumer(threadpool_t *threadpool) {
+    if (pthread_mutex_lock(&(threadpool->lock)) != 0) {
+        fprintf(stderr, "Mutex locking Error\n");
+        exit(EXIT_FAILURE);
+    }
+
+    while (isQueueEmpty(threadpool->queue)) {
+        pthread_cond_wait(&(threadpool->cond), &(threadpool->lock));
+    }
+
+    if (pthread_mutex_unlock(&threadpool->lock) != 0) {
+        fprintf(stderr, "Mutex locking Error\n");
+        exit(EXIT_FAILURE);
+    }
+}
+
+/* scheduler producer */
+void threadpoolAdd(threadpool_t *threadpool, ValidationQueries_t* v) {
     if (pthread_mutex_lock(&(threadpool->lock)) != 0) {
     	fprintf(stderr, "Mutex locking Error\n");
 		exit(EXIT_FAILURE);
     }
 
-
-
-
+    pushJob(threadpool->queue, v);
+    pthread_cond_broadcast(&(threadpool->cond));
 
     if (pthread_mutex_unlock(&threadpool->lock) != 0) {
     	fprintf(stderr, "Mutex locking Error\n");
@@ -57,6 +78,7 @@ void pushJob(job_queue *queue, ValidationQueries_t* v) {
     ALLOCATION_ERROR(node);
     node->v = v;
     node->next = NULL;
+    queue->jobs++;
     if (queue->list_start == NULL) {
         queue->list_start = node;
         queue->list_end = node;
@@ -71,9 +93,13 @@ ValidationQueries_t* popJob(job_queue *queue) {
     if (queue->list_start == NULL) {
         return NULL;
     }
+    queue->jobs--;
     queue->list_start = queue->list_start->next;
     ValidationQueries_t* v = node->v;
     free(node);
     return v;
 }
 
+bool isQueueEmpty(job_queue *queue) {
+    return (queue->jobs) ? true : false;
+}
