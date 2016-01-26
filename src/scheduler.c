@@ -115,14 +115,18 @@ ValidationQueries_t* popJob(job_queue *queue) {
         return NULL;
     }
     queue->jobs--;
-    queue->list_start = queue->list_start->next;
+    if (queue->jobs == 0) {
+        queue->list_start = NULL;
+    } else {
+        queue->list_start = queue->list_start->next;
+    }
     ValidationQueries_t* v = node->v;
     free(node);
     return v;
 }
 
 bool isQueueEmpty(job_queue *queue) {
-    return (queue->jobs) ? true : false;
+    return (queue->jobs) ? false : true;
 }
 
 job_queue* createQueue(void) {
