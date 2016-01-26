@@ -7,7 +7,7 @@ static thread_arg_t* thread_array;
 
 Flush_t* last_flush = NULL;
 int flushes = 0;
-
+bool first_flush = true;
 threadpool_t* threadpool;
 
 extern int* modes;
@@ -137,45 +137,50 @@ void* threadFunction(void* thread_arg){
 
 void processFlush(Flush_t *fl, Journal_t** journal_array, ValidationList_t* validation_list) {
 	last_flush = fl;
+	flushes++;
 	if(modes[2] != 0){ //Threads enabled
-		flushes++;
+		if(flushes == modes[3]){
+			flushes = 0;
 
-		int thread_num = modes[2];
-		static uint64_t last_validation_id = 0;
-		uint64_t num_of_validations = fl->validationId - last_validation_id + 1;	//Number of Validations to evaluate
-		uint8_t* result_array = calloc(num_of_validations,sizeof(uint8_t));
-		uint64_t remove_count = 0; //Number of validations to be removed from the list.
-		
-		if(modes[4] != 0){ //Scheduler enabled
-			uint64_t i;
-			Val_list_node* iter = validation_list->list->list_beg;
-			uint64_t first_val_id = iter->data->validationId;
-		
-			threadpool->result_array = result_array;
-			threadpool->first_val_id = first_val_id;
-			// threadpool_t* threadpool = threadpoolCreate(thread_num, journal_array, result_array, first_val_id);
-			while(iter != NULL && iter->data->validationId < fl->validationId){
-				ValidationQueries_t* val_query = iter->data;
-				threadpoolAdd(threadpool, val_query);
-				iter = iter->next;
-				remove_count++;
+			int thread_num = modes[2];
+			static uint64_t last_validation_id = 0;
+			uint64_t num_of_validations = fl->validationId - last_validation_id + 1;	//Number of Validations to evaluate
+			if (first_flush) {
+				num_of_validations--;
+				first_flush = false;
 			}
+			uint8_t* result_array = calloc(num_of_validations,sizeof(uint8_t));
+			uint64_t remove_count = 0; //Number of validations to be removed from the list.
 			
+			if(modes[4] != 0){ //Scheduler enabled
+		
+				uint64_t i;
+				Val_list_node* iter = validation_list->list->list_beg;
+				uint64_t first_val_id = iter->data->validationId;
+			
+				threadpool->result_array = result_array;
+				threadpool->first_val_id = first_val_id;
+				threadpool->num_of_validations = num_of_validations;
 
-			threadpoolBarrier(threadpool);
+				while(iter != NULL && iter->data->validationId < fl->validationId){
+					ValidationQueries_t* val_query = iter->data;
+					threadpoolAdd(threadpool, val_query);
+					iter = iter->next;
+					remove_count++;
+				}
+
+				threadpoolBarrier(threadpool);
 
 
-			for(i = 0; i < remove_count; i++){
-				validation_remove_start(validation_list->list);
-				printf("%" PRIu8 "",result_array[i]);
-			}
-			last_validation_id = fl->validationId + 1;
-			free(result_array);
+				for(i = 0; i < remove_count; i++){
+					validation_remove_start(validation_list->list);
+					printf("%" PRIu8 "",result_array[i]);
+				}
+				last_validation_id = fl->validationId + 1;
+				free(result_array);
 
-		} else { //Scheduler Not enabled
-			if(flushes == modes[3]){
-				flushes = 0;
-				// fprintf(stderr, "%zu\n",fl->validationId );
+			} else { //Scheduler Not enabled
+				
 				uint64_t max_validations = num_of_validations / thread_num + 1;
 				int i;
 				if (max_validations > thread_array[0].size){

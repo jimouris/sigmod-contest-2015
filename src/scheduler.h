@@ -34,9 +34,12 @@ typedef struct threadpool_t {
 	int thread_count;
 	Journal_t** journal_array;
 	uint8_t* result_array;
+	uint64_t num_of_validations;
 	uint64_t first_val_id;
 	pthread_mutex_t lock;
 	pthread_cond_t cond;
+	pthread_mutex_t lock_end;
+	pthread_cond_t cond_end;
 	job_queue *queue;
 } threadpool_t;
 

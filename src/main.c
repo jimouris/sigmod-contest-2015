@@ -93,8 +93,10 @@ int main(int argc, char **argv) {
 				break;
 			case Flush:
 				processFlush(body,journal_array,validation_list);
-				while(flushes != 0){
-					processFlush(last_flush,journal_array,validation_list);
+				if(modes[3] != 1){
+					while(flushes != 0){
+						processFlush(last_flush,journal_array,validation_list);
+					}
 				}
 				if (body != NULL)
 					free(body);
