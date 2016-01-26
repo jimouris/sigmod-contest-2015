@@ -9,11 +9,12 @@
 int *modes;
 extern Flush_t* last_flush;
 extern int flushes;
-/* modes[tid, predicate, threads, rounds] */
+/* modes[tid, predicate, threads, rounds, scheduler] */
 void usage(int argc, char **argv) {
 	int i;
-	modes = calloc(4, sizeof(int));
+	modes = calloc(5, sizeof(int));
 	modes[3] = 1; // default rounds
+	modes[4] = 0; // default scheduler off
 	for (i = 1 ; i < argc ; i++) {
 		if (!strcmp(argv[i], "-tid") || !strcmp(argv[i], "tid") || !strcmp(argv[i], "--tid")) {
 			modes[0] = 1;
@@ -29,6 +30,11 @@ void usage(int argc, char **argv) {
 			int flushes = atoi(argv[i]);
 			if (flushes < 1) { fprintf(stderr, "Rounds must be greater than zero\n"); exit(1); }
 			modes[3] = flushes;
+		} else if (!strcmp(argv[i], "-scheduler") || !strcmp(argv[i], "scheduler") || !strcmp(argv[i], "--scheduler")) {
+			modes[4] = 1;
+			if (modes[2] == 0) {	// if threads not given
+				modes[2] = 2;	// default threads
+			}
 		} else {
 errorInput:
 			fprintf(stderr, "Wrong Input! Run like:\n%s\nor\n%s --tid\nor\n%s --tid --predicate\nor\n%s --tid --threads T\nor\n%s --threads T\nor\n%s --threads T --rounds R\nor\n%s --tid --threads T --rounds R\n"
