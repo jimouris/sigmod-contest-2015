@@ -52,3 +52,28 @@ void threadpoolFree(threadpool_t *threadpool) {
     free(threadpool);    
 }
 
+void pushJob(job_queue *queue, ValidationQueries_t* v) {
+    job_node_t *node = malloc(sizeof(job_node_t));
+    ALLOCATION_ERROR(node);
+    node->v = v;
+    node->next = NULL;
+    if (queue->list_start == NULL) {
+        queue->list_start = node;
+        queue->list_end = node;
+        return ;
+    }
+    queue->list_end->next = node;
+    queue->list_end = node;
+}
+
+ValidationQueries_t* popJob(job_queue *queue) {
+    job_node_t *node = queue->list_start;
+    if (queue->list_start == NULL) {
+        return NULL;
+    }
+    queue->list_start = queue->list_start->next;
+    ValidationQueries_t* v = node->v;
+    free(node);
+    return v;
+}
+
