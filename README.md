@@ -20,7 +20,7 @@ During the contest we will also hand out larger test datasets, similar to those 
 2. path-to-input:
   "./execute ./path-to-input/file.bin [--tid] [--predicate] [--threads t] [--rounds r] [--scheduler]"
 
-#####Optional Arguments:
+####Optional Arguments:
 1. [--tid enables hash to every transacrion-id]
 2. [--predicate enables hash to every predicate, to avoid computing the same values twice (unfortunately speed down)]
 3. [--threads t computes validations parallel]
