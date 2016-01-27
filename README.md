@@ -18,8 +18,15 @@ During the contest we will also hand out larger test datasets, similar to those 
 1. default input:
   "./execute"
 2. path-to-input:
-  "./execute ./path-to-input/file.bin [--tid] [--predicate]"
-  (e.g. "./execute ./inputs/small.bin [--tid] [--predicate]")
+  "./execute ./path-to-input/file.bin [--tid] [--predicate] [--threads t] [--rounds r] [--scheduler]"
 
-[--tid is optional, enables hash to every transacrion-id]
-[--predicate is also optional, enables hash to every predicate, to avoid computing the same values twice]
+#####Optional Arguments:
+1. [--tid enables hash to every transacrion-id]
+2. [--predicate enables hash to every predicate, to avoid computing the same values twice (unfortunately speed down)]
+3. [--threads t computes validations parallel]
+4. [--rounds r computes every r flushes]
+5. [--scheduler enavbles a thread pool (worse than thread-version)]
+6. 
+
+####Fastest Implementation:
+./execute ./path-to-input/file.bin --threads 4"
