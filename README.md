@@ -16,10 +16,12 @@ During the contest we will also hand out larger test datasets, similar to those 
 
 ####Running:
 1. default input:
+
   ```
   ./execute
   ```
 2. path-to-input:
+
   ```
   ./execute ./path-to-input/file.bin [--tid] [--predicate] [--threads t] [--rounds r] [--scheduler]
   ```
@@ -32,6 +34,7 @@ During the contest we will also hand out larger test datasets, similar to those 
 5. [--scheduler enables a thread pool (worse than thread-version)]
 
 ####Fastest Implementation:
+
 ```
 ./execute ./path-to-input/file.bin --threads 4
 ```
