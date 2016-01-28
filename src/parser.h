@@ -165,6 +165,6 @@ int cmp_col(const void *, const void *);
 
 bool equal_col(const void *p1, const void *p2);
 
-void* threadFunction(void* arg);
+void* threadedCheckValidation(void* arg);
 
 #endif

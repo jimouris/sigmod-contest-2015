@@ -123,7 +123,7 @@ int cmp_col(const void *p1, const void *p2) {
 	}
 	return 0;
 }
-void* threadFunction(void* thread_arg){
+void* threadedCheckValidation(void* thread_arg){
 	thread_arg_t* arg = (thread_arg_t*) thread_arg; 
 	uint64_t i;
 	for(i = 0; i < arg->validation_num; i++){
@@ -216,7 +216,7 @@ void processFlush(Flush_t *fl, Journal_t** journal_array, ValidationList_t* vali
 
 				int err;
 				for(i=0; i<thread_num; i++){
-					if( (err = pthread_create(&thread_id[i], NULL, threadFunction, &thread_array[i])) != 0){
+					if( (err = pthread_create(&thread_id[i], NULL, threadedCheckValidation, &thread_array[i])) != 0){
 						fprintf(stderr, "Error in pthread_create \n");
 						fprintf(stderr, "\tError: %s\n",strerror(err));
 						exit(EXIT_FAILURE);
