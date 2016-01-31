@@ -1,40 +1,53 @@
 # transaction-processing
 ACM Sigmod 2015 Programming Contest
-http://db.in.tum.de/sigmod15contest/task.html
 
-The ACID principle, mandating atomicity, consistency, isolation and durability is one of the cornerstones of relational database management systems. In order to achieve the third principle, isolation, concurrent reads and writes must be handled carefully.
+> The ACID principle, mandating atomicity, consistency, isolation and durability is one of the cornerstones of relational database management systems. In order to achieve the third principle, isolation, concurrent reads and writes must be handled carefully.
 
-In practice, transaction processing is often done in an optimistic fashion, where queries and statements are processed first, and only at the commit point the system validates if there was a conflict between readers and writers.
+> In practice, transaction processing is often done in an optimistic fashion, where queries and statements are processed first, and only at the commit point the system validates if there was a conflict between readers and writers.
 
-In this challenge, we simulate this in a slightly simplified way: The system processes already executed transactions and only needs to check efficiently whether concurrent queries conflict with them. So, in short: we issue a list of insert and delete statements and your program needs to figure out whether given predicates match the inserted or deleted data.
+> In this challenge, we simulate this in a slightly simplified way: The system processes already executed transactions and only needs to check efficiently whether concurrent queries conflict with them. So, in short: we issue a list of insert and delete statements and your program needs to figure out whether given predicates match the inserted or deleted data.
 
-Each client has to process a number of requests, provided via standard input, and must provide answers via stdout. The protocol itself is a simple binary protocol, which is described in the C++ reference implementation. It also contains the testdriver and a basic test case to verify the functionality of your program locally. Additionally there are also a small and a medium-sized test case which can be used together with the test driver; the latter can be decompressed using tar xpvf data_medium.tar.xz. We also provide unoffical untested stub implementations in Go, Java and Rust.
+Website of the contest can be found [here](http://db.in.tum.de/sigmod15contest/task.html)
 
-A basic description of the workload is described in the following section. After the examples there is a detailed description of the semantics of each request type.
+Project Team:
+- [Thanos Giannopoulos](https://github.com/thanosgn)
+- [Jim Mouris](https://github.com/jimouris) 
+- [Themis Beris](https://github.com/ThemisB).
 
-During the contest we will also hand out larger test datasets, similar to those used during evaluation.
+###Running
+Runnig of the program is easy using the script provided.
 
-####Running:
-1. default input:
-
-  ```
-  ./execute
-  ```
-2. path-to-input:
 
   ```
-  ./execute ./path-to-input/file.bin [--tid] [--predicate] [--threads t] [--rounds r] [--scheduler]
+  ./execute.sh
   ```
+  
+  The above will run the program with the default input file (`inputs/small.bin`).
+  It will also check if the output of the programm matches the output provided by the contest (using `diff`)
+  
+  You can specify the input in the first arguement of the script, like:
+  
+  ```
+  ./execute.sh input_file
+  ```
+  
+  After that can also follow some other options for using specific indexes, or enabling multihreaded functions.
+  
+#####Possible  options are:
+  1. [`--tid` enables indexing for transaction-ids using extendible hashing]
+  2. [`--predicate` enables indexing for predicates using extendible hashing, to avoid computing the same values twice]
+  3. [`--threads t` enables multithreaded validation check using `t` threads]
+  4. [`--rounds r` evaluates and print validadations every `r` flushes]
+  5. [`--scheduler` enables thread scheduler for assigning jobs to a thread pool]
 
-####Optional Arguments:
-1. [--tid enables hash to every transacrion-id]
-2. [--predicate enables hash to every predicate, to avoid computing the same values twice (unfortunately speed down)]
-3. [--threads t computes validations parallel]
-4. [--rounds r computes every r flushes]
-5. [--scheduler enables a thread pool (worse than thread-version)]
 
-####Fastest Implementation:
-
+  
+Unfortunately, for the given inputs options 1,2 don't provide speedup due to the overhead of building the indexes.
+Also, regarding the multithreaded execution the scheduler doesn't provide a speedup either and the program runs faster with 
+equal distribution of the validations to each thread.
+  
+#####Fastest Implementation so fast:
+  
 ```
-./execute ./path-to-input/file.bin --threads 4
+./execute.sh input_file --threads 4
 ```
