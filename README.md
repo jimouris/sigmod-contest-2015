@@ -12,7 +12,7 @@ Website of the contest can be found [here](http://db.in.tum.de/sigmod15contest/t
 Project Team:
 - [Thanos Giannopoulos](https://github.com/thanosgn)
 - [Jim Mouris](https://github.com/jimouris) 
-- [Themis Beris](https://github.com/ThemisB).
+- [Themis Beris](https://github.com/ThemisB)
 
 ###Running
 Runnig of the program is easy using the script provided.
@@ -46,7 +46,7 @@ Unfortunately, for the given inputs options 1,2 don't provide speedup due to the
 Also, regarding the multithreaded execution the scheduler doesn't provide a speedup either and the program runs faster with 
 equal distribution of the validations to each thread.
   
-####Fastest Implementation:
+####Fastest Implementation so far:
 
 ```
 ./execute.sh input_file --threads 4
