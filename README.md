@@ -22,16 +22,16 @@ Runnig of the program is easy using the script provided.
   ./execute.sh
   ```
   
-  The above will run the program with the default input file (`inputs/small.bin`).
-  It will also check if the output of the programm matches the output provided by the contest (using `diff`)
+The above will run the program with the default input file (`inputs/small.bin`).
+It will also check if the output of the programm matches the output provided by the contest (using `diff`)
   
-  You can specify the input in the first arguement of the script, like:
+You can specify the input in the first arguement of the script, like:
   
-  ```
-  ./execute.sh input_file
-  ```
-  
-  After that can also follow some other options for using specific indexes, or enabling multihreaded functions.
+```
+./execute.sh input_file
+```
+
+After that can also follow some other options for using specific indexes, or enabling multihreaded functions.
   
 #####Possible  options are:
   1. [`--tid` enables indexing for transaction-ids using extendible hashing]
@@ -46,8 +46,8 @@ Unfortunately, for the given inputs options 1,2 don't provide speedup due to the
 Also, regarding the multithreaded execution the scheduler doesn't provide a speedup either and the program runs faster with 
 equal distribution of the validations to each thread.
   
-#####Fastest Implementation so fast:
-  
+####Fastest Implementation:
+
 ```
 ./execute.sh input_file --threads 4
 ```
