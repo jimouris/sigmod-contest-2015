@@ -27,11 +27,11 @@ During the contest we will also hand out larger test datasets, similar to those 
   ```
 
 ####Optional Arguments:
-1. [--tid enables hash to every transacrion-id]
-2. [--predicate enables hash to every predicate, to avoid computing the same values twice (unfortunately speed down)]
-3. [--threads t computes validations parallel]
-4. [--rounds r computes every r flushes]
-5. [--scheduler enables a thread pool (worse than thread-version)]
+1. [`--tid` enables hash to every transacrion-id]
+2. [`--predicate` enables hash to every predicate, to avoid computing the same values twice (unfortunately speed down)]
+3. [`--threads t` computes validations parallel]
+4. [`--rounds r` computes every r flushes]
+5. [`--scheduler` enables a thread pool (worse than thread-version)]
 
 ####Fastest Implementation:
 
