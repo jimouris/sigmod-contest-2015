@@ -9,10 +9,8 @@ ACM Sigmod 2015 Programming Contest
 
 Website of the contest can be found [here](http://db.in.tum.de/sigmod15contest/task.html)
 
-Project Team:
-- [Thanos Giannopoulos](https://github.com/thanosgn)
-- [Jim Mouris](https://github.com/jimouris) 
-- [Themis Beris](https://github.com/ThemisB)
+This repository contains the approach on this project by [me](https://github.com/jimouris) among with [Thanos Giannopoulos](https://github.com/thanosgn) and [Themis Beris](https://github.com/ThemisB).
+
 
 ###Running
 Runnig of the program is easy using the script provided.
