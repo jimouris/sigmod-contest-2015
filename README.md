@@ -1,4 +1,4 @@
-[![License MIT][badge-license]](LICENSE.md)
+[![License MIT][badge-license]](LICENSE.txt)
 
 # transaction-processing
 ACM Sigmod 2015 Programming Contest
