@@ -51,3 +51,5 @@ equal distribution of the validations to each thread.
 ```
 ./execute.sh input_file --threads 4
 ```
+
+[badge-license]: https://img.shields.io/badge/license-MIT-green.svg
