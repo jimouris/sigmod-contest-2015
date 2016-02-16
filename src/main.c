@@ -53,15 +53,10 @@ int main(int argc, char **argv) {
 	ValidationList_t* validation_list = validationListCreate();
 	int relation_count = 0;
 	while (1) {
-		/* Retrieve the message head */
 		if (read(0, &head, sizeof(head)) <= 0) {
 			exit(EXIT_FAILURE);
 		} // crude error handling, should never happen
-		// printf("HEAD LEN %u \t| HEAD TYPE %u \t| DESC ", head.messageLen, head.type);
 
-		/* Retrieve the message body */
-		// if (body != NULL)
-		// 	free(body);
 		if (head.messageLen > 0 ) {
 			body = malloc(head.messageLen * sizeof(char));
 			if (read(0, body, head.messageLen) <= 0) { 
