@@ -39,7 +39,6 @@ typedef struct predicateHash {
 	ZombieList* zombie_list;
 } predicateHash;
 
-	/// The constant
 typedef struct PredicateRangeArray {
 	uint64_t from;
 	uint64_t to; 
@@ -60,22 +59,14 @@ typedef struct ZombieList {
 	uint64_t num_of_zombies;
 } ZombieList;
 
-
 /*Zombie functions*/
 ZombieList* zombieList_create(void);
 Zombie_node * zombieList_insert_end(ZombieList*, predicateSubBucket*);
 void zombieList_remove(ZombieList *, Zombie_node *);
 void zombieList_destroy(ZombieList *);
-/*******************/
-/* HASH INIT METHOD */
+/*HASH*/
 predicateHash* predicateCreateHash(void); 
-/********************/
-
-/*HASH FUNCTION USED FOR TO GO TO THE RIGHT INDEX*/
 uint64_t predicateHashFunction(uint64_t, uint64_t, uint64_t, uint32_t, Op_t op, uint64_t);
-/*************************************************/
-
-/*INSERT TO HASH FUNCTION AND OTHER HELPER FUNCTIONS*/
 void predicateFixHashPointers(predicateBucket **, predicateBucket *, uint32_t, uint64_t); 
 void predicateFixSplitPointers(predicateHash*, predicateBucket*, predicateBucket*, uint64_t );
 void predicateDuplicateIndex(predicateHash*);
@@ -92,8 +83,6 @@ void predicatePrintBucket(predicateBucket *);
 predicateSubBucket* createPredicateSubBucket(uint64_t, uint64_t, uint32_t, Op_t, uint64_t, uint64_t);
 bool predicateRecordsEqualArguements(predicateSubBucket*,  uint64_t, uint64_t, uint32_t, Op_t, uint64_t);
 int predicateInsertBitSet(predicateHash*, uint64_t, uint64_t, uint32_t, Op_t, uint64_t, BitSet_t*);
-/*****************************************************/
-
 /*FORGET RELATED FUNCTIONS*/
 int predicateDeleteHashRecord(predicateHash*, predicateSubBucket*);
 int predicateForgetSubBucket(predicateHash*, uint64_t, predicateSubBucket*);
@@ -101,15 +90,11 @@ void predicateMoveSubBucketsLeft(predicateBucket*, uint32_t);
 void predicateTryMergeBuckets(predicateHash*, uint64_t);
 uint8_t predicateTryCollapseIndex(predicateHash*);
 void forgetPredicateIndex(predicateHash*, uint64_t);
-/**************************/
 /*DELETE HASH FUNCTION*/
 void predicateDestroyBucket(predicateBucket *);
 void predicateDestroySubBucket(predicateSubBucket *);
 int predicateDestroyHash(predicateHash *);
 void predicateFixDeletePointers(predicateHash*, predicateBucket*, predicateBucket* , uint64_t);
 void predicateDestroyBucketNoSubBuckets(predicateBucket *bucket);
-/**********************/
-
-// bool predicateRecordsEqualRangeArray(predicateSubBucket*, PredicateRangeArray*);
 
 #endif
