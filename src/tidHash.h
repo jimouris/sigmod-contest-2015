@@ -27,17 +27,9 @@ typedef struct tidHash {
 	uint32_t global_depth;
 	tidBucket **index;
 } tidHash;
-/****************************/
 
-/* HASH INIT METHOD */
 tidHash* tidCreateHash(void); 
-/********************/
-
-/*HASH FUNCTION USED FOR TO GO TO THE RIGHT INDEX*/
 uint64_t tidHashFunction(uint64_t, uint64_t);
-/*************************************************/
-
-/*INSERT TO HASH FUNCTION AND OTHER HELPER FUNCTIONS*/
 void tidFixHashPointers(tidBucket **, tidBucket *, uint32_t, uint64_t); 
 void tidFixSplitPointers(tidHash *, tidBucket *, tidBucket *, uint64_t);
 void tidDuplicateIndex(tidHash *);
@@ -46,16 +38,8 @@ int tidInsertHashRecord(tidHash* , tidSubBucket*);
 tidBucket* tidCreateNewBucket(uint32_t);
 tidSubBucket* tidCreateNewSubBucket(tidSubBucket *);
 void tidCleanBucket(tidBucket *);
-/****************************************************/
-
-/*SEARCH TO HASH AND OTHER HELPER METHODS*/
 uint64_t tidGetHashOffset(tidHash *, uint64_t, bool *);
-/****************************************/
-
-/*DELETE HASH FUNCTION*/
 int tidDestroyHash(tidHash *); 
 void tidDestroyBucket(tidBucket *);
-/**********************/
-
 
 #endif
