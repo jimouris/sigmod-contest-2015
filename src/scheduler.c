@@ -64,8 +64,6 @@ void* jobConsumer(void *arg) {
 			fprintf(stderr, "Mutex locking Error\n");
 			exit(EXIT_FAILURE);
 		}
-
-
 	}
 	return NULL;
 }
@@ -86,8 +84,6 @@ void threadpoolBarrier(threadpool_t* threadpool){
 	}
 	return;      
 }
-
-
 
 /* scheduler producer */
 void threadpoolAdd(threadpool_t *threadpool, ValidationQueries_t* v) {
