@@ -9,8 +9,6 @@
 #include "PKeyHash.h"
 
 
-
-//---------------------------------------------------------------------------
 typedef struct MessageHead {
    /// Total message length, excluding this head
    uint32_t messageLen;
@@ -18,7 +16,6 @@ typedef struct MessageHead {
    Type_t type;
 } MessageHead_t;
 
-//---------------------------------------------------------------------------
 typedef struct DefineSchema {
    /// Number of relations
    uint32_t relationCount;
@@ -26,7 +23,6 @@ typedef struct DefineSchema {
    uint32_t columnCounts[];
 } DefineSchema_t;
 
-//---------------------------------------------------------------------------
 typedef struct Transaction {
    /// The transaction id. Monotonic increasing
    uint64_t transactionId;
@@ -36,7 +32,6 @@ typedef struct Transaction {
    char operations[];
 } Transaction_t;
 
-//---------------------------------------------------------------------------
 typedef struct TransactionOperationDelete {
    /// The affected relation
    uint32_t relationId;
@@ -46,7 +41,6 @@ typedef struct TransactionOperationDelete {
    uint64_t keys[];
 } TransactionOperationDelete_t;
 
-//---------------------------------------------------------------------------
 typedef struct TransactionOperationInsert {
    /// The affected relation
    uint32_t relationId;
@@ -56,7 +50,6 @@ typedef struct TransactionOperationInsert {
    uint64_t values[];
 } TransactionOperationInsert_t;
 
-//---------------------------------------------------------------------------
 typedef struct ValidationQueries {
    /// The validation id. Monotonic increasing
    uint64_t validationId;
@@ -68,11 +61,7 @@ typedef struct ValidationQueries {
    char queries[];
 } ValidationQueries_t;
 
-//---------------------------------------------------------------------------
-
-//---------------------------------------------------------------------------
 typedef struct Query {
-
    /// The relation
    uint32_t relationId;
    /// The number of bound columns
@@ -81,13 +70,11 @@ typedef struct Query {
    Column_t columns[];
 } Query_t;
 
-//---------------------------------------------------------------------------
 typedef struct Flush {
    /// All validations to this id (including) must be answered
    uint64_t validationId;
 } Flush_t;
 
-//---------------------------------------------------------------------------
 typedef struct Forget {
    /// Transactions older than that (including) will not be tested for
    uint64_t transactionId;
@@ -113,58 +100,32 @@ typedef struct ValidationList {
 
 
 bool validation_isEmpty(Val_list_t*);
-
 Column_t** removeDuplicates(Column_t** old, uint64_t old_size, uint64_t* new_size);
-
 void destroy_validation_list(Val_list_t*);
-
 List_node* validation_insert_start(Val_list_t* l_info, ValidationQueries_t* d);
-
 void validation_insert_end(Val_list_t* l_info, ValidationQueries_t* d);
-
 void validation_remove_end(Val_list_t* l_info);
-
 void validation_remove_start(Val_list_t *list);
-
 Val_list_t* validation_list_create();
-
 void validation_print_list(Val_list_t *l_info);
-
-
 int validationListInsert(ValidationList_t* , ValidationQueries_t*);
-
 void validationListPrint(ValidationList_t*);
-
 ValidationList_t* validationListCreate();
-
 void validationListDestroy(ValidationList_t*);
-
 Journal_t** processDefineSchema(DefineSchema_t *, int*, int*);
-
 void processTransaction(Transaction_t *, Journal_t**);
-
 void processValidationQueries(ValidationQueries_t *, Journal_t**, ValidationList_t*);
-
 void processFlush(Flush_t *, Journal_t**, ValidationList_t*);
-
 bool checkValidation(Journal_t**, ValidationQueries_t*);
-
 bool checkSingleQuery(Journal_t**, Query_t*, uint64_t, uint64_t);
 bool checkQueryHash(Journal_t **, Query_t *, uint64_t, uint64_t);
-
 void processForget(Forget_t*, Journal_t**, int);
 void forgetJournal(Journal_t*, uint64_t);
 void destroySchema(Journal_t**, int);
-
 void printValidation(ValidationQueries_t*);
-
 void printColumn(Column_t);
-
-
 int cmp_col(const void *, const void *);
-
 bool equal_col(const void *p1, const void *p2);
-
 void* threadedCheckValidation(void* arg);
 
 #endif

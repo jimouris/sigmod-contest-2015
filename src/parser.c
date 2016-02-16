@@ -2,15 +2,12 @@
 #include "scheduler.h"
 
 static uint32_t* schema = NULL;
-
 static thread_arg_t* thread_array;
-
+extern int* modes;
 Flush_t* last_flush = NULL;
 int flushes = 0;
 bool first_flush = true;
 threadpool_t* threadpool;
-
-extern int* modes;
 
 
 Journal_t** processDefineSchema(DefineSchema_t *s, int *relation_count, int* modes) {
@@ -93,7 +90,6 @@ void processValidationQueries(ValidationQueries_t *v, Journal_t** journal_array,
 		// }
 		/*Bring C0==X first*/
 
-
 		qsort(query->columns, query->columnCount, sizeof(Column_t), cmp_col);
 		if (journal->predicate_index != NULL) {
 			for(j = 0; j < query->columnCount; j++) {
@@ -171,7 +167,6 @@ void processFlush(Flush_t *fl, Journal_t** journal_array, ValidationList_t* vali
 
 				threadpoolBarrier(threadpool);
 
-
 				for(i = 0; i < remove_count; i++){
 					validation_remove_start(validation_list->list);
 					printf("%" PRIu8 "",result_array[i]);
@@ -180,7 +175,6 @@ void processFlush(Flush_t *fl, Journal_t** journal_array, ValidationList_t* vali
 				free(result_array);
 
 			} else { //Scheduler Not enabled
-				
 				uint64_t max_validations = num_of_validations / thread_num + 1;
 				int i;
 				if (max_validations > thread_array[0].size){
@@ -210,10 +204,8 @@ void processFlush(Flush_t *fl, Journal_t** journal_array, ValidationList_t* vali
 					iter = iter->next;
 					remove_count++;
 				}
-
 				pthread_t* thread_id = malloc(thread_num*sizeof(pthread_t));
 				ALLOCATION_ERROR(thread_id);
-
 				int err;
 				for(i=0; i<thread_num; i++){
 					if( (err = pthread_create(&thread_id[i], NULL, threadedCheckValidation, &thread_array[i])) != 0){
@@ -308,7 +300,6 @@ bool checkQueryHash(Journal_t** journal_array, Query_t* query, uint64_t from, ui
 	uint64_t range_size = 0;
 	for(i = 0; i < query->columnCount; i++) {
 		Column_t* predicate = &query->columns[i];
-
 
 		//If bit_set for this predicate has allready been computed, get it from the hash table.
 		BitSet_t* predicate_bit_set = predicateGetBitSet(journal->predicate_index, from, to, predicate->column, predicate->op, predicate->value);
@@ -633,21 +624,6 @@ void validation_insert_end(Val_list_t *list, ValidationQueries_t* val_query) {
 	list->size++;
 }
 
-// void validation_remove_end(Val_list_t *list) {
-// 	Val_list_node *n = list->list_end;
-// 	destroyValQuery(n->data);
-// 	if (n->prev == NULL)
-// 		list->list_beg = n->next;
-// 	else
-// 		n->prev->next = n->next;
-// 	if (n->next == NULL)
-// 		list->list_end = n->prev;
-// 	else
-// 		n->next->prev = n->prev;
-// 	list->size--;
-// 	free(n);
-// }
-
 void validation_remove_start(Val_list_t *list) {
 	Val_list_node *n = list->list_beg;
 	if(n == NULL)
@@ -663,8 +639,6 @@ void validation_remove_start(Val_list_t *list) {
 		list->list_end = NULL;
 	}
 }
-
-
 
 void destroy_validation_list(Val_list_t* list){
 	while(!validation_isEmpty(list)){
