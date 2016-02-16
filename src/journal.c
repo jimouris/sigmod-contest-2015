@@ -138,8 +138,6 @@ void insertJournalRecord(Journal_t* journal, uint64_t transaction_id, size_t col
 	journal->num_of_recs++;
 }
 
-
-
 uint64_t getRecordCount(Journal_t* journal, uint64_t range_start, uint64_t range_end, uint64_t* first_offset){
 	uint64_t first_appearance_start = 0, first_appearance_end = 0;
 	if(journal->tid_index != NULL) {
