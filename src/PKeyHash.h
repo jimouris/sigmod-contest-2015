@@ -39,17 +39,10 @@ typedef struct pkHash {
 	uint32_t global_depth;
 	pkBucket **index;
 } pkHash;
-/****************************/
 
-/* HASH INIT METHOD */
+/********************************************************/
 pkHash* createHash(void); 
-/********************/
-
-/*HASH FUNCTION USED FOR TO GO TO THE RIGHT INDEX*/
 uint64_t hashFunction(uint64_t, uint64_t);
-/*************************************************/
-
-/*INSERT TO HASH FUNCTION AND OTHER HELPER FUNCTIONS*/
 void fixHashPointers(pkBucket **, pkBucket *, uint32_t, uint64_t);
 void fixSplitPointers(pkHash *, pkBucket *, pkBucket *, uint64_t);
 void duplicateIndex(pkHash *);
@@ -61,27 +54,10 @@ pkSubBucket* createNewSubBucket(Key, RangeArray *);
 void addNewKeyToTmpBucket(pkBucket *, Key, RangeArray*);
 void cleanBucket(pkBucket *);
 void cleanSubBucket(pkSubBucket *);
-/****************************************************/
-
-/*SEARCH TO HASH AND OTHER HELPER METHODS*/
 RangeArray* getHashRecord(pkHash *, Key, uint64_t *);
 JournalRecord_t* getLastRecord(Journal_t*, Key);
-void moveSubBucketsLeft(pkBucket*,uint32_t);
-/****************************************/
-
-/*PRINT HASH-pkBUCKET FUNCTIONS*/
 void printHash(pkHash*);
 void printBucket(pkBucket *);
-/****************************/
-
-/*DELETE HASH FUNCTION*/
-int deleteHashRecord(pkHash*, Key);
-// void destroyBucket(pkBucket*);
-void tryMergeBuckets(pkHash*, uint64_t);
-void fixDeletePointers(pkHash* , pkBucket* , pkBucket* , uint64_t);
-uint8_t tryCollapseIndex(pkHash*);
-// OK_SUCCESS deleteJournalRecord(pkHash*, Key, int transaction_id); 
 int destroyHash(pkHash*); 
-/**********************/
 
 #endif
