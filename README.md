@@ -1,6 +1,4 @@
-[![License MIT][badge-license]](LICENSE.txt)
-
-# transaction-processing
+# transaction-processing [![License MIT][badge-license]](LICENSE.txt)
 ACM Sigmod 2015 Programming Contest
 
 > The ACID principle, mandating atomicity, consistency, isolation and durability is one of the cornerstones of relational database management systems. In order to achieve the third principle, isolation, concurrent reads and writes must be handled carefully.
@@ -52,4 +50,4 @@ equal distribution of the validations to each thread.
 ./execute.sh input_file --threads 4
 ```
 
-[badge-license]: https://img.shields.io/badge/license-MIT-green.svg
+[badge-license]: https://img.shields.io/badge/license-MIT-green.svg?style=flat-square
