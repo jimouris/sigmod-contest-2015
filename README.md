@@ -9,10 +9,10 @@ ACM Sigmod 2015 Programming Contest
 
 Website of the contest can be found [here](http://db.in.tum.de/sigmod15contest/task.html)
 
-This repository contains the approach on this project by [me](https://github.com/jimouris) among with [Thanos Giannopoulos](https://github.com/thanosgn) and [Themis Beris](https://github.com/ThemisB).
+This repository contains the approach on this project by [Dimitris Mouris](https://github.com/jimouris), [Thanos Giannopoulos](https://github.com/thanosgn) and [Themis Beris](https://github.com/ThemisB).
 
 
-###Running
+### Running
 Runnig of the program is easy using the script provided.
 
 
@@ -31,7 +31,7 @@ You can specify the input in the first arguement of the script, like:
 
 After that can also follow some other options for using specific indexes, or enabling multihreaded functions.
   
-#####Possible  options are:
+##### Possible  options are:
   1. [`--tid` enables indexing for transaction-ids using extendible hashing]
   2. [`--predicate` enables indexing for predicates using extendible hashing, to avoid computing the same values twice]
   3. [`--threads t` enables multithreaded validation check using `t` threads]
@@ -44,7 +44,7 @@ Unfortunately, for the given inputs options 1,2 don't provide speedup due to the
 Also, regarding the multithreaded execution the scheduler doesn't provide a speedup either and the program runs faster with 
 equal distribution of the validations to each thread.
   
-####Fastest Implementation so far:
+#### Fastest Implementation:
 
 ```
 ./execute.sh input_file --threads 4
